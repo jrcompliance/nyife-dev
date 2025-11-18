@@ -92,7 +92,7 @@ const props = defineProps(['aimodule', 'fbmodule']);
         <div class="h-[calc(100vh-65px)] bg-white">
             <!-- Header Section with Horizontal Navigation -->
             <div class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-                <div class="px-4 md:px-4 pt-6 pb-4">
+                <div class="px-4 md:px-8 py-8">
                     <!-- Header Title -->
                     <div class="flex items-center justify-between flex-wrap gap-4">
 

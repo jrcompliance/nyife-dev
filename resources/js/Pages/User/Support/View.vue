@@ -85,9 +85,6 @@
 <script setup>
 import AppLayout from './../Layout/App.vue';
 import { Link, router, useForm } from "@inertiajs/vue3";
-import { ref, onMounted } from 'vue';
-import FormInput from '@/Components/FormInput.vue';
-import FormSelect from '@/Components/FormSelect.vue';
 import FormTextArea from '@/Components/FormTextArea.vue';
 import { ArrowLeft } from 'lucide-vue-next';
 
