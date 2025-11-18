@@ -9,6 +9,6 @@ return [
     'delay'             => true,
     'webhook'           => true,
     'ai_response'       => false, // Disabled
-    'conditional'       => false,
+    'conditional'       => true,
     // Add more actions as needed
 ]; 

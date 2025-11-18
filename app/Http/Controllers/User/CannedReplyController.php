@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Helper;
+use Illuminate\Support\Facades\Log;
+
 
 class CannedReplyController extends BaseController
 {
