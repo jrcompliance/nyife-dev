@@ -8,6 +8,7 @@ use Modules\FlowBuilder\Models\FlowMedia;
 use Modules\FlowBuilder\Models\FlowUserData;
 use Modules\FlowBuilder\Resources\FlowResource;
 use Modules\FlowBuilder\Validators\FlowValidator;
+use Illuminate\Support\Facades\Log;
 
 class FlowService
 {
@@ -16,8 +17,24 @@ class FlowService
         $organizationId = session()->get('current_organization');
         $model = new Flow;
         $searchTerm = $request->query('search');
+        Log::info('FlowService getRows called', ['organizationId' => $organizationId, 'searchTerm' => $searchTerm]);
 
-        return FlowResource::collection($model->listAll($organizationId, $searchTerm));
+        $flows = $model->listAll($organizationId, $searchTerm);
+
+        $totalFlows = Flow::where('organization_id', $organizationId)->count();
+        $activeFlows = Flow::where('organization_id', $organizationId)->where('status', 'active')->count();
+        $inactiveFlows = Flow::where('organization_id', $organizationId)->where('status', 'inactive')->count();
+        $totalRuns = Flow::where('organization_id', $organizationId)->withCount('flowLogs')->get()->sum('flow_logs_count');
+        $analytics = [
+            'totalFlows' => $totalFlows,
+            'activeFlows' => $activeFlows,
+            'inactiveFlows' => $inactiveFlows,
+            'totalRuns' => $totalRuns,
+        ];
+        return [
+            'flows' => FlowResource::collection($flows),
+            $analytics
+        ];
     }
 
     /**
@@ -45,7 +62,7 @@ class FlowService
      * @param array $data
      * @return Flow
      */
-    public function updateFlow($uuid, array $data, $publish)
+    public function updateFlow($uuid, array $data, $publish): Flow
     {
         $validator = new FlowValidator();
         

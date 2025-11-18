@@ -2084,13 +2084,7 @@ class WhatsappService
     }
     
     
-    
-    
-    
-    
-    
-    
-        public function upload(Request $request)
+    public function upload(Request $request)
     {
         $request->validate([
             'image' => 'required|file|mimes:jpg,jpeg,png|max:5120', // max 5MB
@@ -2141,14 +2135,8 @@ class WhatsappService
             'file_handle' => $uploadResponse->json('h'),
         ]);
     }
-    
-    
-    
-    
-    
-    
-    
-        public function uploadfile(Request $request)
+
+    public function uploadfile(Request $request)
     {
         $request->validate([
             'file' => 'required|file|max:10240' // 100MB max
