@@ -475,9 +475,6 @@ const getCategoryColor = (category) => {
                 <div class="max-w-lg mx-auto text-center">
                     <!-- Animated Illustration -->
                     <div class="mb-8 relative inline-block">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-r from-primary via-orange-400 to-red-400 rounded-full blur-3xl opacity-30 animate-pulse">
-                        </div>
                         <div class="relative">
                             <div
                                 class="bg-gradient-to-br from-primary/10 via-orange-100 to-red-100 p-10 rounded-[2.5rem] inline-block">
@@ -493,7 +490,7 @@ const getCategoryColor = (category) => {
                         Get started by creating your first message template to streamline your communication
                     </p>
 
-                    <Link href="/templates/create"
+                    <!-- <Link href="/templates/create"
                         class="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-primary via-orange-600 to-red-600 text-white text-lg font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300">
                     <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -502,7 +499,7 @@ const getCategoryColor = (category) => {
                         </svg>
                     </div>
                     <span>{{ $t('Create template') }}</span>
-                    </Link>
+                    </Link> -->
                 </div>
             </div>
         </div>

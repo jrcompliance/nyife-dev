@@ -315,7 +315,7 @@ const viewMode = ref('list'); // 'grid' or 'list'
             <!-- Search Bar -->
             <div class="relative flex-1 max-w-2xl w-full">
                 <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
                         class="text-primary/40">
                         <circle cx="11" cy="11" r="8" />
@@ -323,7 +323,7 @@ const viewMode = ref('list'); // 'grid' or 'list'
                     </svg>
                 </div>
                 <input @input="search" v-model="params.search" type="text"
-                    class="w-full pl-14 pr-14 py-5 bg-white border-2 border-primary/10 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all duration-300 text-base shadow-lg"
+                    class="w-full pl-14 pr-14 py-3 bg-white border-2 border-primary/10 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none  transition-all duration-300 text-base shadow-lg"
                     :placeholder="$t('Search campaigns')">
 
                 <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
@@ -643,19 +643,16 @@ const viewMode = ref('list'); // 'grid' or 'list'
 
     <!-- Empty State -->
     <div v-if="rows.data.length == 0" class="mt-8">
-        <div class="bg-white rounded-3xl shadow-2xl border-2 border-violet-100 p-16">
+        <div class="bg-white rounded-3xl shadow-xl border-2 border-primary/10 p-16">
             <div class="max-w-lg mx-auto text-center">
                 <!-- Animated Illustration -->
                 <div class="mb-8 relative inline-block">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 rounded-full blur-3xl opacity-30 animate-pulse">
-                    </div>
                     <div class="relative">
                         <div
-                            class="bg-gradient-to-br from-violet-100 via-purple-100 to-fuchsia-100 p-10 rounded-[2.5rem] inline-block">
+                            class="bg-gradient-to-br from-primary/10 via-orange-100 to-red-100 p-10 rounded-[2.5rem] inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                stroke-linejoin="round" class="text-violet-600">
+                                stroke-linejoin="round" class="text-primary">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                                 <path d="M8 10h.01M12 10h.01M16 10h.01" />
                             </svg>
@@ -670,7 +667,7 @@ const viewMode = ref('list'); // 'grid' or 'list'
                     Get started by creating your first campaign to engage with your audience effectively
                 </p>
 
-                <Link href="/campaigns/create"
+                <!-- <Link href="/campaigns/create"
                     class="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white text-lg font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300">
                 <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -679,7 +676,7 @@ const viewMode = ref('list'); // 'grid' or 'list'
                     </svg>
                 </div>
                 <span>{{ $t('Create campaign') }}</span>
-                </Link>
+                </Link> -->
             </div>
         </div>
     </div>
