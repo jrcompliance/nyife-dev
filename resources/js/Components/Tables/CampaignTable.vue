@@ -509,7 +509,7 @@ const viewMode = ref('list'); // 'grid' or 'list'
 
     <!-- List View (Table) -->
     <div v-if="viewMode === 'list' && rows.data.length > 0"
-        class="bg-white rounded-3xl shadow-xl border-2 border-primary/10 p-4 overflow-hidden">
+        class="bg-white rounded-3xl shadow-md border-2 border-primary/10 p-4 overflow-hidden">
         <div class="overflow-x-auto">
             <Table :rows="rows">
                 <TableHeader>

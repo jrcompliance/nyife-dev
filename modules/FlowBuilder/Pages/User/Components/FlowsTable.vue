@@ -226,7 +226,7 @@ const runSearch = () => {
         </div>
 
         <!-- Modern Table -->
-        <div class="overflow-x-auto rounded-xl border border-gray-200">
+        <div class="rounded-xl border border-gray-200">
             <table class="w-full">
                 <thead>
                     <tr class="bg-gradient-to-r from-gray-50 to-orange-50/50 border-b border-gray-200">
@@ -245,7 +245,7 @@ const runSearch = () => {
                             Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white divide-y divide-primary/10">
                     <tr v-for="(item, index) in rows.data" :key="index"
                         class="hover:bg-orange-50/30 transition-colors duration-150 group">
                         <td class="px-6 py-4">

@@ -26,7 +26,7 @@ const props = defineProps({
                 'left-0 origin-top-left': props.align === 'left',
                 'top-[-135px] left-0 origin-top-left': props.align === 'top-left',
             }"
-                class="z-[9999] absolute mt-2 w-32 divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                class="z-[9999] absolute mt-2 w-32 divide-y divide-primary/10 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
 
                 <slot name="items" />
             </MenuItems>
