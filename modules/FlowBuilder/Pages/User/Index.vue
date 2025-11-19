@@ -154,7 +154,7 @@ const submitForm = () => {
                                 </svg>
                             </div>
                         </div>
-                        <p class="text-gray-900 text-3xl font-bold my-2">{{ props.rows.data.length }}</p>
+                        <p class="text-gray-900 text-3xl font-bold my-2">{{ props.analytics.totalFlows }}</p>
                         <p class="text-gray-600 text-sm font-medium">Total Automations</p>
 
                     </div>
@@ -184,10 +184,8 @@ const submitForm = () => {
                                 </svg>
                             </div>
                         </div>
-                        <p class="text-gray-900 text-3xl font-bold my-2">{{props.rows.data.reduce((sum, item) => sum +
-                            item.flow_logs_count, 0)}}</p>
+                        <p class="text-gray-900 text-3xl font-bold my-2">{{ props.analytics.totalRuns }}</p>
                         <p class="text-gray-600 text-sm font-medium">Total Runs</p>
-
                     </div>
                 </div>
 
@@ -215,16 +213,14 @@ const submitForm = () => {
                                 </svg>
                             </div>
                         </div>
-                        <p class="text-gray-900 text-3xl font-bold my-2">{{props.rows.data.filter(item => item.status
-                            === 'active').length}}</p>
+                        <p class="text-gray-900 text-3xl font-bold my-2">{{ props.analytics.activeFlows }}</p>
                         <p class="text-gray-600 text-sm font-medium">Active</p>
-
                     </div>
                 </div>
             </div>
 
             <!-- Table Section -->
-            <div class="overflow-hidden">
+            <div class="">
                 <FlowsTable :rows="props.rows" :filters="props.filters" />
             </div>
 
@@ -300,7 +296,9 @@ import FormTextArea from '@/Components/FormTextArea.vue';
 import Modal from '@/Components/Modal.vue';
 import Pagination from '@/Components/Pagination.vue';
 
-const props = defineProps(['rows', 'filters', 'aimodule', 'fbmodule']);
+const props = defineProps(['rows', 'filters', 'aimodule', 'fbmodule', 'analytics']);
+
+console.log(props.analytics);
 
 const isOpenFormModal = ref(false);
 

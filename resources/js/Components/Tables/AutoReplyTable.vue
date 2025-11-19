@@ -210,7 +210,7 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white divide-y divide-primary/10">
                     <tr v-for="(item, index) in rows.data" :key="index"
                         class="hover:bg-slate-50 transition-colors duration-150">
                         <td class="px-6 py-5">
