@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class FlowService
 {
-    public function getRows(object $request)
+  public function getRows(object $request)
     {
         $organizationId = session()->get('current_organization');
         $model = new Flow;
@@ -36,6 +36,7 @@ class FlowService
             $analytics
         ];
     }
+
 
     /**
      * Create a new flow.
@@ -62,7 +63,7 @@ class FlowService
      * @param array $data
      * @return Flow
      */
-    public function updateFlow($uuid, array $data, $publish): Flow
+    public function updateFlow($uuid, array $data, $publish)
     {
         $validator = new FlowValidator();
         
