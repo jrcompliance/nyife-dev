@@ -20,7 +20,6 @@
                     {{ $t('Create') }}</Link>
                 </div>
             </div>
-            <!-- Table Component-->
             <TicketTable :rows="props.rows" />
         </div>
     </AppLayout>
