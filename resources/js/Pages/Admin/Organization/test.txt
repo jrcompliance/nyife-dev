@@ -1,7 +1,19 @@
+Please act as a Senior Vue.js Developer with strong expertise in shadcn-vue, Framer Motion, and TailwindCSS.
+
+Your task is to redesign the existing provided page to make it more creative, engaging, visually appealing, production-ready, and interactive — without altering any existing functionality.
+
+The updated UI must be in Vue.js, fully responsive, mobile-friendly and does not match with old Ui and layout it must be new look, maintaining a consistent color scheme and design language so future components align seamlessly with the overall style.
+
+For reference, I’ve attached the current existing codebase. Focus solely on improving the user interface, not the logic or functionality.
+
+Note : Code Must be in Vue.js and UI must be completely new look and layout without altering any existing functionality also use this color #ff5100 as primary color for better and consistent color design. you can use vue lucide icon if you want to use it.
+
+
+
+
+Organization create/edit Ui Code :
+
 <template>
-
-
-
     <AppLayout>
         <div class="bg-white md:bg-inherit pt-0 px-4 md:pt-8 md:p-8 rounded-[5px] text-[#000] h-full overflow-y-scroll">
             <div v-if="props.organization === null" class="md:flex justify-between hidden">
