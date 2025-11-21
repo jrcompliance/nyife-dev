@@ -665,9 +665,9 @@ onMounted(async () => {
           <div>
             <FormInput v-model="form.amount" :error="form.errors.amount" :name="''" :type="'number'"
               :class="'w-full'" />
-            <span class="text-sm text-yellow-600" v-if="form.amount >= 1 && form.amount < 100">{{ $t(`Amount should be
+            <span class="text-sm text-yellow-600" v-if="form.amount >= 1 && form.amount < 1000">{{ $t(`Amount should be
               greater
-              than 100`) }}</span>
+              than or equal to 1000`) }}</span>
           </div>
 
           <div>
@@ -734,7 +734,7 @@ onMounted(async () => {
               class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
               {{ $t("Cancel") }}
             </button>
-            <button @click="submitForm" :disabled="isLoading || form.method === null || form.amount < 100"
+            <button @click="submitForm" :disabled="isLoading || form.method === null || form.amount < 1000"
               class="flex-1 px-6 py-3 bg-[#ff5100] text-white rounded-xl font-semibold hover:bg-[#cc4100] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
               <svg v-if="isLoading" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                 <path fill="currentColor"
