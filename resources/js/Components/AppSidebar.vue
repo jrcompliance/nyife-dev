@@ -76,6 +76,7 @@ const user = computed(() => {
     email: props.user.email as string,
     avatar: props.user.avatar as string,
     phone: props.user.phone as string,
+    role: props.user.role as 'admin' | 'user',
   }
 });
 

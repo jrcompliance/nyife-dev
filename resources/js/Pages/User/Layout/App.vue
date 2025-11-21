@@ -110,14 +110,6 @@ import { useRtl } from '../../../Composables/useRtl';
 import AppSidebar from '../../../Components/AppSidebar.vue'
 import LangToggle from '../../../Components/LangToggle.vue';
 
-// import {
-//     Breadcrumb,
-//     BreadcrumbItem,
-//     BreadcrumbLink,
-//     BreadcrumbList,
-//     BreadcrumbPage,
-//     BreadcrumbSeparator,
-// } from '../../../Components/ui/breadcrumb'
 import { Separator } from '../../../Components/ui/separator'
 import {
     SidebarInset,
@@ -132,8 +124,6 @@ const user = computed(() => usePage().props.auth.user);
 const config = computed(() => usePage().props.config);
 const organization = computed(() => usePage().props.organization);
 const organizations = computed(() => usePage().props.organizations);
-// const currentPageTitle = computed(() => usePage().props.title);
-// const displayCreateBtn = computed(() => usePage().props.allowCreate);
 const unreadMessages = ref(usePage().props.unreadMessages);
 const audioPlayer = ref(null);
 
@@ -204,20 +194,6 @@ const currentLanguage = computed(() => usePage().props.currentLanguage);
                 class="w-full flex h-16 shrink-0 justify-between items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                 <div class="flex items-center gap-2 px-4">
                     <SidebarTrigger class="-ml-1" />
-                    <!-- <Separator orientation="vertical" class="mr-2 data-[orientation=vertical]:h-4" />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem class="hidden md:block">
-                                <BreadcrumbLink href="#">
-                                    Building Your Application
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator class="hidden md:block" />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb> -->
                 </div>
                 <div class="mr-8 flex items-center gap-4 bg-slate-100 rounded-3xl py-1 px-2"
                     :class="menuIconsOnly ? 'hidden' : ''">
