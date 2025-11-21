@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  Building2,
   ChevronsUpDown,
   CreditCard,
   LogOut,
@@ -34,11 +35,12 @@ import { ref } from "vue";
 
 
 const props = defineProps<{
-  user: { id: any; first_name: string; last_name?: string; full_name?: string; email?: string; avatar?: string; phone?: string }
+  user: { id: any; first_name: string; last_name?: string; full_name?: string; email?: string; avatar?: string; phone?: string, role?: 'admin' | 'user' }
 }>()
 
 const { isMobile } = useSidebar()
 const isOpen = ref(false);
+
 
 const closeModal = () => {
   isOpen.value = false
@@ -47,6 +49,7 @@ const closeModal = () => {
 const openModal = () => {
   isOpen.value = true;
 }
+
 </script>
 
 <template>
@@ -96,20 +99,43 @@ const openModal = () => {
               <User />
               {{ $t('View Profile') }}
             </DropdownMenuItem>
-            <Link href="/billing" class="w-full">
+            <Link v-if="props.user.role === 'user'" href="/billing" class="w-full">
             <DropdownMenuItem class="cursor-pointer">
               <CreditCard />
               {{ $t('Billing & Subscription') }}
             </DropdownMenuItem>
             </Link>
 
-            <Link href="/settings" class="w-full">
+            <Link v-if="props.user.role === 'admin'" href="/admin/payment-logs" class="w-full">
+            <DropdownMenuItem class="cursor-pointer">
+              <CreditCard />
+              {{ $t('Billing') }}
+            </DropdownMenuItem>
+            </Link>
+
+            <Link v-if="props.user.role === 'admin'" href="/admin/organizations" class="w-full">
+            <DropdownMenuItem class="cursor-pointer">
+              <Building2 />
+              {{ $t('Organizations') }}
+            </DropdownMenuItem>
+            </Link>
+
+            <Link v-if="props.user.role === 'admin'" href="/admin/settings/general" class="w-full">
             <DropdownMenuItem class="cursor-pointer">
               <Settings />
               {{ $t('Settings') }}
             </DropdownMenuItem>
             </Link>
-            <a href="https://pinex.pinnacle.in/cm/#/login" target="_blank" rel="noopener noreferrer">
+
+            <Link v-if="props.user.role === 'user'" href="/settings" class="w-full">
+            <DropdownMenuItem class="cursor-pointer">
+              <Settings />
+              {{ $t('Settings') }}
+            </DropdownMenuItem>
+            </Link>
+
+            <a v-if="props.user.role === 'user'" href="https://pinex.pinnacle.in/cm/#/login" target="_blank"
+              rel="noopener noreferrer">
               <DropdownMenuItem class="cursor-pointer">
                 <SquareArrowOutUpRight />
                 {{ $t('Login for SMS Account') }}
@@ -128,5 +154,5 @@ const openModal = () => {
       </DropdownMenu>
     </SidebarMenuItem>
   </SidebarMenu>
-  <ProfileModal :user="props.user" :isOpen="isOpen" role="user" @close="closeModal()" />
+  <ProfileModal :user="props.user" :isOpen="isOpen" :role=props.user.role @close="closeModal()" />
 </template>
