@@ -121,8 +121,6 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 </template> -->
 
 
-<!-- ============================================= NEW UI CODE ============================================= -->
-
 <!-- ========================================== NEW UI CODE ==================================== -->
 
 
@@ -189,7 +187,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <!-- Table Header -->
-                    <thead class="">
+                    <thead class="border-b border-primary/10">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                 <div class="flex items-center space-x-2">
@@ -296,26 +294,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
             </div>
 
             <!-- Pagination -->
-            <!-- <div v-if="rows.data.length > 0" class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-                <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
-                    <div class="text-sm text-gray-600">
-                        Showing <span class="font-semibold text-gray-900">{{ rows.from }}</span> to
-                        <span class="font-semibold text-gray-900">{{ rows.to }}</span> of
-                        <span class="font-semibold text-gray-900">{{ rows.total }}</span> results
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button v-for="(link, index) in rows?.links" :key="index" @click="goToPage(link?.url)"
-                            :disabled="!link?.url"
-                            class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200" :class="[
-                                link?.active
-                                    ? 'bg-[#ff5100] text-white shadow-md'
-                                    : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200',
-                                !link?.url && 'opacity-50 cursor-not-allowed'
-                            ]" v-html="link?.label">
-                        </button>
-                    </div>
-                </div>
-            </div> -->
+            <Pagination class="mt-3" :pagination="rows.meta" />
         </div>
     </div>
 </template>
@@ -324,6 +303,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 import { ref } from 'vue';
 import debounce from 'lodash/debounce';
 import { router } from '@inertiajs/vue3';
+import Pagination from '../Pagination.vue';
 
 const props = defineProps({
     rows: {
