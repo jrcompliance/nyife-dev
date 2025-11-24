@@ -20,6 +20,7 @@
                         <h1 class="text-xl">{{ $t('Subject') }}: {{ props.ticket.subject }}</h1>
                         <div class="border border-dashed py-2 px-2 mt-8 bg-slate-100">{{ props.ticket.message }}</div>
                     </div>
+
                     <div v-if="props.ticket.status === 'open' || props.ticket.status === 'pending'"
                         class="bg-white border py-5 px-5 rounded-[0.5rem] mb-4">
                         <form @submit.prevent="submitForm()">
@@ -101,7 +102,7 @@
 import AppLayout from './../Layout/App.vue';
 import axios from 'axios';
 import { Link, router, useForm } from "@inertiajs/vue3";
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import FormSelect from '@/Components/FormSelect.vue';
 import FormTextArea from '@/Components/FormTextArea.vue';
 import { ArrowLeft } from 'lucide-vue-next';

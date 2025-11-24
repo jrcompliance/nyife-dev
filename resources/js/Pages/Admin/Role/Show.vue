@@ -59,7 +59,7 @@
                                         <div class="text-sm leading-6">
                                             <label :for="'permission[' + item.name + '|' + value + ']'"
                                                 class="font-medium text-gray-900">{{
-                                                $t(removeUnderscoreAndCapitalize(value)) }}</label>
+                                                    $t(removeUnderscoreAndCapitalize(value)) }}</label>
                                         </div>
                                     </div>
                                 </div>

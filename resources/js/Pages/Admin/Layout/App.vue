@@ -36,7 +36,7 @@ watch(() => [usePage().props.flash, { deep: true }], () => {
 });
 </script>
 
-
+<!-- ============================================ NEW UI CODE ============================================= -->
 <!-- <script>
 export const description
     = "A sidebar that collapses to icons."
