@@ -128,6 +128,7 @@
         </div>
     </AppLayout>
 </template>
+
 <script setup>
 import AppLayout from "./../Layout/App.vue";
 import { ref } from 'vue';

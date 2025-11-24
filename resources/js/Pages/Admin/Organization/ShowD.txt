@@ -1,3 +1,7 @@
+<!-- ========================================= NEW UI CODE ==================================== -->
+
+
+<template>
     <AppLayout>
         <div class="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 p-4 md:p-8">
             <!-- Header Section for Create -->
@@ -204,7 +208,7 @@
                         <div class="lg:w-2/5 mb-6 lg:mb-0">
                             <div class="flex items-start space-x-3">
                                 <div
-                                    class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    class="w-10 h-10 bg-gradient-to-br from-[#ff5100] to-[#ff7733] rounded-xl flex items-center justify-center flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                         class="text-white">
                                         <path fill="currentColor"
@@ -281,7 +285,7 @@
                         <div class="lg:w-2/5 mb-6 lg:mb-0">
                             <div class="flex items-start space-x-3">
                                 <div
-                                    class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    class="w-10 h-10 bg-gradient-to-br from-[#ff5100] to-[#ff7733] rounded-xl flex items-center justify-center flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                         class="text-white">
                                         <path fill="currentColor"
@@ -291,7 +295,7 @@
                                 <div>
                                     <h3 class="text-lg font-bold text-gray-900">{{ $t('Address details') }}</h3>
                                     <p class="text-sm text-gray-500 mt-1">{{ $t('Organization location information')
-                                        }}</p>
+                                    }}</p>
                                 </div>
                             </div>
                         </div>
@@ -330,3 +334,187 @@
             </form>
         </div>
     </AppLayout>
+
+    <!-- Transaction Modal -->
+    <Modal :label="$t('Create transaction')" :isOpen=isOpenFormModal>
+        <div class="mt-5">
+            <form @submit.prevent="submitForm1()">
+                <div class="grid gap-6 sm:grid-cols-2">
+                    <FormSelect v-model="form1.type" :name="$t('Transaction type')" :error="form1.errors.type"
+                        :options="typeOptions" />
+                    <FormInput v-model="form1.amount" :name="$t('Amount')" :error="form1.errors.amount"
+                        :type="'number'" />
+                    <div class="sm:col-span-2">
+                        <FormSelect v-if="form1.type === 'payment'" v-model="form1.method" :name="$t('Payment method')"
+                            :error="form1.errors.method" :options="paymentOptions" />
+                        <FormInput v-else v-model="form1.description" :name="$t('Description')"
+                            :error="form1.errors.description" :type="'text'" />
+                    </div>
+                </div>
+
+                <!-- Warning Message -->
+                <div
+                    class="mt-6 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-4 border-2 border-red-400 shadow-lg">
+                    <div class="flex items-start space-x-3">
+                        <svg class="text-white flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" width="22"
+                            height="22" viewBox="0 0 20 20">
+                            <path fill="currentColor" fill-rule="evenodd"
+                                d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625zM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5m0 9a1 1 0 1 0 0-2a1 1 0 0 0 0 2"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <p class="text-sm text-white font-medium">
+                            {{ $t('You can\'t undo this transaction once you save it') }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" @click="toggleFormModal()"
+                        class="px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-medium transition-all duration-200 border-2 border-gray-200 hover:border-gray-300 shadow-sm">
+                        {{ $t('Cancel') }}
+                    </button>
+                    <button type="submit"
+                        :class="['px-6 py-3 bg-gradient-to-r from-[#ff5100] to-[#ff6622] hover:from-[#ff6622] hover:to-[#ff5100] text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2', { 'opacity-50 cursor-not-allowed': isLoading }]"
+                        :disabled="isLoading">
+                        <svg v-if="isLoading" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                            viewBox="0 0 24 24" class="animate-spin">
+                            <path fill="currentColor"
+                                d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8A8 8 0 0 1 12 20Z"
+                                opacity=".5" />
+                            <path fill="currentColor" d="M20 12h2A10 10 0 0 0 12 2V4A8 8 0 0 1 20 12Z" />
+                        </svg>
+                        <span v-if="!isLoading">{{ $t('Save') }}</span>
+                        <span v-else>{{ $t('Saving...') }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </Modal>
+</template>
+
+<script setup>
+import AppLayout from "./../Layout/App.vue";
+import { ref } from 'vue';
+import { Link, useForm } from "@inertiajs/vue3";
+import FormInput from '@/Components/FormInput.vue';
+import FormPhoneInput from '@/Components/FormPhoneInput.vue';
+import FormSelect from '@/Components/FormSelect.vue';
+import BillingTable from '@/Components/Tables/BillingTable.vue';
+import Modal from '@/Components/Modal.vue';
+import UserTable from '@/Components/Tables/UserTable.vue';
+import { trans } from 'laravel-vue-i18n';
+import { ArrowLeft } from "lucide-vue-next";
+
+const props = defineProps({
+    showAddBtn: {
+        type: Boolean,
+        default: true
+    },
+    title: String,
+    organization: Object,
+    users: Object,
+    invoices: Object,
+    plans: Object,
+    filters: Object,
+    mode: String
+});
+
+const tab = ref('organization');
+
+const getAddressDetail = (value, key) => {
+    if (value) {
+        const address = JSON.parse(value);
+        return address?.[key] ?? null;
+    } else {
+        return null;
+    }
+};
+
+const form = useForm({
+    name: props.organization?.name,
+    plan: props.organization?.subscription?.plan?.uuid,
+    create_user: 1,
+    first_name: null,
+    last_name: null,
+    email: null,
+    phone: null,
+    password: null,
+    password_confirmation: null,
+    street: getAddressDetail(props.organization?.address, 'street'),
+    city: getAddressDetail(props.organization?.address, 'city'),
+    state: getAddressDetail(props.organization?.address, 'state'),
+    zip: getAddressDetail(props.organization?.address, 'zip'),
+    country: getAddressDetail(props.organization?.address, 'country')
+});
+
+const typeOptions = ref([
+    { value: 'credit', label: trans('Credit') },
+    { value: 'debit', label: trans('Debit') },
+    { value: 'payment', label: trans('Payment') },
+])
+
+const paymentOptions = ref([
+    { value: 'manual', label: trans('Manual') },
+    { value: 'bank', label: trans('Bank') },
+])
+
+const form1 = useForm({
+    uuid: props.organization?.uuid,
+    type: null,
+    amount: null,
+    method: null,
+    description: null,
+})
+
+const roleOptions = () => {
+    return props.plans.map((option) => ({
+        value: option.uuid,
+        label: option.name,
+    }));
+};
+
+const isOpenFormModal = ref(false);
+
+const isLoading = ref(false);
+
+const changeTab = (value) => {
+    tab.value = value;
+}
+
+const switchUserType = (value) => {
+    form.create_user = value;
+    if (value === 0) {
+        form.first_name = null;
+        form.last_name = null;
+        form.email = null;
+        form.phone = null;
+        form.password = null;
+        form.password_confirmation = null;
+    } else {
+        form.email = null;
+    }
+}
+
+const submitForm = async () => {
+    const url = props.organization ? window.location.pathname : '/admin/organizations';
+
+    form[props.organization ? 'put' : 'post'](url, {
+        preserveScroll: true,
+    });
+};
+
+const toggleFormModal = () => {
+    isOpenFormModal.value = !isOpenFormModal.value;
+}
+
+const submitForm1 = async () => {
+    form1.post('/admin/billing', {
+        preserveScroll: true,
+        onSuccess: () => {
+            toggleFormModal()
+            changeTab('billing')
+        },
+    })
+};
+</script>

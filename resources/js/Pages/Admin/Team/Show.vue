@@ -83,7 +83,6 @@
 </template>
 <script setup>
 import AppLayout from "./../Layout/App.vue";
-import { ref } from 'vue';
 import { Link, useForm } from "@inertiajs/vue3";
 import FormImage from '@/Components/FormImage.vue';
 import FormInput from '@/Components/FormInput.vue';
@@ -92,7 +91,6 @@ import FormSelect from '@/Components/FormSelect.vue';
 import { ArrowLeft } from "lucide-vue-next";
 
 const props = defineProps({ title: String, user: Object, roles: Object });
-const fileUrl = ref(null);
 
 const getAddressDetail = (value, key) => {
     if (value) {
