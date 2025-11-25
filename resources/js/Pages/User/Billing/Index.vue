@@ -387,9 +387,6 @@ onMounted(async () => {
 });
 </script> -->
 
-
-<!-- ============================================ NEW UI CODE ============================================= -->
-
 <!-- ========================================= NEW UI CODE ==================================== -->
 
 <template>
@@ -763,6 +760,7 @@ import { ref, onMounted } from "vue";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 import { CreditCard } from "lucide-vue-next";
+import { toast } from "vue3-toastify";
 
 const props = defineProps([
   "subscription",
@@ -811,6 +809,16 @@ function onClose() {
 }
 
 const submitForm = async () => {
+  if (form.method === null) {
+    toast.error("Please select a payment method");
+    return;
+  }
+
+  if (form.amount < 1000) {
+    toast.error("Please enter an amount greater than 1000");
+    return;
+  }
+
   isLoading.value = true;
   form.post("/pay", {
     preserveScroll: true,
