@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div :class="rtlClass">
         <MobileSidebar :user="user" :config="config" :title="currentPageTitle" :displayCreateBtn="displayCreateBtn">
         </MobileSidebar>
@@ -34,10 +34,10 @@ watch(() => [usePage().props.flash, { deep: true }], () => {
         });
     }
 });
-</script>
+</script> -->
 
 <!-- ============================================ NEW UI CODE ============================================= -->
-<!-- <script>
+<script>
 export const description
     = "A sidebar that collapses to icons."
 export const iframeHeight = "800px"
@@ -91,4 +91,4 @@ watch(() => [usePage().props.flash, { deep: true }], () => {
             </div>
         </SidebarInset>
     </SidebarProvider>
-</template> -->
+</template>

@@ -128,12 +128,12 @@ const emit = defineEmits(['update:modelValue', 'callback']);
     <div class="space-y-6">
         <!-- Search Bar -->
         <div class="relative">
-            <div class="relative group">
+            <div class="relative group max-w-screen-sm">
                 <div
                     class="absolute inset-0 bg-gradient-to-r from-[#ff5100] to-[#ff7733] rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300">
                 </div>
                 <div
-                    class="relative bg-white flex items-center shadow-lg h-14 w-full rounded-2xl transition-all duration-300 border-2 border-orange-100">
+                    class="relative bg-white flex items-center shadow-lg h-14 rounded-2xl transition-all duration-300 border-2 border-orange-100">
                     <span class="pl-5 text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
                             class="text-[#ff5100]">

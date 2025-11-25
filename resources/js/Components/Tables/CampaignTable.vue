@@ -313,7 +313,7 @@ const viewMode = ref('list'); // 'grid' or 'list'
     <div class="mb-6 space-y-4">
         <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <!-- Search Bar -->
-            <div class="relative flex-1 max-w-2xl w-full">
+            <div class="relative flex-1 max-w-screen-sm w-full">
                 <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
