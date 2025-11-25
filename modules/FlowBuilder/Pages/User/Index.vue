@@ -313,10 +313,11 @@ const submitForm = () => {
         onSuccess: () => {
             isOpenFormModal.value = false;
             form.reset();
-            router.visit('/automation/flows', {
-                preserveState: false,
-            });
+            // router.visit(`/automation/ai`, {
+            //     preserveState: false,
+            // });
         }
     })
 }
+
 </script>
