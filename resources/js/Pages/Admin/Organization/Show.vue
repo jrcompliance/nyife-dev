@@ -1,7 +1,4 @@
 <template>
-
-
-
     <AppLayout>
         <div class="bg-white md:bg-inherit pt-0 px-4 md:pt-8 md:p-8 rounded-[5px] text-[#000] h-full overflow-y-scroll">
             <div v-if="props.organization === null" class="md:flex justify-between hidden">

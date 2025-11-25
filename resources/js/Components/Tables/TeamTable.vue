@@ -337,9 +337,9 @@ const getRoleColor = (role) => {
 <template>
     <div class="min-h-screen">
         <!-- Enhanced Search Bar -->
-        <div class="mb-8">
+        <div class="mb-8 max-w-screen-sm">
             <div
-                class="bg-white rounded-2xl shadow-lg border-2 border-primary/10 p-2 flex items-center gap-3 max-w-md hover:shadow-xl transition-all duration-300">
+                class="bg-white rounded-2xl shadow-lg border-2 border-primary/10 p-2 flex items-center gap-3 hover:shadow-xl transition-all duration-300">
                 <div class="pl-3">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"

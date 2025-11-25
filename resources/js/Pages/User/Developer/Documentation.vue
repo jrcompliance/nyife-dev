@@ -386,9 +386,9 @@ const changeTab = (id) => {
                                 :class="index1 != 0 ? 'mt-8' : ''">
                                 {{ $t(item1.title) }}</h3>
                             <div v-for="(item, index) in item1.value" :key="lang + '-item-' + index"
-                                @click="changeTab(lang + item1.title + index + 1)"
                                 class="mb-3 bg-white backdrop-blur-sm cursor-pointer rounded-xl border border-primary/10 overflow-hidden hover:border-[#ff5100]/50 transition-all duration-300">
-                                <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 group">
+                                <div @click="changeTab(lang + item1.title + index + 1)"
+                                    class="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 group">
                                     <div class="flex items-center gap-x-3">
                                         <span
                                             class="rounded-lg px-3 py-1 bg-[#ff5100] text-white text-xs font-bold uppercase">{{
