@@ -63,7 +63,7 @@ import { Link } from "@inertiajs/vue3";
 
                     <Key :class="$page.url === '/developer-tools/access-tokens' ? 'text-white' : 'text-slate-400 group-hover:text-[#ff5100]'"
                         class="transition-colors text-xl duration-300" />
-                    <span class="font-semibold text-sm whitespace-nowrap group-hover:text-[#ff5100]">
+                    <span class="font-semibold text-sm whitespace-nowrap">
                         Access Token
                     </span>
                 </div>
@@ -89,7 +89,7 @@ import { Link } from "@inertiajs/vue3";
                     <Globe
                         :class="$page.url === '/developer-tools/webhooks' ? 'text-white' : 'text-slate-400 group-hover:text-[#ff5100]'"
                         class="transition-colors duration-300" />
-                    <span class="font-semibold text-sm whitespace-nowrap group-hover:text-[#ff5100]">
+                    <span class="font-semibold text-sm whitespace-nowrap">
                         Webhooks
                     </span>
                 </div>
