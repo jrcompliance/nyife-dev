@@ -689,6 +689,7 @@ import {
   Layers, Upload, Loader2, Info, Workflow,
   Loader2Icon
 } from 'lucide-vue-next';
+import { toast } from "vue3-toastify";
 
 const props = defineProps({
   templates: Object,
@@ -997,26 +998,60 @@ const transformOptions = (options) => {
   }));
 };
 
+// ============================= OLD WAY ==================================
+// const submitForm = () => {
+//   isLoading.value = true;
+//   const url = props.isCampaignFlow
+//     ? "/send/flow/template"
+//     : `/send/flow/template`;
+//   form.post(url, {
+//     onFinish: () => {
+//       isLoading.value = false;
+//       if (!props.isCampaignFlow) {
+//         emit("viewTemplate", false);
+//       }
+//     },
+//   });
+// };
+
+// ============================= NEW WAY ==================================
+
 const submitForm = () => {
   isLoading.value = true;
-  console.log("Submitting form with data:", form.data());
-  const url = props.isCampaignFlow
-    ? "/send/flow/template"
-    : `/send/flow/template`;
-  const payload = form.data();
-  console.log(props.isCampaignFlow ? "Campaign Flow" : "Single Contact Flow");
 
-  console.log("POST Request:", JSON.stringify({ url, payload }, null, 2));
+  const url = "/send/flow/template";
 
   form.post(url, {
+    onSuccess: (page) => {
+      const flash = page?.props?.flash?.status;
+
+      if (flash?.type === "success") {
+        toast.success(flash.message || "Flow template sent successfully.");
+      } else if (flash?.type === "error") {
+        toast.error(flash.message || "Failed to send flow template.");
+      } else {
+        toast.success("Request completed.");
+      }
+    },
+
+    onError: (errors) => {
+      if (Object.keys(errors).length > 0) {
+        toast.error(Object.values(errors)[0]);
+      } else {
+        toast.error("Something went wrong.");
+      }
+    },
+
     onFinish: () => {
       isLoading.value = false;
+
       if (!props.isCampaignFlow) {
         emit("viewTemplate", false);
       }
     },
   });
 };
+
 
 const handleSubmit = async () => {
   try {

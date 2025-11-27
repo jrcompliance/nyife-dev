@@ -382,12 +382,13 @@ export default {
 <!-- ========================================== NEW UI CODE ==================================== -->
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import debounce from 'lodash/debounce';
 import { Link, router } from "@inertiajs/vue3";
 import Pagination from '@/Components/Pagination.vue';
 import TicketStatusToggle from '@/Components/TicketStatusToggle.vue';
 import SortDirectionToggle from '@/Components/SortDirectionToggle.vue';
+import { User } from 'lucide-vue-next';
 
 const props = defineProps({
     rows: { type: Object, required: true },
@@ -594,18 +595,26 @@ export default {
             <div class="flex-shrink-0">
                 <img v-if="contact.avatar" class="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100"
                     :src="contact.avatar">
-                <div v-else
+
+
+                <div v-else-if="!!(contact.full_name?.trim()) && contact.full_name?.trim().length > 0"
                     class="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff5100] to-orange-400 flex items-center justify-center text-white font-semibold text-lg capitalize">
                     {{ contact.full_name.substring(0, 1) }}
+                </div>
+
+                <div v-else
+                    class="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff5100] to-orange-400 flex items-center justify-center text-white font-semibold text-lg capitalize">
+                    <User class="w-6 h-6" />
                 </div>
             </div>
 
             <!-- Content -->
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between mb-1">
-                    <h3 class="font-semibold text-gray-900 truncate">{{ contact.full_name }}</h3>
+                    <h3 class="font-semibold text-gray-900 truncate">{{ (contact.full_name?.trim() ||
+                        contact.full_name?.trim() || contact.phone?.trim() || "N/A") }}</h3>
                     <span class="text-xs text-gray-500 ml-2 flex-shrink-0">{{ formatTime(contact?.last_chat?.created_at)
-                    }}</span>
+                        }}</span>
                 </div>
 
                 <div v-if="contact?.last_chat?.deleted_at === null" class="flex items-center justify-between">

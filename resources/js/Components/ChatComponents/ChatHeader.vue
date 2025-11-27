@@ -201,7 +201,7 @@ import FormSelectCombo from '@/Components/FormSelectCombo.vue';
 import FormTextArea from '@/Components/FormTextArea.vue';
 import Modal from '@/Components/Modal.vue';
 import { trans } from 'laravel-vue-i18n';
-import { ArrowLeft } from 'lucide-vue-next';
+import { ArrowLeft, User } from 'lucide-vue-next';
 
 const props = defineProps(['contact', 'displayContactInfo', 'ticketingIsEnabled', 'ticket', 'addon']);
 
@@ -305,9 +305,14 @@ const submitForm3 = () => {
                 <div @click="toggleView" class="cursor-pointer">
                     <img v-if="contact.avatar" class="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100"
                         :src="contact.avatar">
-                    <div v-else
-                        class="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff5100] to-orange-400 flex items-center justify-center text-white font-semibold text-lg">
+                    <div v-else-if="!!(contact.full_name?.trim()) && contact.full_name?.trim().length > 0"
+                        class="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff5100] to-orange-400 flex items-center justify-center text-white font-semibold text-lg capitalize">
                         {{ contact.full_name.substring(0, 1) }}
+                    </div>
+
+                    <div v-else
+                        class="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff5100] to-orange-400 flex items-center justify-center text-white font-semibold text-lg capitalize">
+                        <User class="w-6 h-6" />
                     </div>
                 </div>
 

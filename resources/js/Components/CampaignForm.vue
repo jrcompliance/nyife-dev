@@ -568,6 +568,7 @@ import { trans } from 'laravel-vue-i18n';
 import Backup from './CrouselSend.vue';
 import FlowTemplate from './FlowTemplate.vue';
 import { MessageSquare, Send, Clock, FileText, Image, Video, FileIcon, ChevronDown, ChevronUp, Sparkles, Zap, X } from 'lucide-vue-next';
+import { toast } from "vue3-toastify";
 
 const props = defineProps({
     templates: Object,
@@ -797,17 +798,63 @@ const transformOptions = (options) => {
     }));
 };
 
+// const submitForm = () => {
+//     isLoading.value = true;
+//     form.post(props.isCampaignFlow ? '/campaigns' : '/chat/' + props.contact + '/send/template', {
+//         onFinish: () => {
+//             isLoading.value = false;
+//             if (!props.isCampaignFlow) {
+//                 emit('viewTemplate', false);
+//             }
+//         },
+//     });
+// }
+
 const submitForm = () => {
     isLoading.value = true;
-    form.post(props.isCampaignFlow ? '/campaigns' : '/chat/' + props.contact + '/send/template', {
-        onFinish: () => {
-            isLoading.value = false;
-            if (!props.isCampaignFlow) {
-                emit('viewTemplate', false);
+
+    const url = props.isCampaignFlow ? '/campaigns' : `/chat/${props.contact}/send/template`;
+
+    form.post(url, {
+
+        onSuccess: (page) => {
+
+            const flash = page?.props?.flash?.status;
+            if (flash && flash.message) {
+                if (flash.type === 'success') {
+                    toast.success(flash.message ?? 'Success!');
+                } else if (flash.type === 'error') {
+                    toast.error(flash.message ?? 'Error!');
+                } else {
+                    toast.warning(flash ?? 'Something went wrong!');
+                }
+            } else {
+                if (page?.props?.response_data) {
+                    toast.warning('Response data:', page.props.response_data);
+                } else {
+                    toast.warning('No flash message — entire props:', page.props);
+                }
             }
         },
+
+        onError: (errors) => {
+            toast.error('Validation / request errors (onError):', errors);
+
+            if (form.errors && Object.keys(form.errors).length > 0) {
+                toast.error('form.errors (helper):', form.errors);
+            }
+        },
+
+        // Always called (success or error)
+        onFinish: () => {
+            isLoading.value = false;
+            if (!props.isCampaignFlow) emit('viewTemplate', false);
+        },
     });
-}
+};
+
+
+
 
 const emit = defineEmits(['viewTemplate']);
 
