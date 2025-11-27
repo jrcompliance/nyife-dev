@@ -212,7 +212,7 @@ const getAddressDetail = (value, key) => {
 
             <!-- Hero Section -->
             <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-6">
-                <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <div class="flex flex-col lg:flex-row items-center lg:items-start gap-8">
                     <!-- Avatar -->
                     <div class="flex-shrink-0">
                         <div class="relative">
@@ -245,9 +245,9 @@ const getAddressDetail = (value, key) => {
                     </div>
 
                     <!-- Info & Actions -->
-                    <div class="flex-1 text-center md:text-left">
+                    <div class="flex-1 text-center lg:text-left">
                         <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ contact.full_name }}</h1>
-                        <p class="text-gray-500 mb-6 flex items-center justify-center md:justify-start gap-2">
+                        <p class="text-gray-500 mb-6 flex items-center justify-center lg:justify-start gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
                                 <path fill="currentColor"
                                     d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24c1.12.37 2.33.57 3.57.57c.55 0 1 .45 1 1V20c0 .55-.45 1-1 1c-9.39 0-17-7.61-17-17c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1c0 1.25.2 2.45.57 3.57c.11.35.03.74-.25 1.02l-2.2 2.2z" />
@@ -255,7 +255,7 @@ const getAddressDetail = (value, key) => {
                             <span>{{ contact.formatted_phone_number }}</span>
                         </p>
 
-                        <div class="flex flex-wrap gap-3 justify-center md:justify-start">
+                        <div class="flex flex-wrap gap-3 justify-center lg:justify-start">
                             <Link :href="'/contacts/' + contact.uuid + '?edit=true'"
                                 class="inline-flex items-center gap-2 px-6 py-2.5 bg-[#ff5100] hover:bg-[#e64900] text-white rounded-xl font-medium transition-all shadow-md hover:shadow-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
@@ -306,7 +306,7 @@ const getAddressDetail = (value, key) => {
                     </div>
                     {{ $t('Contact Information') }}
                 </h2>
-                <div class="grid md:grid-cols-2 gap-6">
+                <div class="grid lg:grid-cols-2 gap-6">
                     <div class="space-y-1">
                         <label class="text-sm font-medium text-gray-500">{{ $t('Full name') }}</label>
                         <p class="text-gray-900">{{ contact.full_name }}</p>
@@ -345,7 +345,7 @@ const getAddressDetail = (value, key) => {
                     </div>
                     {{ $t('Additional Information') }}
                 </h2>
-                <div class="grid md:grid-cols-2 gap-6">
+                <div class="grid lg:grid-cols-2 gap-6">
                     <div v-for="(input, index) in props.fields" :key="index" class="space-y-1">
                         <label class="text-sm font-medium text-gray-500">{{ $t(input.name) }}</label>
                         <p v-if="metadata && metadata[input.name] != null" class="text-gray-900">{{ metadata[input.name]
@@ -367,8 +367,8 @@ const getAddressDetail = (value, key) => {
                     </div>
                     {{ $t('Address Information') }}
                 </h2>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="space-y-1 md:col-span-2">
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <div class="space-y-1 lg:col-span-2">
                         <label class="text-sm font-medium text-gray-500">{{ $t('Street') }}</label>
                         <p class="text-gray-900">{{ getAddressDetail(contact.address, 'street') }}</p>
                     </div>
@@ -404,7 +404,7 @@ const getAddressDetail = (value, key) => {
                     </div>
                     {{ $t('Additional Information') }}
                 </h2>
-                <div class="grid md:grid-cols-2 gap-6">
+                <div class="grid lg:grid-cols-2 gap-6">
                     <div v-for="(input, index) in props.fields" :key="index" class="space-y-1">
                         <label class="text-sm font-medium text-gray-500">{{ $t(input.name) }}</label>
                         <p v-if="metadata && metadata[input.name] != null" class="text-gray-900">{{ metadata[input.name]

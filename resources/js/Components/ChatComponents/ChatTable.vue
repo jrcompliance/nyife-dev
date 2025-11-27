@@ -584,7 +584,7 @@ export default {
     </div>
 
     <!-- Chat List -->
-    <div class="flex-grow overflow-y-auto h-[calc(100vh-380px)]">
+    <div class="flex-grow overflow-y-auto h-[calc(100vh-480px)]">
         <Link :href="'/chats/' + contact.uuid + '?page=' + props.rows.meta.current_page"
             v-for="(contact, index) in rows.data" :key="index"
             class="block border-b border-gray-100 hover:bg-gray-50 transition-colors"
@@ -605,7 +605,7 @@ export default {
                 <div class="flex items-center justify-between mb-1">
                     <h3 class="font-semibold text-gray-900 truncate">{{ contact.full_name }}</h3>
                     <span class="text-xs text-gray-500 ml-2 flex-shrink-0">{{ formatTime(contact?.last_chat?.created_at)
-                        }}</span>
+                    }}</span>
                 </div>
 
                 <div v-if="contact?.last_chat?.deleted_at === null" class="flex items-center justify-between">

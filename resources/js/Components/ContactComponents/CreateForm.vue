@@ -228,7 +228,7 @@ const transformOptions = (optionsString) => {
 
 <template>
     <!-- Header -->
-    <div class="hidden md:flex items-center justify-between px-8 py-6 bg-white border-b border-gray-100">
+    <div class="hidden lg:flex items-center justify-between px-8 py-6 bg-white border-b border-gray-100">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">{{ props.contact ? $t('Edit contact') : $t('Add contact') }}
             </h1>
@@ -249,7 +249,7 @@ const transformOptions = (optionsString) => {
     </div>
 
     <!-- Form Content -->
-    <div class="md:h-[calc(100vh-96px)] md:overflow-y-auto bg-gradient-to-br from-gray-50 to-orange-50/30">
+    <div class="lg:h-[calc(100vh-96px)] lg:overflow-y-auto bg-gradient-to-br from-gray-50 to-orange-50/30">
         <div class="max-w-3xl mx-auto p-8">
             <form @submit.prevent="submitForm()" class="space-y-8">
 

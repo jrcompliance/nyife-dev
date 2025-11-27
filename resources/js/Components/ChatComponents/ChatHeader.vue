@@ -292,10 +292,10 @@ const submitForm3 = () => {
 <template>
     <!-- Main Header -->
     <div class="bg-white border-b border-gray-200 px-6 py-4">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-4">
             <!-- Contact Info -->
             <div class="flex items-center gap-4 flex-1">
-                <Link href="/chats" class="sm:block md:hidden text-gray-600 hover:text-gray-900">
+                <Link href="/chats" class="text-gray-600 hover:text-gray-900">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                     <path fill="currentColor"
                         d="M19 11H7.14l3.63-4.36a1 1 0 1 0-1.54-1.28l-5 6a1.19 1.19 0 0 0-.09.15c0 .05 0 .08-.07.13A1 1 0 0 0 4 12a1 1 0 0 0 .07.36c0 .05 0 .08.07.13a1.19 1.19 0 0 0 .09.15l5 6A1 1 0 0 0 10 19a1 1 0 0 0 .64-.23a1 1 0 0 0 .13-1.41L7.14 13H19a1 1 0 0 0 0-2" />
@@ -313,21 +313,21 @@ const submitForm3 = () => {
 
                 <div @click="toggleView" class="flex-1 min-w-0 max-w-max">
                     <h2
-                        class="text-lg font-semibold text-gray-900 cursor-pointer hover:text-[#ff5100] transition-colors">
+                        class="text-nowrap text-lg font-semibold text-gray-900 cursor-pointer hover:text-[#ff5100] transition-colors">
                         {{ contact.full_name }}
                     </h2>
-                    <p class="text-sm text-gray-500 cursor-pointer">{{
+                    <p class="text-nowrap text-sm text-gray-500 cursor-pointer">{{
                         contact.formatted_phone_number }}</p>
                 </div>
             </div>
 
             <!-- Actions -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 ml-auto">
                 <FormSelectCombo v-if="ticketingIsEnabled && accountUser.teams[0]['role'] != 'agent'" v-model="user"
-                    :name="''" :loadOptions="loadUsers" :class="'col-span-1 md:block hidden'"
-                    :placeholder="'Select Agent'" @update:modelValue="changeTicketAgent()" />
+                    :name="''" :loadOptions="loadUsers" :class="'col-span-1'" :placeholder="'Select Agent'"
+                    @update:modelValue="changeTicketAgent()" />
                 <button v-if="ticketState === 'open' && ticketingIsEnabled" @click="changeTicketStatus('closed')"
-                    class="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-[#ff5100] hover:bg-[#e64900] text-white rounded-xl text-sm font-medium transition-all">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-[#ff5100] hover:bg-[#e64900] text-white rounded-xl text-sm font-medium transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                         <path fill="currentColor"
                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
@@ -336,7 +336,7 @@ const submitForm3 = () => {
                 </button>
 
                 <button v-if="ticketState === 'closed' && ticketingIsEnabled" @click="changeTicketStatus('open')"
-                    class="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-[#ff5100] hover:bg-[#e64900] text-white rounded-xl text-sm font-medium transition-all">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-[#ff5100] hover:bg-[#e64900] text-white rounded-xl text-sm font-medium transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                         <path fill="currentColor"
                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
@@ -353,13 +353,16 @@ const submitForm3 = () => {
                     </button>
                     <template #items>
                         <DropdownItemGroup>
-                            <DropdownItem @click="isOpenModal = true;" as="button">{{ $t('Add notes') }}</DropdownItem>
+                            <DropdownItem @click="isOpenModal = true;" as="button">{{ $t('Add notes') }}
+                            </DropdownItem>
                             <DropdownItem v-if="ticketState === 'open' && ticketingIsEnabled"
                                 @click="changeTicketStatus('closed')" as="button">{{ $t('Mark as closed') }}
                             </DropdownItem>
                             <DropdownItem v-if="ticketState === 'closed' && ticketingIsEnabled"
-                                @click="changeTicketStatus('open')" as="button">{{ $t('Mark as open') }}</DropdownItem>
-                            <DropdownItem @click="showAlert = true" as="button">{{ $t('Clear chat') }}</DropdownItem>
+                                @click="changeTicketStatus('open')" as="button">{{ $t('Mark as open') }}
+                            </DropdownItem>
+                            <DropdownItem @click="showAlert = true" as="button">{{ $t('Clear chat') }}
+                            </DropdownItem>
                         </DropdownItemGroup>
                     </template>
                 </Dropdown>
@@ -394,7 +397,6 @@ const submitForm3 = () => {
             </button>
         </div>
     </div>
-
     <!-- Add Note Modal -->
     <Modal :label="$t('Add Note')" :isOpen="isOpenModal">
         <div class="mt-5">

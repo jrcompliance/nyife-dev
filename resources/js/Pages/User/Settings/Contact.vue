@@ -312,7 +312,7 @@ const submitForm2 = async () => {
 
 <template>
     <SettingLayout :modules="props.modules">
-        <div class="p-6 md:p-8 space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
+        <div class="space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
             <div class="w-full mx-auto space-y-6">
 
                 <!-- Contact Fields Location Card -->
@@ -330,7 +330,7 @@ const submitForm2 = async () => {
                                 </div>
                                 <div class="flex-1">
                                     <h4 class="text-base font-bold text-slate-900 mb-1">{{ $t('Contact fields location')
-                                    }}</h4>
+                                        }}</h4>
                                     <p class="text-sm text-slate-600">{{ $t(`Place custom fields before or after the
                                         address section`) }}</p>
                                 </div>
