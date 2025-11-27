@@ -77,7 +77,7 @@ const getPluginComponent = (pluginName) => {
 
 <template>
     <SettingLayout :modules="props.modules">
-        <div class="p-6 md:p-8 space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
+        <div class="space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
             <div class="w-full mx-auto space-y-6">
 
                 <!-- Page Header -->

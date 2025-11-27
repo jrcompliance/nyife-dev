@@ -195,22 +195,19 @@ const emit = defineEmits(['update:modelValue', 'callback']);
                                     <span>{{ $t('Date') }}</span>
                                 </div>
                             </th>
-                            <th
-                                class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                 <div class="flex items-center space-x-2">
 
                                     <span>{{ $t('Organization') }}</span>
                                 </div>
                             </th>
-                            <th
-                                class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                 <div class="flex items-center space-x-2">
 
                                     <span>{{ $t('Description') }}</span>
                                 </div>
                             </th>
-                            <th
-                                class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                 <div class="flex items-center space-x-2">
 
                                     <span>{{ $t('Amount') }}</span>
@@ -228,7 +225,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
                                 <div class="flex items-center space-x-3">
                                     <div class="hidden sm:block">
                                         <div class="text-sm font-semibold text-gray-900">{{ formatDate(item.created_at)
-                                        }}</div>
+                                            }}</div>
                                         <div class="text-xs text-gray-500">{{ formatTime(item.created_at) }}</div>
                                     </div>
                                     <div class="sm:hidden">
@@ -238,7 +235,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
                             </td>
 
                             <!-- Organization -->
-                            <td class="px-6 py-5 whitespace-nowrap hidden sm:table-cell">
+                            <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="flex items-center space-x-3">
 
                                     <div>
@@ -250,7 +247,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
                             </td>
 
                             <!-- Description -->
-                            <td class="px-6 py-5 hidden sm:table-cell">
+                            <td class="px-6 py-5">
                                 <div class="flex items-start space-x-2">
                                     <span
                                         class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 capitalize border border-blue-100">
@@ -260,7 +257,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
                             </td>
 
                             <!-- Amount -->
-                            <td class="px-6 py-5 whitespace-nowrap hidden sm:table-cell">
+                            <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="flex items-center space-x-2">
                                     <div class="flex items-center space-x-1">
 

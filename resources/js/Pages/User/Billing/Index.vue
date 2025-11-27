@@ -479,8 +479,11 @@ onMounted(async () => {
                   {{ $t("Please subscribe to a plan to continue using the app") }}
                 </p>
                 <p v-if="props.subscription?.status === 'active'" class="text-sm text-white/90">
-                  {{ $t("To continue using the app, please make a payment of") }} {{
-                    props.subscriptionDetails?.accountBalance }}
+                  <!-- {{ $t("To continue using the app, please make a payment of") }} {{
+                    props.subscriptionDetails?.accountBalance }} -->
+
+                  {{ $t("To continue using the app, please take a subscription") }}
+
                 </p>
               </div>
             </div>

@@ -273,7 +273,7 @@
 
 <template>
     <SettingLayout :modules="props.modules">
-        <div class="p-6 md:p-8 space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
+        <div class="space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
             <form @submit.prevent="submitForm2()" class="w-full mx-auto space-y-6">
 
                 <!-- Organization Details Card -->
@@ -308,7 +308,7 @@
                         <div class="grid md:grid-cols-5 gap-6 items-start">
                             <div class="md:col-span-2 space-y-1">
                                 <label class="text-sm font-semibold text-slate-900">{{ $t('Organization name')
-                                }}</label>
+                                    }}</label>
                                 <div class="flex items-start gap-1.5 text-xs text-slate-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         class="text-[#ff5100] shrink-0 mt-0.5">
@@ -443,7 +443,7 @@
                                 <div class="grid md:grid-cols-5 gap-6 items-start">
                                     <div class="md:col-span-2 space-y-1">
                                         <label class="text-sm font-semibold text-slate-900">{{ $t('New chat sound')
-                                        }}</label>
+                                            }}</label>
                                         <div class="flex items-start gap-1.5 text-xs text-slate-600">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                                                 viewBox="0 0 24 24" class="text-[#ff5100] shrink-0 mt-0.5">
@@ -544,7 +544,7 @@
                             class="flex items-center justify-between p-4 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
                             <div class="flex-1">
                                 <div class="font-semibold text-slate-900 mb-1">{{ $t('Enable campaign resend feature')
-                                }}</div>
+                                    }}</div>
                                 <div class="flex items-start gap-1.5 text-xs text-slate-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         class="text-[#ff5100] shrink-0 mt-0.5">
