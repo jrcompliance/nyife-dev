@@ -394,9 +394,9 @@ const runSearch = () => {
                                             <DropdownItemGroup>
                                                 <DropdownItem :href="'/admin/organizations/' + item.uuid">{{
                                                     $t('View/edit')
-                                                    }}</DropdownItem>
+                                                }}</DropdownItem>
                                                 <DropdownItem as="button" @click="openAlert(item.uuid)">{{ $t('Delete')
-                                                    }}</DropdownItem>
+                                                }}</DropdownItem>
                                             </DropdownItemGroup>
                                         </template>
                                     </Dropdown>

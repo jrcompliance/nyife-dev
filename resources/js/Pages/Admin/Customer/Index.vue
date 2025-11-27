@@ -4,7 +4,7 @@
             class="bg-white md:bg-inherit pt-10 px-4 md:pt-8 md:p-8 rounded-[5px] text-[#000] h-full md:overflow-y-auto">
 
             <!-- OLD UI CODE -->
-            <div class="flex justify-between">
+            <!-- <div class="flex justify-between">
                 <div>
                     <h1 class="text-xl mb-1">{{ $t('Users') }}</h1>
                     <p class="mb-6 flex items-center text-sm leading-6 text-gray-600">
@@ -20,10 +20,10 @@
                         class="rounded-md bg-indigo-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     {{ $t('Add user') }}</Link>
                 </div>
-            </div>
+            </div> -->
 
             <!-- NEW UI CODE -->
-            <!-- <div class="flex justify-between">
+            <div class="flex justify-between">
                 <div class="flex-1 mb-8">
                     <div class="flex items-center gap-3 mb-3">
                         <div
@@ -48,7 +48,7 @@
                     {{ $t('Add user') }}</Link>
                 </div>
 
-            </div> -->
+            </div>
 
             <UserTable :rows="props.rows" :filters="props.filters" :type="'user'" />
         </div>

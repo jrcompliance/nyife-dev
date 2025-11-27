@@ -378,7 +378,7 @@
 
 <template>
     <SettingLayout :modules="props.modules">
-        <div class="p-6 md:p-8 space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
+        <div class="space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
             <div class="w-full mx-auto space-y-6">
 
                 <!-- Setup WhatsApp Card (when not connected) -->
@@ -405,7 +405,7 @@
                                 </div>
                                 <div>
                                     <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ $t('Setup Whatsapp Account')
-                                        }}</h2>
+                                    }}</h2>
                                     <p class="text-slate-600">{{ $t(`Setup your integration to be able to receive and
                                         send messages via Whatsapp.`) }}</p>
                                 </div>
@@ -461,7 +461,7 @@
                                 <div>
                                     <h2 class="text-lg font-bold text-slate-900">{{ $t('WhatsApp Connected') }}</h2>
                                     <p class="text-sm text-slate-600">{{ $t('Your account is successfully configured')
-                                        }}</p>
+                                    }}</p>
                                 </div>
                             </div>
                             <button v-if="refreshLoading === false" @click="refreshData()"
@@ -526,14 +526,14 @@
                             <div
                                 class="p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200">
                                 <div class="text-xs font-medium text-orange-600 mb-1">{{ $t('Whatsapp business ac ID')
-                                    }}</div>
+                                }}</div>
                                 <div class="text-sm font-semibold text-orange-900 truncate">{{
                                     settings.whatsapp?.waba_id }}</div>
                             </div>
                             <div v-if="settings.whatsapp?.is_embedded_signup == 1"
                                 class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200">
                                 <div class="text-xs font-medium text-indigo-600 mb-1">{{ $t('Phone verification status')
-                                    }}</div>
+                                }}</div>
                                 <div
                                     class="inline-flex px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold">
                                     {{ settings.whatsapp?.code_verification_status }}
@@ -576,7 +576,7 @@
                                     </div>
                                     <div>
                                         <h2 class="text-lg font-bold text-slate-900">{{ $t('Business profile settings')
-                                            }}</h2>
+                                        }}</h2>
                                         <div class="flex items-center gap-1.5 text-sm text-slate-600 mt-0.5">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                                                 viewBox="0 0 24 24" class="text-[#ff5100]">
@@ -647,7 +647,7 @@
                             <div class="grid md:grid-cols-5 gap-6 items-start">
                                 <div class="md:col-span-2 space-y-1">
                                     <label class="text-sm font-semibold text-slate-900">{{ $t('Business address')
-                                        }}</label>
+                                    }}</label>
                                     <div class="flex items-start gap-1.5 text-xs text-slate-600">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                                             viewBox="0 0 24 24" class="text-[#ff5100] shrink-0 mt-0.5">
@@ -670,7 +670,7 @@
                             <div class="grid md:grid-cols-5 gap-6 items-start">
                                 <div class="md:col-span-2 space-y-1">
                                     <label class="text-sm font-semibold text-slate-900">{{ $t('Business email')
-                                        }}</label>
+                                    }}</label>
                                     <div class="flex items-start gap-1.5 text-xs text-slate-600">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                                             viewBox="0 0 24 24" class="text-[#ff5100] shrink-0 mt-0.5">
@@ -693,7 +693,7 @@
                             <div class="grid md:grid-cols-5 gap-6 items-start">
                                 <div class="md:col-span-2 space-y-1">
                                     <label class="text-sm font-semibold text-slate-900">{{ $t('Business description')
-                                        }}</label>
+                                    }}</label>
                                     <div class="flex items-start gap-1.5 text-xs text-slate-600">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                                             viewBox="0 0 24 24" class="text-[#ff5100] shrink-0 mt-0.5">
@@ -716,7 +716,7 @@
                             <div class="grid md:grid-cols-5 gap-6 items-start">
                                 <div class="md:col-span-2 space-y-1">
                                     <label class="text-sm font-semibold text-slate-900">{{ $t('Business industry')
-                                        }}</label>
+                                    }}</label>
                                     <div class="flex items-start gap-1.5 text-xs text-slate-600">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                                             viewBox="0 0 24 24" class="text-[#ff5100] shrink-0 mt-0.5">
@@ -787,7 +787,7 @@
                                             d="M12 11v5m0 5a9 9 0 1 1 0-18a9 9 0 0 1 0 18Zm.05-13v.1h-.1V8h.1Z" />
                                     </svg>
                                     <span>{{ $t('Add these webhook settings to your facebook developer account')
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
                         </div>

@@ -138,7 +138,7 @@ const moduleActive = (moduleName) => {
                         </div>
                         <h1
                             class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                            {{ $t('General settings') }}
+                            {{ $t('Settings') }}
                         </h1>
                     </div>
                     <div class="flex items-start gap-2 text-gray-600">
@@ -150,9 +150,9 @@ const moduleActive = (moduleName) => {
             </div>
 
             <!-- Main Content Grid -->
-            <div class="flex flex-col lg:flex-row gap-6">
+            <div class="grid grid-cols-12 gap-6">
                 <!-- Sidebar Navigation -->
-                <div class="lg:w-80 shrink-0">
+                <div class="col-span-12 lg:col-span-3">
                     <div class="bg-white rounded-2xl shadow-sm border border-primary/10 overflow-hidden sticky top-6">
                         <div class="p-4 bg-gradient-to-r from-slate-50 to-orange-50/30 border-b border-slate-200/60">
                             <h3 class="font-semibold text-slate-900 text-sm uppercase tracking-wide">Navigation</h3>
@@ -180,7 +180,7 @@ const moduleActive = (moduleName) => {
                 </div>
 
                 <!-- Content Area -->
-                <div class="flex-1 min-w-0">
+                <div class="col-span-12 lg:col-span-9">
                     <!-- <div class="bg-white rounded-2xl shadow-sm border border-primary/10 p-2 overflow-hidden"> -->
                     <slot />
                     <!-- </div> -->

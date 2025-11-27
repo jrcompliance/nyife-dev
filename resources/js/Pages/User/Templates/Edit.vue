@@ -1,10 +1,11 @@
 <template>
     <AppLayout>
-        <div class="h-[calc(100vh-65px)] bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50 overflow-hidden">
+        <div
+            class="lg:h-[calc(100vh-65px)] bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50 overflow-hidden">
             <!-- Header -->
             <div class="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
                 <div class="mx-auto px-6 py-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between flex-wrap gap-6">
                         <!-- Left: Title and Info -->
                         <div class="flex items-center space-x-4">
                             <div
@@ -20,7 +21,7 @@
                         </div>
 
                         <!-- Right: Actions -->
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-3 flex-wrap ml-auto">
                             <Link href="/templates"
                                 class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-all duration-200 border border-slate-300 flex items-center space-x-2">
                             <ArrowLeft class="w-4 h-4" />
@@ -58,9 +59,9 @@
             </div>
 
             <!-- Main Content -->
-            <div class="flex h-[calc(100vh-152px)]">
+            <div class="grid grid-cols-1 lg:grid-cols-2 lg:h-[calc(100vh-152px)]">
                 <!-- Left Panel - Form -->
-                <div class="w-full lg:w-1/2 overflow-y-auto">
+                <div class="overflow-y-auto">
                     <div class="p-6 lg:p-8 space-y-6">
                         <!-- Template Type Display (Read-only) -->
                         <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
@@ -263,7 +264,7 @@
                                         class="p-4 bg-slate-50 rounded-xl border border-slate-200">
                                         <div class="flex items-center justify-between mb-3">
                                             <span class="text-sm font-medium text-slate-700">{{ formatText(button.type)
-                                                }}</span>
+                                            }}</span>
                                             <button @click="removeButton(index)"
                                                 class="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors">
                                                 <Trash2 class="w-4 h-4" />
@@ -314,10 +315,10 @@
                                                 <div class="flex-1">
                                                     <label class="font-medium text-slate-800 cursor-pointer">{{
                                                         $t(option.label)
-                                                    }}</label>
+                                                        }}</label>
                                                     <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{
                                                         $t(option.description)
-                                                    }}</p>
+                                                        }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -377,7 +378,7 @@
                                                 class="w-5 h-5 rounded border-slate-300 text-[#ff5100] focus:ring-[#ff5100] cursor-pointer" />
                                             <span class="text-sm font-medium text-slate-700">{{ $t(`Add security
                                                 recommendation`)
-                                            }}</span>
+                                                }}</span>
                                         </label>
 
                                         <label
@@ -399,7 +400,7 @@
                                             class="p-4 bg-white border border-slate-200 rounded-xl">
                                             <label class="block text-sm font-medium text-slate-700 mb-2">{{ $t(`Expires
                                                 In`)
-                                            }}</label>
+                                                }}</label>
                                             <div class="flex items-center space-x-2">
                                                 <input type="number" v-model="form.footer.code_expiration_minutes"
                                                     step="any"
@@ -653,7 +654,7 @@
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">{{ $t("Flow JSON")
-                                        }}</label>
+                                    }}</label>
                                     <textarea v-model="flowform.flowJson" rows="6"
                                         class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff5100] focus:border-transparent font-mono text-sm"
                                         placeholder="Paste the JSON here"></textarea>
@@ -678,7 +679,7 @@
 
                 <!-- Right Panel - Preview -->
                 <div
-                    class="w-full lg:w-1/2 bg-gradient-to-br from-slate-100 via-orange-50/20 to-slate-100 p-4 flex items-center justify-center relative">
+                    class="bg-gradient-to-br from-slate-100 via-orange-50/20 to-slate-100 p-4 flex items-center justify-center relative">
                     <!-- Background Decorations -->
                     <div
                         class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#ff5100]/5 to-transparent rounded-full blur-3xl">
@@ -745,7 +746,7 @@
                                             <!-- Footer -->
                                             <div class="text-slate-500 mt-2 text-xs">
                                                 <span v-if="form.category !== 'AUTHENTICATION'">{{ form.footer.text
-                                                    }}</span>
+                                                }}</span>
                                                 <span v-else-if="form.code_expiration">
                                                     {{ $t("This code expires in") }} {{
                                                         form.footer.code_expiration_minutes }}
@@ -905,7 +906,7 @@
                     </div>
                     <h4 class="text-lg text-slate-800 font-semibold mb-2 text-start">{{ error.error?.error_user_title ||
                         'Error'
-                        }}</h4>
+                    }}</h4>
                     <p class="text-sm text-slate-600 mb-6 text-start">{{ error.error?.error_user_msg || error }}</p>
                     <button @click="closeModal"
                         class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors">

@@ -359,8 +359,11 @@
                     {{ $t("Please subscribe to a plan to continue using the app") }}
                   </span>
                   <span v-if="props.subscription?.status === 'active' && !subscriptionIsActive">
-                    {{ $t("To continue using the app, please make a payment of") }}
-                    {{ props.subscriptionDetails?.accountBalance }}.
+                    <!-- {{ $t("To continue using the app, please make a payment of") }}
+                    {{ props.subscriptionDetails?.accountBalance }}. -->
+
+                    {{ $t("To continue using the app, please take a subscription") }}
+
                   </span>
                   <span v-if="props.subscription?.status === 'trial' && subscriptionIsActive">
                     {{ $t("Your trial period expires on") }}

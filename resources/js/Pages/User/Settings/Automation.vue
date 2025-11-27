@@ -122,7 +122,7 @@ const submitForm = async () => {
 
 <template>
     <SettingLayout :modules="props.modules">
-        <div class="p-6 md:p-8 space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
+        <div class="space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
             <div class="w-full mx-auto">
 
                 <!-- Response Sequence Priority Card -->
@@ -227,7 +227,7 @@ const submitForm = async () => {
                                             d="m9.55 18l-5.7-5.7l1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z" />
                                     </svg>
                                     <span>{{ $t('The system will check responses in the order you arrange them.')
-                                    }}</span>
+                                        }}</span>
                                 </li>
                                 <li class="flex items-start gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -245,7 +245,7 @@ const submitForm = async () => {
                                             d="m9.55 18l-5.7-5.7l1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z" />
                                     </svg>
                                     <span>{{ $t(`Place the most frequently used option first for better performance.`)
-                                    }}</span>
+                                        }}</span>
                                 </li>
                             </ul>
                         </div>
