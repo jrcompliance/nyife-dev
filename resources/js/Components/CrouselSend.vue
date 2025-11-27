@@ -794,6 +794,7 @@ import {
   Video, FileIcon, ChevronDown, ChevronUp, Sparkles, Zap, X,
   Layers, Upload, Loader2, Info
 } from 'lucide-vue-next';
+import { toast } from "vue3-toastify";
 
 const props = defineProps({
   templates: Object,
@@ -1102,26 +1103,65 @@ const transformOptions = (options) => {
   }));
 };
 
+// ============================= OLD WAY ==================================
+// const submitForm = () => {
+//   isLoading.value = true;
+
+//   const url = props.isCampaignFlow
+//     ? "/campaigns"
+//     : `/chat/${props.contact}/send/template`;
+
+//   form.post(url, {
+//     onFinish: () => {
+//       isLoading.value = false;
+//       if (!props.isCampaignFlow) {
+//         emit("viewTemplate", false);
+//       }
+//     },
+//   });
+// };
+
+// ============================= NEW WAY ==================================
+
 const submitForm = () => {
   isLoading.value = true;
 
   const url = props.isCampaignFlow
     ? "/campaigns"
     : `/chat/${props.contact}/send/template`;
-  const payload = form.data();
-  console.log(props.isCampaignFlow ? "Campaign Flow" : "Single Contact Flow");
-
-  console.log("POST Request:", JSON.stringify({ url, payload }, null, 2));
 
   form.post(url, {
+    onSuccess: (page) => {
+      const flash = page?.props?.flash?.status;
+
+      if (flash?.type === "success") {
+        toast.success(flash.message || "Action completed successfully.");
+      } else if (flash?.type === "error") {
+        toast.error(flash.message || "Something went wrong.");
+      } else {
+        toast.success("Request completed.");
+      }
+    },
+
+    onError: (errors) => {
+      if (Object.keys(errors).length > 0) {
+        toast.error(Object.values(errors)[0]);
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    },
+
+    // Always runs (success or error)
     onFinish: () => {
       isLoading.value = false;
+
       if (!props.isCampaignFlow) {
         emit("viewTemplate", false);
       }
     },
   });
 };
+
 
 const submitCarouselForm = async () => {
   isLoading.value = true;
@@ -1209,36 +1249,72 @@ const submitCarouselForm = async () => {
     });
   }
 
-  try {
-    const url = "/send/crousel";
 
-    console.log(
-      "POST Request:",
-      JSON.stringify(
-        {
-          url,
-          payload,
-          campaign_name: form.name,
-        },
-        null,
-        2
-      )
-    );
+  // ============================= OLD WAY ==================================
+  // try {
+  //   const url = "/send/crousel";
+
+  //   const res = await axios.post(url, {
+  //     payload,
+  //     campaign_name: form.name,
+  //   });
+  //   if (!props.isCampaignFlow) {
+  //     emit("viewTemplate", false);
+  //   }
+  // } catch (error) {
+  //   console.error("Error sending carousel message:", error);
+  //   alert(trans("Failed to send carousel message"));
+  // } finally {
+  //   isLoading.value = false;
+  // }
+
+  // ============================= NEW WAY ==================================
+
+  try {
+    isLoading.value = true;
+
+    const url = "/send/crousel";
 
     const res = await axios.post(url, {
       payload,
       campaign_name: form.name,
     });
-    console.log("Response:", res.data);
+
+    const data = res.data;
+
+    const flash = data?.props?.flash?.status;
+
+    if (flash && flash.message) {
+      if (flash.type === "success") {
+        toast.success(flash.message ?? 'Success!');
+      } else if (flash.type === "error") {
+        toast.error(flash.message ?? 'Error!');
+      }
+    }
+
+    // Close modal only when success
     if (!props.isCampaignFlow) {
       emit("viewTemplate", false);
     }
+
   } catch (error) {
-    console.error("Error sending carousel message:", error);
-    alert(trans("Failed to send carousel message"));
+
+    if (error.response) {
+      const flash = error.response.data?.props?.flash?.status;
+      if (flash?.message) {
+        console.error(flash.message ?? 'Error!');
+      }
+
+      if (error.response.status === 422) {
+        console.error("Validation errors:", error.response.data.errors);
+      }
+    }
+
+    toast.error("Failed to send carousel message");
   } finally {
     isLoading.value = false;
   }
+
 };
 
 const handleSubmit = async () => {

@@ -721,7 +721,7 @@ const copyItem = async (token) => {
                         {{ JSON.parse(content.metadata).header.text }}
                     </div>
                     <p class="text-gray-800 whitespace-pre-wrap break-words">{{ JSON.parse(content.metadata).text?.body
-                        }}</p>
+                    }}</p>
 
                     <!-- Action Buttons -->
                     <div v-if="JSON.parse(content.metadata)?.buttons" class="mt-3 space-y-2">
@@ -947,7 +947,8 @@ const copyItem = async (token) => {
     <Modal :label="$t('Message status: ') + chatStatus(content.logs)" :isOpen="isModalOpen" :closeBtn="true"
         @close="isModalOpen = false">
         <div v-if="errors.length" class="mt-4 space-y-3">
-            <div v-for="(error, index) in errors" :key="index" class="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div v-for="(error, index) in errors" :key="index"
+                class="bg-red-50 border border-red-200 rounded-xl p-4 min-w-max">
                 <div class="flex items-start gap-3 mb-3">
                     <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -958,7 +959,7 @@ const copyItem = async (token) => {
                     </div>
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-2">
-                            <p class="text-sm font-medium text-red-900">Chat ID: {{
+                            <p class="text-sm font-medium text-red-900 text-wrap">Chat ID: {{
                                 JSON.parse(content.logs[0].metadata).id }}</p>
                             <button @click="copyItem(JSON.parse(content.logs[0].metadata).id)"
                                 class="p-1 hover:bg-red-100 rounded transition-colors">
@@ -969,7 +970,7 @@ const copyItem = async (token) => {
                                 </svg>
                             </button>
                         </div>
-                        <div class="space-y-1 text-sm text-red-800">
+                        <div class="space-y-1 text-sm text-red-800 text-wrap">
                             <p><span class="font-medium">Error Code:</span> {{ error.code }}</p>
                             <p><span class="font-medium">Title:</span> {{ error.title }}</p>
                             <p><span class="font-medium">Message:</span> {{ error.message }}</p>

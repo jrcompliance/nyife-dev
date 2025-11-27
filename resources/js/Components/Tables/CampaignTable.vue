@@ -462,6 +462,7 @@ const viewMode = ref('list'); // 'grid' or 'list'
                             <span v-if="item.status !== 'scheduled'" class="text-lg font-bold text-emerald-700">
                                 {{ formatPercentageRate(item.delivery_count, item.contacts_count,
                                     item.contact_group_count) }}
+
                             </span>
                             <span v-else class="text-sm text-gray-400 italic">{{ $t('N/A') }}</span>
                         </div>
@@ -577,6 +578,8 @@ const viewMode = ref('list'); // 'grid' or 'list'
                                     class="inline-flex items-center px-3 py-1.5 rounded-xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md">
                                     {{ formatPercentageRate(item.delivery_count, item.contacts_count,
                                         item.contact_group_count) }}
+
+                                    {{ console.log("TEXT: ", JSON.stringify(item, null, 2)) }}
                                 </span>
                                 <span class="text-sm text-gray-600 font-semibold">
                                     {{ formatStats(item.delivery_count, item.contacts_count, item.contact_group_count)
