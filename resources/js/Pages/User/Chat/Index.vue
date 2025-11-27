@@ -158,46 +158,55 @@ onMounted(() => {
 
 <template>
     <AppLayout v-slot:default="slotProps">
-        <div class="md:h-[calc(100vh-65px)] md:flex md:flex-grow bg-gradient-to-br from-gray-50 to-orange-50/20">
+        <div class="grid grid-cols-12 lg:h-[calc(100vh-65px)] bg-gradient-to-br from-gray-50 to-orange-50/30">
             <!-- Chat List Sidebar -->
-            <div class="md:w-[380px] md:flex flex-col bg-white shadow-xl border-r" :class="contact ? 'hidden' : ''">
+            <div class="col-span-12 lg:col-span-4 bg-white shadow-sm lg:shadow-xl lg:flex flex-col">
                 <ChatTable :rows="rows" :filters="props.filters" :rowCount="props.rowCount"
                     :ticketingIsEnabled="ticketingIsEnabled" :status="props?.status"
                     :chatSortDirection="props.chat_sort_direction" />
             </div>
 
             <!-- Main Chat Area -->
-            <div class="flex-1 flex flex-col" :class="contact ? 'h-full' : 'md:h-full'">
+            <div class="relative col-span-12 lg:col-span-8 h-[calc(100vh-65px)] overflow-y-auto">
+
+                <!-- Chat Header -->
                 <ChatHeader v-if="contact" :ticketingIsEnabled="ticketingIsEnabled" :contact="contact"
                     :displayContactInfo="displayContactInfo" :ticket="ticket" :addon="addon"
                     @toggleView="toggleContactView" @deleteThread="deleteThread" @closeThread="closeThread" />
 
-                <!-- Chat Messages Area -->
-                <div v-if="contact && !displayTemplate" class="flex-1 overflow-y-auto bg-[#efeae2] chat-bg h-full"
-                    ref="scrollContainer2">
-                    <ChatThread v-if="!displayContactInfo && !loadingThread && !displayTemplate" :contactId="contact.id"
-                        :initialMessages="chatThread" :hasMoreMessages="hasMoreMessages" :initialNextPage="nextPage" />
-                    <Contact v-if="displayContactInfo && !displayTemplate" class="bg-white h-full pb-8"
-                        :fields="props.fields" :contact="contact" :locationSettings="props.locationSettings" />
-                </div>
 
-                <!-- Chat Input Area -->
-                <div v-if="contact && !displayContactInfo && !formLoading && !displayTemplate"
-                    class="chat-bg border-t border-gray-200">
-                    <ChatForm :contact="contact" :simpleForm="simpleForm" :chatLimitReached="isChatLimitReached"
-                        @viewTemplate="displayTemplate = true;" />
-                </div>
+                <div v-if="contact" class="grid grid-rows-12 overflow-y-auto"
+                    :class="addon == 1 ? 'h-[calc(100%-130.1px)]' : 'h-[calc(100%-81px)]'">
 
-                <!-- Template View -->
-                <div v-if="displayTemplate" class="flex-1 overflow-y-hidden bg-white">
-                    <CampaignForm v-if="displayTemplate" class="h-full" :contact="contact.uuid" :templates="templates"
-                        :contactGroups="[]" :settings="props.settings" :displayCancelBtn="false" :displayTitle="true"
-                        :isCampaignFlow="false" :scheduleTemplate="false" :sendText="'Send Message'"
-                        @viewTemplate="displayTemplate = false;" />
+                    <!-- Chat Messages Area -->
+                    <div v-if="!displayTemplate" class="flex-1 overflow-y-auto bg-[#efeae2] row-span-full chat-bg"
+                        ref="scrollContainer2">
+                        <ChatThread v-if="!displayContactInfo && !loadingThread && !displayTemplate"
+                            :contactId="contact.id" :initialMessages="chatThread" :hasMoreMessages="hasMoreMessages"
+                            :initialNextPage="nextPage" />
+                        <Contact v-if="displayContactInfo && !displayTemplate" class="bg-white row-span-full pb-8"
+                            :fields="props.fields" :contact="contact" :locationSettings="props.locationSettings" />
+                    </div>
+
+                    <!-- Chat Input Area -->
+                    <div v-if="!displayContactInfo && !formLoading && !displayTemplate"
+                        class="chat-bg border-t border-gray-200">
+                        <ChatForm :contact="contact" :simpleForm="simpleForm" :chatLimitReached="isChatLimitReached"
+                            @viewTemplate="displayTemplate = true;" />
+                    </div>
+
+                    <!-- Template View -->
+                    <div v-if="displayTemplate" class="flex-1 overflow-y-hidden bg-white row-span-full">
+                        <CampaignForm v-if="displayTemplate" class="h-full" :contact="contact.uuid"
+                            :templates="templates" :contactGroups="[]" :settings="props.settings"
+                            :displayCancelBtn="false" :displayTitle="true" :isCampaignFlow="false"
+                            :scheduleTemplate="false" :sendText="'Send Message'"
+                            @viewTemplate="displayTemplate = false;" />
+                    </div>
                 </div>
 
                 <!-- Empty State -->
-                <div v-if="!contact" class="flex-1 flex items-center justify-center p-8">
+                <div v-else class="flex-1 flex items-center justify-center h-full p-8">
                     <div class="text-center max-w-md">
                         <div class="mb-8 relative">
                             <div
@@ -213,6 +222,7 @@ onMounted(() => {
                         <p class="text-gray-500">{{ $t('Choose a chat from the list to start messaging') }}</p>
                     </div>
                 </div>
+
             </div>
         </div>
         <button class="hidden" ref="toggleNavbarBtn" @click="slotProps.toggleNavBar"></button>

@@ -110,14 +110,14 @@ const handleCallback = (res) => {
 
 <template>
     <AppLayout>
-        <div class="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30">
-            <div class="md:flex md:h-screen">
+        <div class="lg:h-[calc(100vh-65px)] overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50/30">
+            <div class="grid grid-cols-12 lg:h-full">
                 <!-- Sidebar -->
-                <div class="md:w-[380px] bg-white shadow-xl md:flex flex-col" :class="group ? 'hidden' : ''">
+                <div class="col-span-12 lg:col-span-4 bg-white shadow-sm lg:shadow-xl lg:flex flex-col">
 
                     <!-- Header -->
                     <div class="p-6 border-b border-gray-100">
-                        <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center justify-between mb-0">
                             <div>
                                 <h1 class="text-2xl font-bold text-gray-900">{{ $t('Groups') }}</h1>
                                 <p class="text-sm text-gray-500 mt-1">{{ props.rowCount }} {{ $t('total groups') }}</p>
@@ -139,13 +139,13 @@ const handleCallback = (res) => {
                 </div>
 
                 <!-- Main Content Area -->
-                <div class="flex-1 md:overflow-hidden">
+                <div class="col-span-12 lg:col-span-8 lg:overflow-hidden">
                     <div v-if="group" class="h-full">
                         <ContactGroupInfo :group="group" />
                     </div>
 
                     <!-- Empty State -->
-                    <div v-else class="hidden md:flex items-center justify-center h-full p-8">
+                    <div v-else class="hidden lg:flex items-center justify-center h-full p-8">
                         <div class="text-center max-w-md">
                             <div class="mb-8 relative">
                                 <div

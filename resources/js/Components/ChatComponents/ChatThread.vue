@@ -140,7 +140,7 @@ const loadMoreMessages = async () => {
 </script>
 
 <template>
-    <div class="py-6 px-4 md:px-10 relative">
+    <div class="py-6 px-4 lg:px-10 relative">
         <!-- Load More Button -->
         <div v-if="hasMore" class="flex justify-center py-4">
             <button v-if="loading" disabled

@@ -92,11 +92,10 @@ const handleContact = (value) => {
 
 <template>
     <AppLayout>
-        <div class="h-[calc(100vh-65px)] bg-gradient-to-br from-gray-50 to-orange-50/30">
-            <div class="md:flex md:h-full">
+        <div class="lg:h-[calc(100vh-65px)] overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50/30">
+            <div class="grid grid-cols-12 lg:h-full">
                 <!-- Sidebar -->
-                <div class="md:w-[380px] bg-white shadow-xl md:flex flex-col"
-                    :class="$page.url === '/contacts/add' || contact ? 'hidden' : ''">
+                <div class="col-span-12 lg:col-span-4 bg-white shadow-sm lg:shadow-xl lg:flex flex-col">
 
                     <!-- Header -->
                     <div class="p-6 border-b border-gray-100">
@@ -124,7 +123,7 @@ const handleContact = (value) => {
                 </div>
 
                 <!-- Main Content Area -->
-                <div class="flex-1 md:overflow-hidden">
+                <div class="col-span-12 lg:col-span-8 lg:overflow-hidden">
                     <div v-if="contact" class="h-full">
                         <ContactInfo v-if="!editContact" :contact="contact" :fields="props.fields"
                             :locationSettings="locationSettings" />
@@ -138,7 +137,7 @@ const handleContact = (value) => {
                     </div>
 
                     <!-- Empty State -->
-                    <div v-else class="hidden md:flex items-center justify-center h-full p-8">
+                    <div v-else class="flex items-center justify-center h-full p-8">
                         <div class="text-center max-w-md">
                             <div class="mb-8 relative">
                                 <div

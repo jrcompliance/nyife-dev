@@ -538,7 +538,7 @@ watchEffect(() => {
     </div>
 
     <!-- Contact List -->
-    <div class="flex-grow overflow-y-auto h-[calc(100vh-340px)]">
+    <div class="flex-grow overflow-y-auto h-[calc(100vh-440px)]">
         <div v-if="type === 'contact'" v-for="(contact, index) in rows.data" :key="index" @click="getRow(contact.uuid)"
             class="group flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition-all"
             :class="contact.isChecked ? 'bg-orange-50/50' : ''">
