@@ -79,6 +79,11 @@ class SettingController extends BaseController
         return Inertia::render('Admin/Setting/Broadcast', $data);
     }
 
+    public function AlertAndRemainder(Request $request){
+        $data['config'] = Setting::get();
+        return Inertia::render('Admin/Setting/AlertAndRemainder', $data);
+    }
+
     public function seo(Request $request){
         return Inertia::render('Admin/Setting/Seo');
     }

@@ -243,8 +243,9 @@ const unMask = (token) => {
                                 <!-- Token Display -->
                                 <div class="relative flex-1 min-w-0">
                                     <div
-                                        class="font-mono text-sm text-slate-700 break-all bg-slate-50 px-4 py-3 rounded-xl border border-slate-200 group-hover:border-[#ff5100]/30 transition-colors duration-300">
-                                        {{ unMaskedRef === item.token ? item.token : maskToken(item.token) }}
+                                        class="font-mono text-center !text-wrap text-sm text-slate-700 break-all bg-slate-50 px-4 py-3 rounded-xl border border-slate-200 group-hover:border-[#ff5100]/30 transition-colors duration-300">
+                                        {{ unMaskedRef === item.token ? item.token :
+                                            maskToken(item.token)?.slice(0, 6) }}
                                     </div>
 
                                     <!-- Copied Notification -->

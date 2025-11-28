@@ -330,7 +330,7 @@ const submitForm2 = async () => {
                                 </div>
                                 <div class="flex-1">
                                     <h4 class="text-base font-bold text-slate-900 mb-1">{{ $t('Contact fields location')
-                                        }}</h4>
+                                    }}</h4>
                                     <p class="text-sm text-slate-600">{{ $t(`Place custom fields before or after the
                                         address section`) }}</p>
                                 </div>

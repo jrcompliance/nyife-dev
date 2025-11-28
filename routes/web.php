@@ -283,6 +283,7 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
     Route::match(['get', 'post'], '/settings/general', [App\Http\Controllers\Admin\SettingController::class, 'general']);
     Route::put('/settings', [App\Http\Controllers\Admin\SettingController::class, 'update']);
     Route::get('/settings/smtp', [App\Http\Controllers\Admin\SettingController::class, 'email']);
+    Route::get('/settings/alerts', [App\Http\Controllers\Admin\SettingController::class, 'AlertAndRemainder']);
     Route::get('/settings/broadcast-drivers', [App\Http\Controllers\Admin\SettingController::class, 'broadcast_driver']);
     Route::match(['get', 'post'], '/settings/timezone', [App\Http\Controllers\Admin\SettingController::class, 'timezone']);
     Route::get('/settings/email-templates', [App\Http\Controllers\Admin\EmailTemplateController::class, 'index']);

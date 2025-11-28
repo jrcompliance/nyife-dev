@@ -247,8 +247,124 @@ onMounted(() => {
 
                 <!-- Main Content Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
                     <!-- Main Content Column -->
                     <div class="lg:col-span-2 space-y-6">
+
+                        <!-- Customer Details Card -->
+                        <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-orange-100/50 p-6">
+                            <div class="flex items-center gap-2 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-[#ff5100]">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">{{ $t(`Customer
+                                    Details`) }}</h3>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Customer Avatar & Name -->
+                                <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+                                    <div
+                                        class="w-14 h-14 rounded-full bg-gradient-to-br from-[#ff5100] to-[#ff7a3d] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-500/25">
+                                        SA
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 text-lg">SAHEB</h4>
+                                        <p class="text-xs text-slate-500">Customer ID: #12345</p>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Information -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Email -->
+                                    <div
+                                        class="p-3 bg-gradient-to-br from-slate-50 to-orange-50/20 rounded-xl border border-slate-200">
+                                        <div class="flex items-start gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="text-[#ff5100] mt-0.5 flex-shrink-0">
+                                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                                            </svg>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-xs font-semibold text-slate-600 uppercase mb-1">Email</p>
+                                                <p class="text-sm text-slate-800 break-all">saheb@jrcompliance.com</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Phone -->
+                                    <div
+                                        class="p-3 bg-gradient-to-br from-slate-50 to-orange-50/20 rounded-xl border border-slate-200">
+                                        <div class="flex items-start gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="text-[#ff5100] mt-0.5 flex-shrink-0">
+                                                <path
+                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                                </path>
+                                            </svg>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-xs font-semibold text-slate-600 uppercase mb-1">Phone</p>
+                                                <p class="text-sm text-slate-800">+918800281734</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Member Since -->
+                                    <div
+                                        class="p-3 bg-gradient-to-br from-slate-50 to-orange-50/20 rounded-xl border border-slate-200">
+                                        <div class="flex items-start gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="text-[#ff5100] mt-0.5 flex-shrink-0">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            </svg>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-xs font-semibold text-slate-600 uppercase mb-1">Member
+                                                    Since
+                                                </p>
+                                                <p class="text-sm text-slate-800">Sep 1, 2025</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Total Tickets -->
+                                    <div
+                                        class="p-3 bg-gradient-to-br from-slate-50 to-orange-50/20 rounded-xl border border-slate-200">
+                                        <div class="flex items-start gap-2">
+
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-building2-icon lucide-building-2 text-[#ff5100] mt-0.5 flex-shrink-0">
+                                                <path d="M10 12h4" />
+                                                <path d="M10 8h4" />
+                                                <path d="M14 21v-3a2 2 0 0 0-4 0v3" />
+                                                <path
+                                                    d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" />
+                                                <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+                                            </svg>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-xs font-semibold text-slate-600 uppercase mb-1">
+                                                    Organization</p>
+                                                <p class="text-sm text-slate-800 font-bold">Jr Compliance</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Ticket Details Card -->
                         <div
                             class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-orange-100/50 overflow-hidden">
@@ -308,6 +424,7 @@ onMounted(() => {
                             </form>
                         </div>
 
+
                         <!-- Comments Section -->
                         <div class="space-y-4">
                             <div v-for="(item, index) in props.ticket.comments_with_user" :key="index"
@@ -347,6 +464,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Sidebar Column -->
+
                     <div class="lg:col-span-1">
                         <div
                             class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-orange-100/50 p-6 sticky top-8">
