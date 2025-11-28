@@ -88,7 +88,6 @@
         </TableBody>
     </Table>
 
-    <!-- Alert Modal Component-->
     <AlertModal 
         v-model="isOpenAlert" 
         @confirm="() => confirmAlert(deleteAction)"
