@@ -157,7 +157,12 @@ class CampaignController extends BaseController
 
         $oldBalance = (float) $user->balance;
         $newBalance = round($oldBalance - $charge, 2);
-
+        if ($user->balance < $charge) {
+            return Redirect::route('campaigns')->with('status', [
+                'type' => 'error',
+                'message' => __('Insufficient balance to create this campaign.')
+            ]);
+        }
         $user->balance = $newBalance;
         $user->save();
 

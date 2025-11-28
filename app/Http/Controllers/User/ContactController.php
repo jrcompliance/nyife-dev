@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Excel;
+use Illuminate\Support\Facades\Log;
 use Validator;
 
 class ContactController extends BaseController
@@ -278,6 +279,9 @@ class ContactController extends BaseController
 
     public function update(StoreContact $request, $uuid)
     {
+        Log::info('Updating contact with UUID: ' . $uuid);
+        Log::info('Request data: ' . json_encode($request->all()));
+
         $contact = $this->contactService()->store($request, $uuid);
 
         return redirect('/contacts/' . $contact->uuid)->with(
