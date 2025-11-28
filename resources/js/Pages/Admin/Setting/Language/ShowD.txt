@@ -1,43 +1,83 @@
+<!-- ============================================ NEW UI CODE ============================================= -->
+
 <template>
     <AppLayout>
-        <div class="flex justify-between">
-            <div>
-                <h2 class="text-xl mb-1">{{ $t('Language translations:') }} {{ props.language.name }}</h2>
-                <p class="mb-6 flex items-center text-sm leading-6 text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
-                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                            stroke-width="2" d="M12 11v5m0 5a9 9 0 1 1 0-18a9 9 0 0 1 0 18Zm.05-13v.1h-.1V8h.1Z" />
-                    </svg>
-                    <span class="ml-1 mt-1">{{ $t('Translate your language') }}</span>
-                </p>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button @click="isOpenModal = true"
-                    class="rounded-md bg-indigo-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{
-                        $t('Bulk edit translations') }}</button>
-                <Link href="/admin/languages"
-                    class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-all duration-200 border border-slate-300 flex items-center space-x-2">
-                <ArrowLeft class="w-4 h-4" />
-                <span>{{ $t('Back') }}</span></Link>
+        <div class="p-6 md:p-8 space-y-6 max-h-[calc(100vh-14rem)] overflow-y-auto">
+            <!-- Language Translations Card -->
+            <div class="group bg-white rounded-2xl border border-slate-200 shadow-md">
+                <div class="bg-gradient-to-r from-slate-50 to-orange-50/30 px-6 py-4 border-b border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="p-2 bg-gradient-to-br from-[#ff5100] to-[#ff7340] rounded-lg shadow-lg shadow-[#ff5100]/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    class="text-white">
+                                    <path fill="currentColor"
+                                        d="m12.87 15.07l-2.54-2.51l.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35C8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5l3.11 3.11l.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-900">{{ $t('Language translations:') }} {{
+                                    props.language.name }}</h2>
+                                <div class="flex items-center gap-1.5 text-sm text-slate-600 mt-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                        class="text-[#ff5100]">
+                                        <path fill="none" stroke="currentColor" stroke-linecap="round"
+                                            stroke-linejoin="round" stroke-width="2"
+                                            d="M12 11v5m0 5a9 9 0 1 1 0-18a9 9 0 0 1 0 18Zm.05-13v.1h-.1V8h.1Z" />
+                                    </svg>
+                                    <span>{{ $t('Translate your language') }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-3">
+                            <button @click="isOpenModal = true" type="button"
+                                class="px-6 py-2.5 bg-gradient-to-r from-[#ff5100] to-[#ff7340] text-white font-semibold rounded-xl shadow-lg shadow-[#ff5100]/20 hover:shadow-xl hover:shadow-[#ff5100]/30 transition-all duration-200">
+                                <span class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                                        <path fill="currentColor"
+                                            d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                                    </svg>
+                                    {{ $t('Bulk edit translations') }}
+                                </span>
+                            </button>
+
+                            <Link href="/admin/languages"
+                                class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 transition-all duration-200"
+                                title="Back to Languages">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2z" />
+                            </svg>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <!-- Table Component -->
+                    <LangTranslationsTable :rows="props.rows" :filters="props.filters" :language="props.language" />
+                </div>
             </div>
         </div>
 
-        <LangTranslationsTable :rows="props.rows" :filters="props.filters" :language="props.language" />
-
-        <Modal :label="$t('Bulk Edit')" :isOpen=isOpenModal>
+        <!-- Import Modal-->
+        <Modal :label="$t('Bulk Edit')" :isOpen="isOpenModal">
             <ol class="list-decimal ml-4 mt-2 space-y-0 text-sm">
                 <li class="mb-0">
                     <span class="text-sm text-slate-600">{{ $t('Download .xlsx file with all translation strings.')
-                    }}</span>
+                        }}</span>
                     <br>
-                    <span class="text-sm text-slate-600 underline">
+                    <span class="text-sm text-[#ff5100] hover:text-[#ff7340] underline transition-colors">
                         <a :href="'/admin/languages/' + props.language.code + '/export'">{{ $t('Click here to download')
-                        }}</a>
+                            }}</a>
                     </span>
                 </li>
                 <li>
                     <div class="text-sm text-slate-600 mt-4 mb-0">{{ $t('Edit the xlsx file with your own translations')
-                    }}</div>
+                        }}</div>
                 </li>
                 <li>
                     <div class="text-sm text-slate-600 mt-4 mb-0">{{ $t('Reupload the edited xlsx file below') }}</div>
@@ -47,12 +87,12 @@
             <div class="max-w-md w-full space-y-8">
                 <div class="mt-8 space-y-6">
                     <div @dragover.prevent @drop="handleDrop"
-                        class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                        <input type="file" class="sr-only" accept=".xslx" ref="fileInput" id="file-upload"
+                        class="flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-[#ff5100] transition-colors">
+                        <input type="file" class="sr-only" accept=".xlsx" ref="fileInput" id="file-upload"
                             @change="handleFileUpload($event)" />
                         <div class="text-center">
                             <div>
-                                <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                <svg class="mx-auto h-12 w-12 text-slate-400" xmlns="http://www.w3.org/2000/svg"
                                     width="24" height="24" viewBox="0 0 24 24">
                                     <g fill="none">
                                         <path fill="currentColor"
@@ -61,33 +101,33 @@
                                             d="M13 2.5V5c0 2.357 0 3.536.732 4.268C14.464 10 15.643 10 18 10h4" />
                                     </g>
                                 </svg>
-                                <div class="flex text-sm text-gray-600">
+                                <div class="flex text-sm text-slate-600">
                                     <label for="file-upload"
-                                        class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                        class="relative cursor-pointer bg-white rounded-md font-medium text-[#ff5100] hover:text-[#ff7340] focus-within:outline-none transition-colors">
                                         <span>{{ $t('Click to upload a file') }}</span>
                                     </label>
                                     <p class="pl-1">{{ $t('Or drag and drop') }}</p>
                                 </div>
-                                <p class="text-xs text-gray-500">{{ $t('XLSX files only') }}</p>
+                                <p class="text-xs text-slate-500">{{ $t('XLSX files only') }}</p>
                             </div>
                         </div>
                     </div>
                     <div v-if="uploads.length" class="mt-4">
-                        <ul class="mt-2 rounded-md bg-[#F5F7FB] px-6">
+                        <ul class="mt-2 rounded-lg bg-slate-50 px-6">
                             <li v-for="upload in uploads" :key="upload.name"
                                 class="py-2 flex justify-between items-center">
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-indigo-600 truncate">{{ upload.name }}</p>
-                                    <div class="mt-1 flex items-center text-sm text-gray-500">
+                                    <p class="text-sm font-medium text-[#ff5100] truncate">{{ upload.name }}</p>
+                                    <div class="mt-1 flex items-center text-sm text-slate-500">
                                         <span v-if="upload.progress !== 100">{{ upload.progress }}% - </span>
                                         <span v-else>{{ $t('Complete') }}</span>
                                     </div>
                                 </div>
                                 <div class="ml-4 flex-shrink-0">
                                     <div v-if="upload.progress !== 100" class="relative w-48">
-                                        <div class="overflow-hidden h-2 text-xs flex rounded bg-indigo-200">
+                                        <div class="overflow-hidden h-2 text-xs flex rounded bg-orange-200">
                                             <div :style="{ width: `${upload.progress}%` }"
-                                                class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500">
+                                                class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-[#ff5100] to-[#ff7340]">
                                             </div>
                                         </div>
                                     </div>
@@ -101,22 +141,28 @@
             <div class="mt-5 grid grid-cols-1 gap-x-6 gap-y-4">
                 <div class="mt-2 w-full">
                     <button type="button" @click="isOpenModal = false"
-                        class="inline-flex float-right justify-center rounded-md border border-transparent bg-slate-50 px-4 py-2 text-sm text-slate-500 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">{{
-                            $t('Close') }}</button>
+                        class="inline-flex float-right justify-center rounded-xl border border-slate-200 bg-slate-50 px-6 py-2.5 text-sm text-slate-700 hover:bg-slate-200 transition-all duration-200">
+                        {{ $t('Close') }}
+                    </button>
                 </div>
             </div>
         </Modal>
     </AppLayout>
 </template>
+
 <script setup>
 import AppLayout from "../Layout/App.vue";
 import { ref } from 'vue';
 import { Link, useForm } from "@inertiajs/vue3";
 import LangTranslationsTable from '@/Components/Tables/LangTranslationsTable.vue';
 import Modal from '@/Components/Modal.vue';
-import { ArrowLeft } from "lucide-vue-next";
 
-const props = defineProps({ language: Object, rows: Object, filters: String });
+const props = defineProps({
+    language: Object,
+    rows: Object,
+    filters: String
+});
+
 const uploads = ref([]);
 const isOpenModal = ref(false);
 
@@ -124,13 +170,12 @@ const form = useForm({
     _method: 'put',
 })
 
-
 const handleFileUpload = (event) => {
     const files = event.target.files;
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (!['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'].includes(file.type)) {
-            alert(trans('please select a CSV or XLSX file'));
+            alert('Please select a CSV or XLSX file');
             return;
         }
         const formData = new FormData();
@@ -153,10 +198,8 @@ const handleFileUpload = (event) => {
         xhr.onload = () => {
             if (xhr.status === 200) {
                 // Handle success
-                //console.log('File uploaded successfully!');
             } else {
                 // Handle error
-                //console.error('File upload failed.');
             }
         };
 
@@ -175,7 +218,7 @@ const handleDrop = (event) => {
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (!['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'].includes(file.type)) {
-            alert(trans('please select a CSV or XLSX file'));
+            alert('Please select a CSV or XLSX file');
             return;
         }
         const formData = new FormData();
@@ -198,10 +241,8 @@ const handleDrop = (event) => {
         xhr.onload = () => {
             if (xhr.status === 200) {
                 // Handle success
-                //console.log('File uploaded successfully!');
             } else {
                 // Handle error
-                //console.error('File upload failed.');
             }
         };
 
