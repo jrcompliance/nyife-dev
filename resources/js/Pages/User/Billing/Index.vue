@@ -657,6 +657,8 @@ onMounted(async () => {
       <!-- Add Payment Modal -->
       <Modal :label="label" :isOpen="isOpenModal">
         <div class="space-y-6">
+
+
           <div>
             <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ $t("Add payment") }}</h2>
             <p class="text-sm text-gray-600">{{ $t("Add your own custom amount") }}</p>
@@ -747,6 +749,7 @@ onMounted(async () => {
               <span>{{ isLoading ? $t("Processing") : $t("Continue") }}</span>
             </button>
           </div>
+
         </div>
       </Modal>
     </div>
