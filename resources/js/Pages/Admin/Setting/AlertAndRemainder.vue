@@ -248,6 +248,8 @@ import { ref } from 'vue';
 // import AlertModal from '@/Components/Modals/AlertModal.vue';
 // import DeleteModal from '@/Components/Modals/DeleteModal.vue';
 
+
+
 const props = defineProps({
     rows: Object,
     logs: Object,

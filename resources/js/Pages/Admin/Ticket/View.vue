@@ -499,7 +499,7 @@ onMounted(() => {
                                         class="p-3 bg-gradient-to-br from-slate-50 to-orange-50/20 rounded-xl border border-slate-200">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-semibold text-slate-600 uppercase">{{ $t('Status')
-                                                }}</span>
+                                            }}</span>
                                             <span
                                                 :class="['px-3 py-1 rounded-lg text-xs font-bold border', getStatusColor(props.ticket.status)]">
                                                 {{ $t(props.ticket.status) }}
@@ -623,6 +623,7 @@ import FormTextArea from '@/Components/FormTextArea.vue';
 import { ArrowLeft } from 'lucide-vue-next';
 
 const props = defineProps(['title', 'ticket', 'users']);
+// console.log('props', props?.users);
 const priority = ref(props.ticket.priority);
 const user = ref(props.ticket.assigned_to);
 const userOptions = ref([]);
