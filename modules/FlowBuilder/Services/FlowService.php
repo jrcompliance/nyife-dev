@@ -17,9 +17,10 @@ class FlowService
         $organizationId = session()->get('current_organization');
         $model = new Flow;
         $searchTerm = $request->query('search');
-        Log::info('FlowService getRows called', ['organizationId' => $organizationId, 'searchTerm' => $searchTerm]);
+        
 
         $flows = $model->listAll($organizationId, $searchTerm);
+        
 
         $totalFlows = Flow::where('organization_id', $organizationId)->count();
         $activeFlows = Flow::where('organization_id', $organizationId)->where('status', 'active')->count();
@@ -63,82 +64,129 @@ class FlowService
      * @param array $data
      * @return Flow
      */
-    public function updateFlow($uuid, array $data, $publish)
-    {
+public function updateFlow($uuid, array $data, $publish)
+{
+    Log::info('[FlowService] updateFlow START', [
+        'uuid' => $uuid,
+        'incoming_data' => $data,
+        'publish_flag' => $publish,
+    ]);
+
+    $validator = new FlowValidator();
+    
+    Log::info('[FlowService] Fetching Flow from DB', ['uuid' => $uuid]);
+    $flow = Flow::where('uuid', $uuid)->firstOrFail();
+    
+    Log::info('[FlowService] Flow fetched', [
+        'id' => $flow->id,
+        'current_status' => $flow->status
+    ]);
+
+    if (!empty($flow->metadata)) {
+        $metadataArray = json_decode($flow->metadata, true);
+        
+        Log::info('[FlowService] Decoded metadata', [
+            'metadata' => $metadataArray,
+            'metadata_valid' => json_last_error() === JSON_ERROR_NONE
+        ]);
+
+        $result = $validator->validateMessageNodes($metadataArray);
+
+        Log::info('[FlowService] Message node validation result before initial update', [
+            'result' => $result
+        ]);
+
+        if (is_array($result)) {
+            Log::warning('[FlowService] Validation failed — setting status inactive (before update)');
+            $data['status'] = 'inactive';
+        }
+    }
+
+    Log::info('[FlowService] Running first update() call on Flow', ['update_data' => $data]);
+    $flow->update($data);
+
+    Log::info('[FlowService] Re-fetching Flow after first update');
+    $flow = Flow::where('uuid', $uuid)->firstOrFail();
+
+    if (!empty($flow->metadata)) {
+        $metadataArray = json_decode($flow->metadata, true);
+
+        $data2['trigger'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.type', null);
+        $data2['keywords'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.keywords', null);
+
+        Log::info('[FlowService] Trigger/Keywords extracted', $data2);
+
+        $result = $validator->validateMessageNodes($metadataArray);
+
+        Log::info('[FlowService] Message node validation result after first update', [
+            'validation_result' => $result
+        ]);
+
+        if (is_array($result)) {
+            Log::warning('[FlowService] Validation failed — setting status inactive (second update)');
+            $data2['status'] = 'inactive';
+        }
+
+        Log::info('[FlowService] Running second update() call on Flow', ['update_data2' => $data2]);
+        $flow->update($data2);
+    }
+
+    if (isset($publish)) {
+        Log::info('[FlowService] Publish flag detected', ['publish_flag' => $publish]);
+
         $validator = new FlowValidator();
-        
-        $flow = Flow::where('uuid', $uuid)->firstOrFail();
+        $metadataArray = json_decode($flow->metadata, true);
+        $status = $publish == 1 ? 'active' : 'inactive';
 
-        if(isset($flow->metadata)){
-            $metadataArray = json_decode($flow->metadata, true);
+        if ($publish == 1) {
+            Log::info('[FlowService] Validating before publishing...');
             $result = $validator->validateMessageNodes($metadataArray);
 
-            if(is_array($result)){
-                $data['status'] = 'inactive';
-            }
-        }
-
-        $flow->update($data);
-
-        $flow = Flow::where('uuid', $uuid)->firstOrFail();
-        
-        if(isset($flow->metadata)){
-            $metadataArray = json_decode($flow->metadata, true);
-            $data2['trigger'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.type', null);
-            $data2['keywords'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.keywords', null);
-
-            $result = $validator->validateMessageNodes($metadataArray);
-
-            if(is_array($result)){
-                $data2['status'] = 'inactive';
-            }
-
-            $flow->update($data2);
-        }
-
-        if(isset($publish)){
-            $validator = new FlowValidator();
-            $metadataArray = json_decode($flow->metadata, true);
-            $status = $publish == 1 ? 'active' : 'inactive';
-
-            if($publish == 1){
-                $result = $validator->validateMessageNodes($metadataArray);
-
-                if (!is_array($result)) {
-                    $flow->update(['status' => $status]);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => __('Flow saved & published successfully!'),
-                        'status' => 'active'
-                    ]);
-                } else {
-                    // Return the errors in JSON format with a 422 Unprocessable Entity status code
-                    return response()->json([
-                        'success' => false,
-                        'errors' => $result,
-                        'status' => 'inactive'
-                    ], 200);
-                }
-            } else {
+            if (!is_array($result)) {
+                Log::info('[FlowService] Validation passed — activating flow');
                 $flow->update(['status' => $status]);
 
+                Log::info('[FlowService] Flow published successfully');
                 return response()->json([
                     'success' => true,
-                    'message' => __('Flow saved & unpublished successfully!'),
+                    'message' => __('Flow saved & published successfully!'),
+                    'status' => 'active'
+                ]);
+            } else {
+                Log::warning('[FlowService] Publishing blocked — validation errors', [
+                    'errors' => $result
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'errors' => $result,
                     'status' => 'inactive'
                 ], 200);
             }
+        } else {
+            Log::info('[FlowService] Setting flow status inactive (unpublish)');
+            $flow->update(['status' => $status]);
+
+            Log::info('[FlowService] Flow unpublished successfully');
+            return response()->json([
+                'success' => true,
+                'message' => __('Flow saved & unpublished successfully!'),
+                'status' => 'inactive'
+            ], 200);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => __('Flow saved successfully!'),
-            'status' => $flow->status,
-        ], 200);
-
-        return $flow;
     }
+
+    Log::info('[FlowService] Final response returned', [
+        'final_status' => $flow->status
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => __('Flow saved successfully!'),
+        'status' => $flow->status,
+    ], 200);
+}
+
 
     public function duplicateFlow($uuid): void
     {
