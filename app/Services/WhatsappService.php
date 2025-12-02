@@ -61,23 +61,23 @@ class WhatsappService
      */
     public function sendMessage($contactUuId, $messageContent, $userId = NULL, $type="text", $buttons = [], $header = [], $footer = null, $buttonLabel = null)
     {
-        Log::info("--------------------------------");
-        Log::info($contactUuId);
-        Log::info("--------------------------------");
-        Log::info($messageContent);
-        Log::info("--------------------------------");
-        Log::info($userId);
-        Log::info("--------------------------------");
-        Log::info($type);
-        Log::info("--------------------------------");
-        Log::info($buttons);
-        Log::info("--------------------------------");
-        Log::info($header);
-        Log::info("--------------------------------");
-        Log::info($footer);
-        Log::info("--------------------------------");
-        Log::info($buttonLabel);
-        Log::info("--------------------------------");
+        // Log::info("--------------------------------");
+        // Log::info($contactUuId);
+        // Log::info("--------------------------------");
+        // Log::info($messageContent);
+        // Log::info("--------------------------------");
+        // Log::info($userId);
+        // Log::info("--------------------------------");
+        // Log::info($type);
+        // Log::info("--------------------------------");
+        // Log::info($buttons);
+        // Log::info("--------------------------------");
+        // Log::info($header);
+        // Log::info("--------------------------------");
+        // Log::info($footer);
+        // Log::info("--------------------------------");
+        // Log::info($buttonLabel);
+        // Log::info("--------------------------------");
         $contact = Contact::where('uuid', $contactUuId)->first();
         $url = "https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages";
         
@@ -132,9 +132,9 @@ class WhatsappService
             }
         }
 
-        Log::info($requestData);
+        // Log::info("This is request",$requestData);
         $responseObject = $this->sendHttpRequest('POST', $url, $requestData, $headers);
-
+        // Log::info("This is response".json_encode($responseObject));
         if($responseObject->success === true){
             $response['text']['body'] = clean($messageContent);
             $response['type'] = 'text';
@@ -1042,7 +1042,7 @@ class WhatsappService
 
     public function updateTemplate(Request $request, $uuid)
     {
-        Log::info('Inside whatsapp service Template Request: ', $request->all());
+        // Log::info('Inside whatsapp service Template Request: ', $request->all());
         $template = Template::where('uuid', $uuid)->first();
         $url = "https://graph.facebook.com/{$this->apiVersion}/{$template->meta_id}";
         
@@ -1275,7 +1275,7 @@ class WhatsappService
     public function CarouselupdateTemplate(Request $request, $uuid)
 {
     $appId = $this->wabaId;
-    Log::info('Inside WhatsApp Service Template Request:', $request->all());
+    // Log::info('Inside WhatsApp Service Template Request:', $request->all());
 
     $template = Template::where('uuid', $uuid)->first();
     if (!$template) {
@@ -1344,11 +1344,11 @@ class WhatsappService
         }
     }
 
-    Log::info('Cleaned Request Data:', $requestData);
+    // Log::info('Cleaned Request Data:', $requestData);
 
     $client = new Client();
     $responseObject = new \stdClass();
-    Log::info('Prepared Request Data:', ($requestData));
+    // Log::info('Prepared Request Data:', ($requestData));
     try {
 
         $response = $client->post($url, [
@@ -2036,15 +2036,15 @@ class WhatsappService
                 unset($component['example']); // remove the whole example object
             }
         }
-        Log::info($requestData);
+        // Log::info($requestData);
         // Guzzle client
         $client = new Client();
 
         $appId = $this->wabaId;
         $accessToken = $this->accessToken; // or env('META_ACCESS_TOKEN')
-        Log::info('Meta Access Token: ' . $accessToken);
+        // Log::info('Meta Access Token: ' . $accessToken);
         $url = "https://graph.facebook.com/{$this->apiVersion}/{$appId}/message_templates";
-        Log::info('Meta API URL: ' . $url);
+        // Log::info('Meta API URL: ' . $url);
 
         try {
             $response = $client->post($url, [
@@ -2057,7 +2057,7 @@ class WhatsappService
 
             $responseBody = json_decode($response->getBody()->getContents(), true);
 
-            Log::info('✅ Meta API Success:', $responseBody);
+            // Log::info('✅ Meta API Success:', $responseBody);
 
             return response()->json([
                 'success' => true,
@@ -2143,14 +2143,14 @@ class WhatsappService
         ]);
 
         $file = $request->file('file');
-        Log::info('Uploading file: ' . $file->getClientOriginalName());
+        // Log::info('Uploading file: ' . $file->getClientOriginalName());
 
         // Optional: store in temp/backup
         $path = $file->store('uploads', 'public');
-        Log::info("Temp file stored at: storage/app/public/{$path}");
+        // Log::info("Temp file stored at: storage/app/public/{$path}");
 
         try {
-            Log::info("Sending file to WhatsApp Cloud API...");
+            // Log::info("Sending file to WhatsApp Cloud API...");
 
             $response = \Illuminate\Support\Facades\Http::withToken($this->accessToken)
                 ->attach(
@@ -2164,7 +2164,7 @@ class WhatsappService
                 ]);
 
             $responseData = $response->json();
-            Log::info('WhatsApp API response:', $responseData);
+            // Log::info('WhatsApp API response:', $responseData);
 
             if ($response->successful() && isset($responseData['id'])) {
                 $mediaId = $responseData['id'];
@@ -2172,10 +2172,10 @@ class WhatsappService
                 $fileName = "{$mediaId}.{$extension}";
 
                 $storedPath = $file->storeAs("public", $fileName);
-                Log::info("File saved locally as: storage/app/{$storedPath}");
+                // Log::info("File saved locally as: storage/app/{$storedPath}");
 
                 $publicUrl = asset("media/public/{$fileName}");
-                Log::info("Public URL: {$publicUrl}");
+                // Log::info("Public URL: {$publicUrl}");
 
                 return response()->json([
                     'media_id' => $mediaId,
