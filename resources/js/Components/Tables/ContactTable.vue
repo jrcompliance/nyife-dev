@@ -286,7 +286,7 @@
 <!-- ========================================== NEW UI CODE ==================================== -->
 
 <script setup>
-import { ref, watchEffect, onMounted, onUpdated } from 'vue';
+import { ref, watchEffect, onMounted, onUpdated, onBeforeUnmount, nextTick } from 'vue';
 import debounce from 'lodash/debounce';
 import { Link, router } from "@inertiajs/vue3";
 import ContactImportModal from '@/Components/ContactImportModal.vue';
@@ -442,6 +442,83 @@ watchEffect(() => {
     params.value.page = props.filters?.page;
     applyCheckedState();
 });
+
+// /////////////////////////////
+
+
+// keep in sync with your template ref
+const listRef = ref(null);
+
+// sessionStorage key generator (path + search) so each page keeps its own scroll
+const getStorageKey = () => `chat-list-scroll:${location.pathname}${location.search}`;
+
+// small debounce helper
+function debouncet(fn, wait = 150) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), wait);
+    };
+}
+
+// restore scrollTop from storage if present
+const restoreScroll = async () => {
+    const key = getStorageKey();
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return;
+
+    const saved = parseInt(raw, 10);
+    if (Number.isNaN(saved)) return;
+
+    // wait for Vue to render and layout to settle
+    await nextTick();
+    // use RAF to be extra safe if element is created async
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            if (listRef.value) listRef.value.scrollTop = saved;
+            else window.scrollTo(0, saved);
+        });
+    });
+};
+
+// save current scrollTop to sessionStorage
+const saveScroll = () => {
+    const key = getStorageKey();
+    const y = listRef.value ? Math.max(0, Math.floor(listRef.value.scrollTop)) : window.pageYOffset || 0;
+    try {
+        sessionStorage.setItem(key, String(y));
+    } catch (err) {
+        // ignore quota errors
+        console.warn('Could not save scroll position', err);
+    }
+};
+
+const debouncedSave = debouncet(saveScroll, 120);
+
+onMounted(() => {
+    // restore when component mounts
+    restoreScroll();
+
+    // listen to scroll events on the container
+    if (listRef.value) {
+        listRef.value.addEventListener('scroll', debouncedSave, { passive: true });
+    } else {
+        // fallback to window if container is missing
+        window.addEventListener('scroll', debouncedSave, { passive: true });
+    }
+
+    // save on page unload (reload/close)
+    window.addEventListener('beforeunload', saveScroll);
+});
+
+onBeforeUnmount(() => {
+    // cleanup
+    if (listRef.value) listRef.value.removeEventListener('scroll', debouncedSave);
+    window.removeEventListener('scroll', debouncedSave);
+    window.removeEventListener('beforeunload', saveScroll);
+    // final save
+    saveScroll();
+});
 </script>
 
 <template>
@@ -511,7 +588,7 @@ watchEffect(() => {
                     <DropdownItem as="button" @click="isOpenModal = true">{{ $t('Import rows') }}</DropdownItem>
                     <DropdownItem as="button" @click="isExportModalOpen = true">{{ $t('Export') }}</DropdownItem>
                     <DropdownItem v-if="selectedCount > 0" as="button" @click="deleteItems()">{{ $t('Delete selected')
-                    }}</DropdownItem>
+                        }}</DropdownItem>
                     <DropdownItem as="button" @click="deleteItems('all')">{{ $t('Delete all') }}</DropdownItem>
                 </DropdownItemGroup>
             </template>
@@ -538,10 +615,10 @@ watchEffect(() => {
     </div>
 
     <!-- Contact List -->
-    <div class="flex-grow overflow-y-auto h-[calc(100vh-440px)]">
+    <div ref="listRef" class="flex-grow overflow-y-auto h-[calc(100vh-440px)]">
         <div v-if="type === 'contact'" v-for="(contact, index) in rows.data" :key="index" @click="getRow(contact.uuid)"
             class="group flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition-all"
-            :class="contact.isChecked ? 'bg-orange-50/50' : ''">
+            :class="contact.isChecked ? 'bg-orange-50/50' : '', $page.url.startsWith(`/contacts?id=${contact.uuid}`) ? 'bg-orange-100/50 hover:bg-orange-100/50 border-b-transparent border-l-4 border-orange-400' : ''">
 
             <label @click.stop="toggleCheckbox(contact.uuid)" class="cursor-pointer flex-shrink-0">
                 <div class="w-5 h-5 border-2 rounded-md flex items-center justify-center transition-all"
@@ -578,7 +655,7 @@ watchEffect(() => {
 
         <div v-else-if="type === 'group'" v-for="(row, key) in rows.data" :key="key" @click="getRow(row.uuid)"
             class="group flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition-all"
-            :class="row.isChecked ? 'bg-orange-50/50' : ''">
+            :class="row.isChecked ? 'bg-orange-50/50' : '', $page.url.startsWith(`/contact-groups?id=${row.uuid}`) ? 'bg-orange-100/50 hover:bg-orange-100/50 border-b-transparent border-l-4 border-orange-400' : ''">
 
             <label @click.stop="toggleCheckbox(row.uuid)" class="cursor-pointer flex-shrink-0">
                 <div class="w-5 h-5 border-2 rounded-md flex items-center justify-center transition-all"
