@@ -3,7 +3,7 @@
         <!-- Trigger Button -->
         <div class="flex justify-center">
             <button @click="openModal"
-                class="bg-white hover:bg-primary border-2 border-primary  text-primary hover:text-white font-semibold px-4 md:px-6 py-2.5 rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-lg flex items-center gap-2">
+                class="bg-primary text-white font-semibold px-4 md:px-6 py-2.5 rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-lg flex items-center gap-2">
                 <CirclePlus />
                 Create Quotation Invoice
             </button>
@@ -47,10 +47,10 @@
                             <span v-if="errors.companyName" class="error-text">{{ errors.companyName }}</span>
                         </div>
                         <div class="form-group">
-                            <label>Kind Attention To <span class="required">*</span></label>
-                            <input type="text" v-model="formData.attentionTo" placeholder="Enter contact person name"
-                                :class="{ 'error-input': errors.attentionTo }">
-                            <span v-if="errors.attentionTo" class="error-text">{{ errors.attentionTo }}</span>
+                            <label>Contact Person <span class="required">*</span></label>
+                            <input type="text" v-model="formData.contactPerson" placeholder="Enter contact person name"
+                                :class="{ 'error-input': errors.contactPerson }">
+                            <span v-if="errors.contactPerson" class="error-text">{{ errors.contactPerson }}</span>
                         </div>
                     </div>
 
@@ -310,7 +310,7 @@
                 </div>
 
                 <div class="client-info">
-                    <h4>Kind Attention: {{ formData.attentionTo || 'N/A' }}</h4>
+                    <h4>Kind Attention: {{ formData.contactPerson || 'N/A' }}</h4>
                     <p><strong>Company:</strong> {{ formData.companyName || 'N/A' }}</p>
                     <p><strong>Phone Number:</strong> {{ formData.phone || 'N/A' }}</p>
                     <p><strong>Email:</strong> {{ formData.email || 'N/A' }}</p>
@@ -432,7 +432,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, toRaw } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
@@ -482,7 +482,7 @@ const isSharing = ref({
 
 const formData = ref({
     companyName: '',
-    attentionTo: '',
+    contactPerson: '',
     phone: '',
     email: '',
     address: '',
@@ -518,7 +518,7 @@ const closeShareModal = () => {
 const resetForm = () => {
     formData.value = {
         companyName: '',
-        attentionTo: '',
+        contactPerson: '',
         phone: '',
         email: '',
         address: '',
@@ -556,8 +556,8 @@ const validateForm = () => {
         isValid = false;
     }
 
-    if (!formData.value.attentionTo.trim()) {
-        errors.value.attentionTo = 'Contact person name is required';
+    if (!formData.value.contactPerson.trim()) {
+        errors.value.contactPerson = 'Contact person name is required';
         isValid = false;
     }
 
@@ -802,6 +802,7 @@ const generatePDF = async () => {
     }
 };
 
+
 const downloadPDF = () => {
     if (!generatedPdfBlob.value) {
         toast.error('No PDF available to download');
@@ -839,7 +840,7 @@ const shareOnWhatsApp = async () => {
         const formDataToSend = new FormData();
         formDataToSend.append('pdf', generatedPdfBlob.value, generatedFileName.value);
         formDataToSend.append('companyName', formData.value.companyName);
-        formDataToSend.append('attentionTo', formData.value.attentionTo);
+        formDataToSend.append('contactPerson', formData.value.contactPerson);
         formDataToSend.append('phone', formData.value.phone);
         formDataToSend.append('email', formData.value.email || '');
         formDataToSend.append('totalAmount', calculateTotal().toString());
@@ -889,7 +890,7 @@ const shareViaEmail = async () => {
         const formDataToSend = new FormData();
         formDataToSend.append('pdf', generatedPdfBlob.value, generatedFileName.value);
         formDataToSend.append('companyName', formData.value.companyName);
-        formDataToSend.append('attentionTo', formData.value.attentionTo);
+        formDataToSend.append('contactPerson', formData.value.contactPerson);
         formDataToSend.append('phone', formData.value.phone);
         formDataToSend.append('email', formData.value.email);
         formDataToSend.append('totalAmount', calculateTotal().toString());
@@ -923,11 +924,6 @@ const shareViaEmail = async () => {
     }
 };
 
-onMounted(() => {
-    quotationNumber.value = generateQuotationNumber();
-    currentDate.value = getCurrentDate();
-    validUntilDate.value = getValidUntilDate();
-});
 </script>
 
 <style scoped>
