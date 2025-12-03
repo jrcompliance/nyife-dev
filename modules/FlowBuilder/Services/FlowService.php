@@ -3,241 +3,208 @@
 namespace Modules\FlowBuilder\Services;
 
 use App\Models\Setting;
+use Illuminate\Support\Facades\Log;
 use Modules\FlowBuilder\Models\Flow;
 use Modules\FlowBuilder\Models\FlowMedia;
 use Modules\FlowBuilder\Models\FlowUserData;
 use Modules\FlowBuilder\Resources\FlowResource;
 use Modules\FlowBuilder\Validators\FlowValidator;
-use Illuminate\Support\Facades\Log;
 
 class FlowService
 {
-  public function getRows(object $request)
+    public function getRows(object $request)
     {
+        Log::info('[FlowService] Fetching flow rows', [
+            'organization_id' => session()->get('current_organization'),
+            'search' => $request->query('search')
+        ]);
+
         $organizationId = session()->get('current_organization');
         $model = new Flow;
         $searchTerm = $request->query('search');
-        
-
         $flows = $model->listAll($organizationId, $searchTerm);
-        
 
         $totalFlows = Flow::where('organization_id', $organizationId)->count();
         $activeFlows = Flow::where('organization_id', $organizationId)->where('status', 'active')->count();
         $inactiveFlows = Flow::where('organization_id', $organizationId)->where('status', 'inactive')->count();
         $totalRuns = Flow::where('organization_id', $organizationId)->withCount('flowLogs')->get()->sum('flow_logs_count');
-        $analytics = [
+
+        Log::info('[FlowService] Analytics generated', [
             'totalFlows' => $totalFlows,
             'activeFlows' => $activeFlows,
             'inactiveFlows' => $inactiveFlows,
-            'totalRuns' => $totalRuns,
-        ];
+            'totalRuns' => $totalRuns
+        ]);
+
         return [
             'flows' => FlowResource::collection($flows),
-            $analytics
+            compact('totalFlows', 'activeFlows', 'inactiveFlows', 'totalRuns')
         ];
     }
 
-
-    /**
-     * Create a new flow.
-     *
-     * @param array $data
-     * @return Flow
-     */
     public function createFlow(array $data): Flow
     {
+        Log::info('[FlowService] Creating flow', $data);
+
         $organizationId = session()->get('current_organization');
 
-        return Flow::create([
+        $flow = Flow::create([
             'organization_id' => $organizationId,
             'name' => $data['name'],
             'description' => $data['description'],
             'status' => 'inactive',
         ]);
+
+        Log::info('[FlowService] Flow created', ['flow_id' => $flow->id]);
+
+        return $flow;
     }
 
-    /**
-     * Update an existing flow.
-     *
-     * @param string $uuid
-     * @param array $data
-     * @return Flow
-     */
-public function updateFlow($uuid, array $data, $publish)
-{
-    // Log::info('[FlowService] updateFlow START', [
-    //     'uuid' => $uuid,
-    //     'incoming_data' => $data,
-    //     'publish_flag' => $publish,
-    // ]);
-
-    $validator = new FlowValidator();
-    
-    // Log::info('[FlowService] Fetching Flow from DB', ['uuid' => $uuid]);
-    $flow = Flow::where('uuid', $uuid)->firstOrFail();
-    
-    // Log::info('[FlowService] Flow fetched', [
-    //     'id' => $flow->id,
-    //     'current_status' => $flow->status
-    // ]);
-
-    if (!empty($flow->metadata)) {
-        $metadataArray = json_decode($flow->metadata, true);
-        
-        // Log::info('[FlowService] Decoded metadata', [
-        //     'metadata' => $metadataArray,
-        //     'metadata_valid' => json_last_error() === JSON_ERROR_NONE
-        // ]);
-
-        $result = $validator->validateMessageNodes($metadataArray);
-
-        // Log::info('[FlowService] Message node validation result before initial update', [
-        //     'result' => $result
-        // ]);
-
-        if (is_array($result)) {
-            Log::warning('[FlowService] Validation failed — setting status inactive (before update)');
-            $data['status'] = 'inactive';
-        }
-    }
-
-    // Log::info('[FlowService] Running first update() call on Flow', ['update_data' => $data]);
-    $flow->update($data);
-
-    // Log::info('[FlowService] Re-fetching Flow after first update');
-    $flow = Flow::where('uuid', $uuid)->firstOrFail();
-
-    if (!empty($flow->metadata)) {
-        $metadataArray = json_decode($flow->metadata, true);
-
-        $data2['trigger'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.type', null);
-        $data2['keywords'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.keywords', null);
-
-        // Log::info('[FlowService] Trigger/Keywords extracted', $data2);
-
-        $result = $validator->validateMessageNodes($metadataArray);
-
-        // Log::info('[FlowService] Message node validation result after first update', [
-        //     'validation_result' => $result
-        // ]);
-
-        if (is_array($result)) {
-            Log::warning('[FlowService] Validation failed — setting status inactive (second update)');
-            $data2['status'] = 'inactive';
-        }
-
-        // Log::info('[FlowService] Running second update() call on Flow', ['update_data2' => $data2]);
-        $flow->update($data2);
-    }
-
-    if (isset($publish)) {
-        // Log::info('[FlowService] Publish flag detected', ['publish_flag' => $publish]);
+    public function updateFlow($uuid, array $data, $publish)
+    {
+        Log::info('[FlowService] Updating flow', ['uuid' => $uuid, 'publish' => $publish]);
 
         $validator = new FlowValidator();
-        $metadataArray = json_decode($flow->metadata, true);
-        $status = $publish == 1 ? 'active' : 'inactive';
+        $flow = Flow::where('uuid', $uuid)->firstOrFail();
 
-        if ($publish == 1) {
-            // Log::info('[FlowService] Validating before publishing...');
+        Log::info('[FlowService] Existing Metadata Validation');
+
+        if (isset($flow->metadata)) {
+            $metadataArray = json_decode($flow->metadata, true);
             $result = $validator->validateMessageNodes($metadataArray);
 
-            if (!is_array($result)) {
-                // Log::info('[FlowService] Validation passed — activating flow');
-                $flow->update(['status' => $status]);
+            if (is_array($result)) {
+                Log::warning('[FlowService] Validation failed. Forcing inactive.', $result);
+                $data['status'] = 'inactive';
+            }
+        }
 
-                // Log::info('[FlowService] Flow published successfully');
+        $flow->update($data);
+        Log::info('[FlowService] Flow updated partially.', $data);
+
+        $flow = Flow::where('uuid', $uuid)->firstOrFail();
+
+        if (isset($flow->metadata)) {
+            $metadataArray = json_decode($flow->metadata, true);
+            $data2['trigger'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.type', null);
+            $data2['keywords'] = \Arr::get($metadataArray, 'nodes.0.data.metadata.fields.keywords', null);
+
+            $result = $validator->validateMessageNodes($metadataArray);
+
+            if (is_array($result)) {
+                $data2['status'] = 'inactive';
+            }
+
+            $flow->update($data2);
+
+            Log::info('[FlowService] Metadata validated & updated', $data2);
+        }
+
+        if (isset($publish)) {
+            Log::info('[FlowService] Publishing Status Processing...');
+
+            $metadataArray = json_decode($flow->metadata, true);
+            $status = $publish == 1 ? 'active' : 'inactive';
+
+            if ($publish == 1) {
+                $result = $validator->validateMessageNodes($metadataArray);
+
+                if (!is_array($result)) {
+                    $flow->update(['status' => $status]);
+                    Log::info('[FlowService] Flow Published Successfully');
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => __('Flow saved & published successfully!'),
+                        'status' => 'active'
+                    ]);
+                } else {
+                    Log::warning('[FlowService] Publish Failed - Validation Errors Occurred', $result);
+
+                    return response()->json([
+                        'success' => false,
+                        'errors' => $result,
+                        'status' => 'inactive'
+                    ], 200);
+                }
+            } else {
+                $flow->update(['status' => $status]);
+                Log::info('[FlowService] Flow Unpublished Successfully');
+
                 return response()->json([
                     'success' => true,
-                    'message' => __('Flow saved & published successfully!'),
-                    'status' => 'active'
-                ]);
-            } else {
-                Log::warning('[FlowService] Publishing blocked — validation errors', [
-                    'errors' => $result
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'errors' => $result,
+                    'message' => __('Flow saved & unpublished successfully!'),
                     'status' => 'inactive'
                 ], 200);
             }
-        } else {
-            // Log::info('[FlowService] Setting flow status inactive (unpublish)');
-            $flow->update(['status' => $status]);
-
-            // Log::info('[FlowService] Flow unpublished successfully');
-            return response()->json([
-                'success' => true,
-                'message' => __('Flow saved & unpublished successfully!'),
-                'status' => 'inactive'
-            ], 200);
         }
+
+        Log::info('[FlowService] Flow Saved Successfully', ['uuid' => $uuid]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Flow saved successfully!'),
+            'status' => $flow->status,
+        ], 200);
     }
-
-    // Log::info('[FlowService] Final response returned', [
-    //     'final_status' => $flow->status
-    // ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => __('Flow saved successfully!'),
-        'status' => $flow->status,
-    ], 200);
-}
-
 
     public function duplicateFlow($uuid): void
     {
+        Log::info('[FlowService] Duplicating Flow', ['uuid' => $uuid]);
+
         $flow = Flow::where('uuid', $uuid)->first();
 
         if (!$flow) {
-            return; // Exit early if the flow doesn't exist
+            Log::error('[FlowService] Flow not found for duplication', ['uuid' => $uuid]);
+            return;
         }
 
-        // Get the base name without any existing (number) suffix
         $baseName = preg_replace('/\(\d+\)$/', '', trim($flow->name));
 
-        // Find existing duplicates
         $count = Flow::where('name', 'LIKE', "{$baseName} (%)")
             ->orWhere('name', $baseName)
             ->count();
 
-        // Set the new name with an incremented number
         $newName = $count ? "{$baseName} ({$count})" : "{$baseName} (1)";
 
-        // Duplicate the flow and assign the new name
         $duplicate = $flow->replicate(['uuid']);
         $duplicate->name = $newName;
         $duplicate->save();
+
+        Log::info('[FlowService] Flow duplicated successfully', [
+            'original_flow' => $flow->id,
+            'duplicate_flow' => $duplicate->id,
+        ]);
     }
 
     public function uploadMedia($request, $uuid, $stepId)
     {
+        Log::info('[FlowService] Uploading media for flow', ['uuid' => $uuid, 'stepId' => $stepId]);
+
         $flow = Flow::where('uuid', $uuid)->first();
+
         $fileName = $request->file('file')->getClientOriginalName();
         $fileContent = $request->file('file');
         $storage = Setting::where('key', 'storage_system')->first()->value;
 
-        // Get file extension or MIME type
-        $fileExtension = strtolower($fileContent->getClientOriginalExtension());
+        if ($storage === 'local') {
+            Log::info('[FlowService] Using Local Storage');
+        } else {
+            Log::info('[FlowService] Using S3 Storage');
+        }
+
         $fileMimeType = strtolower($fileContent->getMimeType());
 
-        if($storage === 'local'){
-            $location = 'local';
+        if ($storage === 'local') {
             $file = \Storage::disk('local')->put('public', $fileContent);
-            $mediaFilePath = $file;
-            $mediaUrl = rtrim(config('app.url'), '/') . '/media/' . ltrim($mediaFilePath, '/');
-        } else if($storage === 'aws') {
+            $mediaUrl = rtrim(config('app.url'), '/') . '/media/' . ltrim($file, '/');
+        } else {
             $organizationId = session()->get('current_organization');
-            $location = 'amazon';
-            $file = $request->file('file');
-            $filePath = 'uploads/media/received/'  . $organizationId . '/' . $fileName;
-            $uploadedFile = $file->store('uploads/media/sent/' . $organizationId, 's3');
-            $mediaFilePath = \Storage::disk('s3')->url($uploadedFile);
-            $mediaUrl = $mediaFilePath;
+            $uploadedFile = $fileContent->store('uploads/media/sent/' . $organizationId, 's3');
+            $mediaUrl = \Storage::disk('s3')->url($uploadedFile);
         }
+
+        Log::info('[FlowService] Media File Stored', ['path' => $mediaUrl]);
 
         $flowMedia = FlowMedia::create([
             'flow_id' => $flow->id,
@@ -251,70 +218,79 @@ public function updateFlow($uuid, array $data, $publish)
             ])
         ]);
 
+        Log::info('[FlowService] Media record saved', ['media_id' => $flowMedia->id]);
+
         return $flowMedia;
     }
 
-    /**
-     * Delete a flow and its related steps.
-     *
-     * @param Flow $flow
-     * @return void
-     */
     public function deleteFlow($uuid): void
     {
+        Log::info('[FlowService] Deleting flow', ['uuid' => $uuid]);
+
         $flow = Flow::where('uuid', $uuid)->first();
 
-        $flow->delete(); // Cascade will delete related steps
+        if (!$flow) {
+            Log::error('[FlowService] Flow not found for deletion', ['uuid' => $uuid]);
+            return;
+        }
+
+        $flow->delete();
+
+        Log::info('[FlowService] Flow deleted successfully', ['flow_id' => $flow->id]);
     }
 
     public function handleUserReply($contactId)
     {
-        // Get user progress or start at step 1
+        Log::info('[FlowService] Handling user reply', ['contact_id' => $contactId]);
+
         $userProgress = FlowUserData::firstOrCreate(
             ['contact_id' => $contactId],
             ['current_step' => 1]
         );
 
-        $currentStep = 1;
+        Log::info('[FlowService] User progress fetched', ['current_step' => $userProgress->current_step]);
 
-        $flow = Flow::where('flow_id', $userProgress->flow_id)->first();
+        $flow = Flow::find($userProgress->flow_id);
 
-        $nextStep = $this->getNextStep($currentStep, $flow->metadata);
+        if (!$flow) {
+            Log::error('[FlowService] Flow not found for reply handling', ['flow_id' => $userProgress->flow_id]);
+            return;
+        }
+
+        $nextStep = $this->getNextStep($userProgress->current_step, $flow->metadata);
 
         if ($nextStep) {
-            // Send message for the current step
-            $this->sendMessage($userId, $nextStep);
-    
-            // Update user progress
+            Log::info('[FlowService] Sending message for next step', $nextStep);
+
+            $this->sendMessage($contactId, $nextStep);
+
             $userProgress->incrementStep();
+        } else {
+            Log::info('[FlowService] No more steps available - flow completed.');
         }
-    }
-
-    private function checkSteps($metadata){
-
     }
 
     function getNextStep($currentNodeId, $metadata)
     {
+        Log::info('[FlowService] Calculating next step', ['current_node' => $currentNodeId]);
+
         $flowMetadata = json_decode($metadata, true);
         $nodes = $flowMetadata['nodes'];
         $edges = $flowMetadata['edges'];
 
-        // Find the edge where the source is the current node
         foreach ($edges as $edge) {
             if ($edge['source'] === $currentNodeId) {
-                $nextNodeId = $edge['target'];
-
-                // Find and return the next node details
+                Log::info('[FlowService] Edge found', $edge);
                 foreach ($nodes as $node) {
-                    if ($node['id'] === $nextNodeId) {
+                    if ($node['id'] === $edge['target']) {
+                        Log::info('[FlowService] Next step found', $node);
                         return $node;
                     }
                 }
             }
         }
 
-        // Return null if there are no more steps
+        Log::info('[FlowService] No next step - end of flow reached');
         return null;
     }
 }
