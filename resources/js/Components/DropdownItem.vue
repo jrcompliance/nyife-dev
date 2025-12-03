@@ -1,7 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue';
-import { Link, useForm } from "@inertiajs/vue3";
+import { MenuItem } from '@headlessui/vue';
+import { Link } from "@inertiajs/vue3";
 
 const props = defineProps({
     as: {

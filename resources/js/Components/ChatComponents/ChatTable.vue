@@ -382,13 +382,14 @@ export default {
 <!-- ========================================== NEW UI CODE ==================================== -->
 
 <script setup>
-import { ref } from 'vue';
 import debounce from 'lodash/debounce';
 import { Link, router } from "@inertiajs/vue3";
 import Pagination from '@/Components/Pagination.vue';
 import TicketStatusToggle from '@/Components/TicketStatusToggle.vue';
 import SortDirectionToggle from '@/Components/SortDirectionToggle.vue';
 import { User } from 'lucide-vue-next';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+
 
 const props = defineProps({
     rows: { type: Object, required: true },
@@ -479,6 +480,84 @@ const clearSearch = () => {
     params.value.search = null;
     runSearch();
 }
+// ////////////////////////////
+
+
+
+// keep in sync with your template ref
+const listRef = ref(null);
+
+// sessionStorage key generator (path + search) so each page keeps its own scroll
+const getStorageKey = () => `chat-list-scroll:${location.pathname}${location.search}`;
+
+// small debounce helper
+function debouncet(fn, wait = 150) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), wait);
+    };
+}
+
+// restore scrollTop from storage if present
+const restoreScroll = async () => {
+    const key = getStorageKey();
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return;
+
+    const saved = parseInt(raw, 10);
+    if (Number.isNaN(saved)) return;
+
+    // wait for Vue to render and layout to settle
+    await nextTick();
+    // use RAF to be extra safe if element is created async
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            if (listRef.value) listRef.value.scrollTop = saved;
+            else window.scrollTo(0, saved);
+        });
+    });
+};
+
+// save current scrollTop to sessionStorage
+const saveScroll = () => {
+    const key = getStorageKey();
+    const y = listRef.value ? Math.max(0, Math.floor(listRef.value.scrollTop)) : window.pageYOffset || 0;
+    try {
+        sessionStorage.setItem(key, String(y));
+    } catch (err) {
+        // ignore quota errors
+        console.warn('Could not save scroll position', err);
+    }
+};
+
+const debouncedSave = debouncet(saveScroll, 120);
+
+onMounted(() => {
+    // restore when component mounts
+    restoreScroll();
+
+    // listen to scroll events on the container
+    if (listRef.value) {
+        listRef.value.addEventListener('scroll', debouncedSave, { passive: true });
+    } else {
+        // fallback to window if container is missing
+        window.addEventListener('scroll', debouncedSave, { passive: true });
+    }
+
+    // save on page unload (reload/close)
+    window.addEventListener('beforeunload', saveScroll);
+});
+
+onBeforeUnmount(() => {
+    // cleanup
+    if (listRef.value) listRef.value.removeEventListener('scroll', debouncedSave);
+    window.removeEventListener('scroll', debouncedSave);
+    window.removeEventListener('beforeunload', saveScroll);
+    // final save
+    saveScroll();
+});
+
 </script>
 
 <script>
@@ -508,6 +587,7 @@ export default {
     }
 }
 </script>
+
 
 <template>
     <!-- Header -->
@@ -585,17 +665,16 @@ export default {
     </div>
 
     <!-- Chat List -->
-    <div class="flex-grow overflow-y-auto h-[calc(100vh-480px)]">
-        <Link :href="'/chats/' + contact.uuid + '?page=' + props.rows.meta.current_page"
+    <div ref="listRef" class="flex-grow overflow-y-auto h-[calc(100vh-480px)]">
+        <Link :href="'/chats/' + contact.uuid + '?page=' + props.rows.meta.current_page" :preserve-scroll="true"
             v-for="(contact, index) in rows.data" :key="index"
             class="block border-b border-gray-100 hover:bg-gray-50 transition-colors"
-            :class="contact.unread_messages > 0 ? 'bg-green-50/50' : ''">
+            :class="contact.unread_messages > 0 ? 'bg-green-50/50' : '', $page.url.startsWith(`/chats/${contact.uuid}`) ? 'bg-orange-100/50 hover:bg-orange-100/50 border-b-transparent border-l-4 border-orange-400' : ''">
         <div class="flex items-center gap-3 p-4">
             <!-- Avatar -->
             <div class="flex-shrink-0">
                 <img v-if="contact.avatar" class="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100"
                     :src="contact.avatar">
-
 
                 <div v-else-if="!!(contact.full_name?.trim()) && contact.full_name?.trim().length > 0"
                     class="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff5100] to-orange-400 flex items-center justify-center text-white font-semibold text-lg capitalize">
@@ -614,7 +693,7 @@ export default {
                     <h3 class="font-semibold text-gray-900 truncate">{{ (contact.full_name?.trim() ||
                         contact.full_name?.trim() || contact.phone?.trim() || "N/A") }}</h3>
                     <span class="text-xs text-gray-500 ml-2 flex-shrink-0">{{ formatTime(contact?.last_chat?.created_at)
-                        }}</span>
+                    }}</span>
                 </div>
 
                 <div v-if="contact?.last_chat?.deleted_at === null" class="flex items-center justify-between">

@@ -3,13 +3,8 @@
         <!-- Trigger Button -->
         <div class="flex justify-center">
             <button @click="openModal"
-                class="bg-primary hover:bg-primary/90 text-white font-semibold px-4 md:px-6 py-2.5 rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-lg flex items-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
+                class="bg-white hover:bg-primary border-2 border-primary  text-primary hover:text-white font-semibold px-4 md:px-6 py-2.5 rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-lg flex items-center gap-2">
+                <CirclePlus />
                 Create Quotation Invoice
             </button>
         </div>
@@ -308,6 +303,7 @@
                         <p>Delhi-110063, India</p>
                     </div>
                     <div class="quotation-info">
+                        <h3>QUOTATION #{{ quotationNumber }}</h3>
                         <p><strong>Date:</strong> {{ currentDate }}</p>
                         <p><strong>Valid Until:</strong> {{ validUntilDate }}</p>
                     </div>
@@ -345,26 +341,28 @@
                 </table>
 
                 <table class="summary-table">
-                    <tr>
-                        <td>SUBTOTAL:</td>
-                        <td>₹{{ formatCurrency(calculateSubtotal()) }}</td>
-                    </tr>
-                    <tr v-if="formData.discount > 0">
-                        <td>DISCOUNT ({{ formData.discount }}%):</td>
-                        <td>-₹{{ formatCurrency(calculateDiscount()) }}</td>
-                    </tr>
-                    <tr v-if="formData.discount > 0">
-                        <td>AMOUNT AFTER DISCOUNT:</td>
-                        <td>₹{{ formatCurrency(calculateAmountAfterDiscount()) }}</td>
-                    </tr>
-                    <tr>
-                        <td>GST 18%:</td>
-                        <td>₹{{ formatCurrency(calculateGST()) }}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td>TOTAL:</td>
-                        <td>₹{{ formatCurrency(calculateTotal()) }}</td>
-                    </tr>
+                    <thead>
+                        <tr>
+                            <td>SUBTOTAL:</td>
+                            <td>₹{{ formatCurrency(calculateSubtotal()) }}</td>
+                        </tr>
+                        <tr v-if="formData.discount > 0">
+                            <td>DISCOUNT ({{ formData.discount }}%):</td>
+                            <td>-₹{{ formatCurrency(calculateDiscount()) }}</td>
+                        </tr>
+                        <tr v-if="formData.discount > 0">
+                            <td>AMOUNT AFTER DISCOUNT:</td>
+                            <td>₹{{ formatCurrency(calculateAmountAfterDiscount()) }}</td>
+                        </tr>
+                        <tr>
+                            <td>GST 18%:</td>
+                            <td>₹{{ formatCurrency(calculateGST()) }}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>TOTAL:</td>
+                            <td>₹{{ formatCurrency(calculateTotal()) }}</td>
+                        </tr>
+                    </thead>
                 </table>
 
                 <div class="thank-you-note">
@@ -440,6 +438,7 @@ import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
 import FormPhoneInput from './FormPhoneInput.vue';
 import FormInput from './FormInput.vue';
+import { CirclePlus } from 'lucide-vue-next';
 
 // Compute active plans
 const activePlans = computed(() => {
@@ -497,6 +496,7 @@ const formData = ref({
 });
 
 const additionalItems = ref([]);
+const quotationNumber = ref('');
 const currentDate = ref('');
 const validUntilDate = ref('');
 
@@ -572,6 +572,12 @@ const validateForm = () => {
     }
 
     return isValid;
+};
+
+const generateQuotationNumber = () => {
+    const prefix = 'KA/';
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${randomNum}`;
 };
 
 const getCurrentDate = () => {
@@ -682,6 +688,7 @@ const getVisibleItems = () => {
 };
 
 const generatePDFBlob = async () => {
+    quotationNumber.value = generateQuotationNumber();
     currentDate.value = getCurrentDate();
     validUntilDate.value = getValidUntilDate();
 
@@ -753,7 +760,7 @@ const generatePDFBlob = async () => {
     }
 
     // Generate filename
-    const fileName = `Quotation_${formData.value.companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    const fileName = `Quotation_${quotationNumber.value.replace('/', '_')}_${formData.value.companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     generatedFileName.value = fileName;
 
     // Convert PDF to Blob
@@ -769,7 +776,7 @@ const generatePDF = async () => {
     isGenerating.value = true;
 
     try {
-        const { blob, pdf, fileName } = await generatePDFBlob();
+        const { blob /* pdf, fileName*/ } = await generatePDFBlob();
 
         // Store the blob for sharing
         generatedPdfBlob.value = blob;
@@ -917,6 +924,7 @@ const shareViaEmail = async () => {
 };
 
 onMounted(() => {
+    quotationNumber.value = generateQuotationNumber();
     currentDate.value = getCurrentDate();
     validUntilDate.value = getValidUntilDate();
 });
@@ -1317,9 +1325,8 @@ onMounted(() => {
 }
 
 .thank-you-note {
-    /* margin-bottom: 20px; */
     padding: 15px;
-    background: #ff51000a;
+    background: #ff51002d;
     border-left: 4px solid #ff5100;
 }
 
