@@ -134,13 +134,13 @@ const openModal = () => {
             </DropdownMenuItem>
             </Link>
 
-            <a v-if="props.user.role === 'user'" href="https://pinex.pinnacle.in/cm/#/login" target="_blank"
+            <!-- <a v-if="props.user.role === 'user'" href="https://pinex.pinnacle.in/cm/#/login" target="_blank"
               rel="noopener noreferrer">
               <DropdownMenuItem class="cursor-pointer">
                 <SquareArrowOutUpRight />
                 {{ $t('Login for SMS Account') }}
               </DropdownMenuItem>
-            </a>
+            </a> -->
 
           </DropdownMenuGroup>
           <DropdownMenuSeparator />

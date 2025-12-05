@@ -1050,7 +1050,7 @@ const closeModal = () => {
 
                         <!-- Header Variables -->
                         <div v-if="form.header.parameters.length > 0"
-                            class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            class="bg-white rounded-2xl shadow-sm border border-slate-200">
                             <button type="button" @click="toggleSection('header')"
                                 class="w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                 <div class="flex items-center space-x-3">
@@ -1107,7 +1107,7 @@ const closeModal = () => {
                                                     }}
                                                 </span>
                                                 <span v-else class="text-sm text-slate-400">{{ $t('No file chosen')
-                                                }}</span>
+                                                    }}</span>
                                             </div>
                                             <p class="text-xs text-slate-500 flex items-start space-x-2">
                                                 <span class="text-[#ff5100]">ℹ</span>
@@ -1136,7 +1136,7 @@ const closeModal = () => {
 
                         <!-- Body Variables -->
                         <div v-if="form.body.parameters.length > 0"
-                            class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            class="bg-white rounded-2xl shadow-sm border border-slate-200">
                             <button type="button" @click="toggleSection('body')"
                                 class="w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                 <div class="flex items-center space-x-3">
@@ -1182,7 +1182,7 @@ const closeModal = () => {
 
                         <!-- Button Variables -->
                         <div v-if="form.buttons.length > 0"
-                            class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            class="bg-white rounded-2xl shadow-sm border border-slate-200">
                             <button type="button" @click="toggleSection('buttons')"
                                 class="w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                 <div class="flex items-center space-x-3">
