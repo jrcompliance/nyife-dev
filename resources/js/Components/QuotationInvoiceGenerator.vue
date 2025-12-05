@@ -1,3 +1,4 @@
+<!-- This is the complete code for the quotation invoice generator -->
 <template>
     <div class="">
         <!-- Trigger Button -->
@@ -179,12 +180,7 @@
                             Cancel
                         </button>
                         <button class="btn btn-primary" @click="generatePDF" :disabled="isGenerating">
-                            <svg v-if="!isGenerating" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
+                            <FileText v-if="!isGenerating" />
                             <span v-if="isGenerating">Generating...</span>
                             <span v-else>Generate PDF</span>
                         </button>
@@ -432,13 +428,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, toRaw } from 'vue';
+import { ref, computed, toRaw } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
 import FormPhoneInput from './FormPhoneInput.vue';
 import FormInput from './FormInput.vue';
-import { CirclePlus } from 'lucide-vue-next';
+import { CirclePlus, FileText } from 'lucide-vue-next';
+import axios from 'axios';
 
 // Compute active plans
 const activePlans = computed(() => {
@@ -776,6 +773,50 @@ const generatePDF = async () => {
     isGenerating.value = true;
 
     try {
+
+        // const payload = {
+        //     company_name: formData.value.companyName,
+        //     contact_person: formData.value.contactPerson,
+        //     phone: formData.value.phone,
+        //     email: formData.value.email,
+        //     address: formData.value.address,
+        //     selected_plan_id: formData.value.selectedPlanId,
+        //     platform_charge_type: formData.value.platformChargeType,
+        //     platform_charge: formData.value.platformCharge,
+        //     wallet_recharge: formData.value.walletRecharge,
+        //     setup_fee: formData.value.setupFee,
+        //     customization_fee: formData.value.customizationFee,
+        //     additional_fee: additionalItems.value,
+        //     discount: formData.value.discount,
+        // }
+
+        // const res = await axios.post("http://localhost:3000/api/v1/invoices", {
+        //     body: {
+        //         "company_name": "Abc Company Pvt Ltd",
+        //         "contact_person": "Rohit Sharma",
+        //         "phone": "+91 98765 43210",
+        //         "email": "rohit.sharma@example.com",
+        //         "address": "D-221 Industrial Area\nNew Delhi - 110020",
+        //         "selected_plan_id": 1,
+        //         "platform_charge_type": "Monthly",
+        //         "platform_charge": 1000,
+        //         "wallet_recharge": 2000,
+        //         "setup_fee": 300,
+        //         "discount": 10,
+        //         "customization_fee": 250,
+        //         "additional_fee": [
+        //             {
+        //                 "description": "Support Fee",
+        //                 "amount": 500
+        //             }
+        //         ]
+        //     },
+        // });
+
+        // console.log(res);
+        // return;
+
+
         const { blob /* pdf, fileName*/ } = await generatePDFBlob();
 
         // Store the blob for sharing
@@ -801,7 +842,6 @@ const generatePDF = async () => {
         isGenerating.value = false;
     }
 };
-
 
 const downloadPDF = () => {
     if (!generatedPdfBlob.value) {
@@ -923,7 +963,6 @@ const shareViaEmail = async () => {
         isSharing.value.email = false;
     }
 };
-
 </script>
 
 <style scoped>

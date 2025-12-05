@@ -12,6 +12,7 @@ import {
     FileQuestion,
     Star,
     Settings2, type LucideIcon,
+    CreditCard,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -85,10 +86,15 @@ const data: { navMain: NavMainType[] } = {
             url: "/admin/users",
             icon: Users,
         },
+        // {
+        //     title: "Billing",
+        //     url: "/admin/payment-logs",
+        //     icon: ReceiptText,
+        // },
         {
-            title: "Billing",
+            title: "Invoices & Payments",
             url: "/admin/payment-logs",
-            icon: ReceiptText,
+            icon: CreditCard,
         },
         {
             title: "Support desk",
