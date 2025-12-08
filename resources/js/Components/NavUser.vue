@@ -5,7 +5,6 @@ import {
   CreditCard,
   LogOut,
   Settings,
-  SquareArrowOutUpRight,
   User,
 } from "lucide-vue-next"
 

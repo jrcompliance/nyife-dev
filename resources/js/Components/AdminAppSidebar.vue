@@ -12,6 +12,7 @@ import {
     FileQuestion,
     Star,
     Settings2, type LucideIcon,
+    CreditCard,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -85,10 +86,15 @@ const data: { navMain: NavMainType[] } = {
             url: "/admin/users",
             icon: Users,
         },
+        // {
+        //     title: "Billing",
+        //     url: "/admin/payment-logs",
+        //     icon: ReceiptText,
+        // },
         {
-            title: "Billing",
+            title: "Invoices & Payments",
             url: "/admin/payment-logs",
-            icon: ReceiptText,
+            icon: CreditCard,
         },
         {
             title: "Support desk",
@@ -145,7 +151,7 @@ const data: { navMain: NavMainType[] } = {
                     <SidebarMenuButton size="lg" as-child class="bg-black/5 hover:bg-black/10">
                         <Link href="/admin/dashboard"
                             class="flex items-center justify-start rounded-lg pl-4 cursor-pointer">
-                        <img :src="NyifeLogo" alt="Nyife Logo" class="h-full min-h-10" />
+                            <img :src="NyifeLogo" alt="Nyife Logo" class="h-full min-h-10" />
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

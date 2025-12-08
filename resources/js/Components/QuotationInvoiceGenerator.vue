@@ -1,3 +1,4 @@
+<!-- This is the complete code for the quotation invoice generator -->
 <template>
     <div class="">
         <!-- Trigger Button -->
@@ -179,12 +180,7 @@
                             Cancel
                         </button>
                         <button class="btn btn-primary" @click="generatePDF" :disabled="isGenerating">
-                            <svg v-if="!isGenerating" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
+                            <FileText v-if="!isGenerating" />
                             <span v-if="isGenerating">Generating...</span>
                             <span v-else>Generate PDF</span>
                         </button>
@@ -303,7 +299,7 @@
                         <p>Delhi-110063, India</p>
                     </div>
                     <div class="quotation-info">
-                        <h3>QUOTATION #{{ quotationNumber }}</h3>
+                        <h3>QUOTATION #{{ currentPdfData.quotation_number }}</h3>
                         <p><strong>Date:</strong> {{ currentDate }}</p>
                         <p><strong>Valid Until:</strong> {{ validUntilDate }}</p>
                     </div>
@@ -432,13 +428,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, toRaw } from 'vue';
+import { ref, computed } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
 import FormPhoneInput from './FormPhoneInput.vue';
 import FormInput from './FormInput.vue';
-import { CirclePlus } from 'lucide-vue-next';
+import { CirclePlus, FileText } from 'lucide-vue-next';
+import axios from 'axios';
 
 // Compute active plans
 const activePlans = computed(() => {
@@ -488,10 +485,10 @@ const formData = ref({
     address: '',
     selectedPlanId: '',
     platformChargeType: '',
-    platformCharge: '',
-    walletRecharge: '',
-    setupFee: '',
-    customizationFee: '',
+    platformCharge: 0,
+    walletRecharge: 0,
+    setupFee: 0,
+    customizationFee: 0,
     discount: 0
 });
 
@@ -499,6 +496,7 @@ const additionalItems = ref([]);
 const quotationNumber = ref('');
 const currentDate = ref('');
 const validUntilDate = ref('');
+const currentPdfData = ref(null);
 
 const openModal = () => {
     isModalOpen.value = true;
@@ -524,10 +522,10 @@ const resetForm = () => {
         address: '',
         selectedPlanId: '',
         platformChargeType: '',
-        platformCharge: '',
-        walletRecharge: '',
-        setupFee: '',
-        customizationFee: '',
+        platformCharge: 0,
+        walletRecharge: 0,
+        setupFee: 0,
+        customizationFee: 0,
         discount: 0
     };
     additionalItems.value = [];
@@ -598,7 +596,7 @@ const getValidUntilDate = () => {
 };
 
 const addAdditionalItem = () => {
-    additionalItems.value.push({ description: '', amount: '' });
+    additionalItems.value.push({ description: '', amount: 0 });
 };
 
 const removeAdditionalItem = (index) => {
@@ -776,32 +774,61 @@ const generatePDF = async () => {
     isGenerating.value = true;
 
     try {
-        const { blob /* pdf, fileName*/ } = await generatePDFBlob();
 
-        // Store the blob for sharing
-        generatedPdfBlob.value = blob;
+        const payload = {
+            company_name: formData.value.companyName,
+            contact_person: formData.value.contactPerson,
+            phone: formData.value.phone,
+            email: formData.value.email,
+            address: formData.value.address,
+            selected_plan_id: formData.value.selectedPlanId,
+            platform_charge_type: formData.value.platformChargeType,
+            platform_charge: formData.value.platformCharge,
+            wallet_recharge: formData.value.walletRecharge,
+            setup_fee: formData.value.setupFee,
+            customization_fee: formData.value.customizationFee,
+            additional_fee: additionalItems.value,
+            discount: formData.value.discount,
+            GST: 18
+        }
 
-        // Download PDF
-        // pdf.save(fileName);
+        const res = await axios.post("http://localhost:3000/api/v1/invoices", payload);
 
-        toast.success('Quotation generated successfully!');
+        console.log("res", res);
 
-        // Close the form modal
-        isModalOpen.value = false;
+        if (res?.data?.success) {
+            toast.success('Invoice created successfully.');
+            currentPdfData.value = res?.data;
+        }
 
-        // Show share options modal after a short delay
-        setTimeout(() => {
-            showShareOptions.value = true;
-        }, 300);
+        throw new Error(res?.data?.message || "Failed to create invoice");
+
+
+        // const { blob /* pdf, fileName*/ } = await generatePDFBlob();
+
+        // // Store the blob for sharing
+        // generatedPdfBlob.value = blob;
+
+        // // Download PDF
+        // // pdf.save(fileName);
+
+        // toast.success('Quotation generated successfully!');
+
+        // // Close the form modal
+        // isModalOpen.value = false;
+
+        // // Show share options modal after a short delay
+        // setTimeout(() => {
+        //     showShareOptions.value = true;
+        // }, 300);
 
     } catch (error) {
         console.error('Error generating PDF:', error);
-        toast.error('Error generating quotation. Please try again.');
+        toast.error(error.message || 'Error generating quotation. Please try again.');
     } finally {
         isGenerating.value = false;
     }
 };
-
 
 const downloadPDF = () => {
     if (!generatedPdfBlob.value) {
@@ -923,7 +950,6 @@ const shareViaEmail = async () => {
         isSharing.value.email = false;
     }
 };
-
 </script>
 
 <style scoped>
