@@ -1,8 +1,8 @@
 <template>
     <div class="space-y-6 mb-12">
-        <!-- Search Bar -->
         <div class="relative flex justify-between gap-4">
-            <div class="relative group w-full max-w-screen-sm">
+            <!-- Search Bar -->
+            <!-- <div class="relative group w-full max-w-screen-sm">
                 <div
                     class="absolute inset-0 bg-gradient-to-r from-[#ff5100] to-[#ff7733] rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300">
                 </div>
@@ -52,7 +52,7 @@
                         </svg>
                     </span>
                 </div>
-            </div>
+            </div> -->
 
             <div class="ml-auto">
                 <QuotationInvoiceGenerator />
@@ -93,23 +93,23 @@
 
                     <!-- Table Body -->
                     <tbody class="divide-y divide-primary/10">
-                        <tr v-for="(item, index) in rows.data" :key="index"
-                            class="hover:bg-orange-50/30 transition-all duration-200 group">
+                        <tr v-if="loading === false || invoiceData?.length > 0" v-for="(item) in invoiceData"
+                            :key="item.id" class="hover:bg-orange-50/30 transition-all duration-200 group">
 
                             <!-- Quotation Number -->
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="text-sm font-semibold text-gray-900">
-                                    {{ item.quotationNumber }}
+                                    {{ item.quotation_number }}
                                 </div>
-                                <div v-if="item.proformaNumber" class="text-xs text-gray-500 mt-1">
-                                    {{ item.proformaNumber }}
+                                <div v-if="item.proforma_number" class="text-xs text-gray-500 mt-1">
+                                    {{ item.proforma_number }}
                                 </div>
                             </td>
 
                             <!-- Company -->
                             <td class="px-6 py-5">
                                 <div class="text-sm font-medium text-gray-900">
-                                    {{ item.companyName }}
+                                    {{ item.company_name }}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
                                     {{ item.email }}
@@ -119,7 +119,7 @@
                             <!-- Contact Person -->
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
-                                    {{ item.contactPerson }}
+                                    {{ item.contact_person }}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
                                     {{ item.phone }}
@@ -129,10 +129,10 @@
                             <!-- Date -->
                             <td class="px-6 py-5 whitespace-nowrap">
                                 <div class="text-sm font-semibold text-gray-900">
-                                    {{ formatDate(item.quotationDate) }}
+                                    {{ item.quotation_date }}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
-                                    Valid: {{ formatDate(item.quotationValidUntilDate) }}
+                                    Valid: {{ item.quotation_valid_until_date }}
                                 </div>
                             </td>
 
@@ -142,7 +142,7 @@
                                     ₹{{ formatAmount(item.total) }}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1">
-                                    {{ item.platformChargeType }}
+                                    {{ item.platform_charge_type }}
                                 </div>
                             </td>
 
@@ -159,7 +159,7 @@
                             <!-- Actions - Custom Dropdown -->
                             <td class="px-6 py-5 whitespace-nowrap text-right">
                                 <div class="relative inline-block">
-                                    <button @click="toggleDropdown(index)"
+                                    <button @click="toggleDropdown(item.id)"
                                         class="inline-flex justify-center rounded-md text-sm font-medium text-black hover:bg-[#F6F7F9] hover:rounded-full p-2 transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                             viewBox="0 0 24 24">
@@ -175,7 +175,7 @@
                                         leave-active-class="transition ease-in duration-75"
                                         leave-from-class="transform opacity-100 scale-100"
                                         leave-to-class="transform opacity-0 scale-95">
-                                        <div v-if="openDropdownIndex === index"
+                                        <div v-if="openDropdownId === item.id"
                                             class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
                                             <div class="py-1">
                                                 <button v-for="action in getAvailableActions(item)" :key="action.key"
@@ -193,7 +193,7 @@
                         </tr>
 
                         <!-- Empty State -->
-                        <tr v-if="rows.data.length === 0">
+                        <tr v-if="invoiceData.length === 0">
                             <td colspan="7" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center justify-center space-y-4">
                                     <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
@@ -209,6 +209,27 @@
                                         </h3>
                                         <p class="text-sm text-gray-500">
                                             {{ $t('Your invoices and receipts will appear here') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="loading === true">
+                            <td colspan="7" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center space-y-4">
+                                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+                                            viewBox="0 0 24 24" class="text-gray-400">
+                                            <path fill="currentColor"
+                                                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-center">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                                            {{ $t('Loading...') }}
+                                        </h3>
+                                        <p class="text-sm text-gray-500">
+                                            {{ $t('Please wait while we fetch your invoices and receipts') }}
                                         </p>
                                     </div>
                                 </div>
@@ -459,31 +480,39 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import debounce from 'lodash/debounce';
-import { router } from '@inertiajs/vue3';
+// import debounce from 'lodash/debounce';
+// import { router } from '@inertiajs/vue3';
 import { FileText, FileCheck, Receipt, Plus } from 'lucide-vue-next';
 // import Pagination from '../Pagination.vue';
 import QuotationInvoiceGenerator from '../QuotationInvoiceGenerator.vue';
 import { toast } from 'vue3-toastify';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import axios from 'axios';
 
-const props = defineProps({
-    rows: {
-        type: Object,
-        required: true,
-    },
-    filters: {
-        type: Object
-    },
-    uuid: {
-        type: String,
+const invoiceData = ref([]);
+const loading = ref(false);
+
+const fetchInvoices = async () => {
+    loading.value = true;
+
+    try {
+        const response = await axios.get('http://localhost:3000/api/v1/invoices');
+
+        if (!response?.data?.success) {
+            throw new Error(response?.data?.message || 'Failed to fetch invoices');
+        }
+        invoiceData.value = response.data?.data?.invoices;
+    } catch (err) {
+        toast.error(err.message || 'Error fetching invoices');
+    } finally {
+        loading.value = false;
     }
-});
+};
 
-const params = ref({
-    search: props.filters?.search || '',
-});
+// const params = ref({
+//     search: props.filters?.search || '',
+// });
 
 const isSharing = ref({
     whatsapp: false,
@@ -491,9 +520,9 @@ const isSharing = ref({
     downloading: false
 });
 
+// const isSearching = ref(false);
 const showShareOptions = ref(false);
-const isSearching = ref(false);
-const openDropdownIndex = ref(null);
+const openDropdownId = ref(null);
 const currentPDF = ref(null);
 const generateCurrentProformaPDF = ref(null);
 const pdfTemplate = ref(null);
@@ -513,22 +542,29 @@ const actionConfig = {
         label: 'Generate & Share Proforma',
         icon: Plus,
         colorClass: 'text-green-600',
-        condition: (item) => !item.proformaInvoice,
+        condition: (item) => !item.proforma_invoice,
     },
     shareProforma: {
         key: 'shareProforma',
         label: 'Share Proforma',
         icon: FileCheck,
         colorClass: 'text-purple-600',
-        condition: (item) => item.proformaInvoice,
+        condition: (item) => item.proforma_invoice,
     },
     generateReceipt: {
         key: 'generateReceipt',
+        label: 'Generate & Share Payment Receipt',
+        icon: Plus,
+        colorClass: 'text-orange-600',
+        condition: (item) => item.payment_receipt && !item.payment_receipt_pdf_url,
+    },
+    shareReceipt: {
+        key: 'shareReceipt',
         label: 'Share Payment Receipt',
         icon: Receipt,
         colorClass: 'text-orange-600',
-        condition: (item) => item.paymentReceipt,
-    },
+        condition: (item) => item.payment_receipt_number && item.payment_receipt_pdf_url,
+    }
 };
 
 const openShareModal = () => {
@@ -541,25 +577,13 @@ const closeShareModal = () => {
     generateCurrentProformaPDF.value = null;
 };
 
-const generateProformaNumber = () => {
-    const prefix = 'PI';
-    const timestamp = Date.now().toString().slice(-8);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${prefix}-${timestamp}-${random}`;
-};
-
-const getCurrentDate = () => {
-    const today = new Date();
-    return today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-};
-
 // Dropdown methods
-const toggleDropdown = (index) => {
-    openDropdownIndex.value = openDropdownIndex.value === index ? null : index;
+const toggleDropdown = (id) => {
+    openDropdownId.value = openDropdownId.value === id ? null : id;
 };
 
 const closeDropdown = () => {
-    openDropdownIndex.value = null;
+    openDropdownId.value = null;
 };
 
 // Close dropdown when clicking outside
@@ -577,6 +601,10 @@ const handleClickOutside = (event) => {
         closeDropdown();
     }
 };
+
+onMounted(() => {
+    fetchInvoices();
+});
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
@@ -605,6 +633,9 @@ const handleAction = (actionKey, item) => {
             break;
         case 'generateReceipt':
             generateReceipt(item);
+            break;
+        case 'shareReceipt':
+            shareReceipt(item);
             break;
     }
 };
@@ -798,7 +829,7 @@ const shareOnWhatsApp = async () => {
             body: JSON.stringify({
                 phone: currentPDF.value.phone,
                 template: {
-                    name: "quotation_invoice",
+                    name: templateName,
                     language: { code: "en" },
                     components: [
                         {
@@ -885,94 +916,139 @@ const shareViaEmail = async () => {
 // Action handlers
 const shareQuotation = (item) => {
     currentPDF.value = {
-        contactPerson: item.contactPerson,
-        companyName: item.companyName,
+        contactPerson: item.contact_person,
+        companyName: item.company_name,
         phone: item.phone,
         email: item.email,
-        pdf: item.quotationInvoicePdfUrl,
-        pdfName: item.quotationNumber + '.pdf'
+        pdf: item.quotation_invoice_pdf_url,
+        templateName: "quotation_invoice",
+        pdfName: `Quotation_${item.quotation_number.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
     };
     openShareModal();
 };
 
 const generateProforma = async (item) => {
-    const tId = toast.loading('Generating proforma invoice...');
-    generateCurrentProformaPDF.value = item;
-    generateCurrentProformaPDF.value.proformaNumber = generateProformaNumber();
-    generateCurrentProformaPDF.value.proformaDate = getCurrentDate();
+    try {
+        const tId = toast.loading('Generating proforma invoice...');
 
-    const { blob, fileName } = await generatePDFBlob();
+        const res = await axios.put(`http://localhost:3000/api/v1/invoices/generate-proforma/${item.id}`);
 
-    currentPDF.value = {
-        contactPerson: item.contactPerson,
-        companyName: item.companyName,
-        phone: item.phone,
-        email: item.email,
-        pdf: URL.createObjectURL(blob),
-        pdfName: fileName
-    };
+        if (!res?.data?.success) {
+            throw new Error(res?.data?.message || 'Failed to generate proforma invoice');
+        }
 
-    openShareModal();
-    toast.remove(tId);
-    toast.success('Proforma invoice generated successfully!');
+        generateCurrentProformaPDF.value = res.data?.data;
+
+        const { blob, fileName } = await generatePDFBlob();
+
+        // Store the blob for sharing --- THIS IS PENDING
+
+        currentPDF.value = {
+            contactPerson: generateCurrentProformaPDF.value.contact_person,
+            companyName: generateCurrentProformaPDF.value.company_name,
+            phone: generateCurrentProformaPDF.value.phone,
+            email: generateCurrentProformaPDF.value.email,
+            templateName: "proforma_invoice",
+            pdf: generateCurrentProformaPDF.value.proforma_invoice_pdf_url,
+            pdfName: fileName
+        };
+
+        openShareModal();
+        toast.remove(tId);
+        toast.success('Proforma invoice generated successfully!');
+    } catch (error) {
+        toast.error(error.message || 'Error generating proforma invoice. Please try again.');
+    }
 };
 
 const shareProforma = (item) => {
     currentPDF.value = {
-        contactPerson: item.contactPerson,
-        companyName: item.companyName,
+        contactPerson: item.contact_person,
+        companyName: item.company_name,
         phone: item.phone,
         email: item.email,
-        pdf: item.proformaInvoicePdfUrl,
-        pdfName: item.proformaNumber + '.pdf'
+        templateName: "proforma_invoice",
+        pdf: item.proforma_invoice_pdf_url,
+        pdfName: `Proforma_${item.proforma_number.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
     };
     openShareModal();
 };
 
-const generateReceipt = (item) => {
-    console.log('Generate payment receipt:', item.paymentReceiptNumber);
-    // Implement generate logic
+const generateReceipt = async (item) => {
+    try {
+        const tId = toast.loading('Generating  payment receipt...');
+
+        generateCurrentPaymentReceiptPDF.value = item;
+
+        const { blob, fileName } = await generatePDFBlob();
+
+        // Store the blob for sharing --- THIS IS PENDING
+
+        currentPDF.value = {
+            contactPerson: generateCurrentPaymentReceiptPDF.value.contact_person,
+            companyName: generateCurrentPaymentReceiptPDF.value.company_name,
+            phone: generateCurrentPaymentReceiptPDF.value.phone,
+            email: generateCurrentPaymentReceiptPDF.value.email,
+            templateName: "payment_receipt",
+            pdf: generateCurrentPaymentReceiptPDF.value.proforma_invoice_pdf_url,
+            pdfName: fileName
+        };
+
+        openShareModal();
+        toast.remove(tId);
+        toast.success('Payment receipt generated successfully!');
+    } catch (error) {
+        toast.error(error.message || 'Error generating payment receipt. Please try again.');
+    }
+};
+
+const shareReceipt = (item) => {
+    currentPDF.value = {
+        contactPerson: item.contact_person,
+        companyName: item.company_name,
+        phone: item.phone,
+        email: item.email,
+        templateName: "payment_receipt",
+        pdf: item.payment_receipt_pdf_url,
+        pdfName: `PaymentReceipt_${item.payment_receipt_number.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+    };
+    openShareModal();
 };
 
 // Status helpers
 const getStatusText = (item) => {
-    if (item.paymentReceipt) return 'Paid';
-    if (item.proformaInvoice) return 'Proforma Issued';
+    if (item.payment_receipt) return 'Paid';
+    if (item.proforma_invoice) return 'Proforma Issued';
     return 'Quotation Issued';
 };
 
 const getStatusBadgeClass = (item) => {
-    if (item.paymentReceipt) {
+    if (item.payment_receipt) {
         return 'bg-green-100 text-green-800 border border-green-200';
     }
-    if (item.proformaInvoice) {
+    if (item.proforma_invoice) {
         return 'bg-purple-100 text-purple-800 border border-purple-200';
     }
     return 'bg-blue-100 text-blue-800 border border-blue-200';
 };
 
 // Utility functions
-const clearSearch = () => {
-    params.value.search = null;
-    runSearch();
-};
+// const clearSearch = () => {
+//     params.value.search = null;
+//     runSearch();
+// };
 
-const search = debounce(() => {
-    isSearching.value = true;
-    runSearch();
-}, 1000);
+// const search = debounce(() => {
+//     isSearching.value = true;
+//     runSearch();
+// }, 1000);
 
-const runSearch = () => {
-    router.visit(window.location.pathname, {
-        method: 'get',
-        data: params.value,
-    });
-};
-
-const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-};
+// const runSearch = () => {
+//     router.visit(window.location.pathname, {
+//         method: 'get',
+//         data: params.value,
+//     });
+// };
 
 const formatAmount = (amount) => {
     return new Intl.NumberFormat('en-IN', {

@@ -1,4 +1,3 @@
-<!-- This is the complete code for the quotation invoice generator -->
 <template>
     <div class="">
         <!-- Trigger Button -->
@@ -288,7 +287,7 @@
         </div>
 
         <!-- PDF Template (Hidden) -->
-        <div ref="pdfTemplate" class="pdf-template">
+        <div v-if="currentPdfData" ref="pdfTemplate" class="pdf-template">
             <div class="pdf-content relative pb-8">
                 <div class="pdf-header">
                     <div class="company-info">
@@ -300,17 +299,17 @@
                     </div>
                     <div class="quotation-info">
                         <h3>QUOTATION #{{ currentPdfData.quotation_number }}</h3>
-                        <p><strong>Date:</strong> {{ currentDate }}</p>
-                        <p><strong>Valid Until:</strong> {{ validUntilDate }}</p>
+                        <p><strong>Date:</strong> {{ currentPdfData.quotation_date }}</p>
+                        <p><strong>Valid Until:</strong> {{ currentPdfData.quotation_valid_until_date }}</p>
                     </div>
                 </div>
 
                 <div class="client-info">
-                    <h4>Kind Attention: {{ formData.contactPerson || 'N/A' }}</h4>
-                    <p><strong>Company:</strong> {{ formData.companyName || 'N/A' }}</p>
-                    <p><strong>Phone Number:</strong> {{ formData.phone || 'N/A' }}</p>
-                    <p><strong>Email:</strong> {{ formData.email || 'N/A' }}</p>
-                    <p><strong>Address:</strong> {{ formData.address || 'N/A' }}</p>
+                    <h4>Kind Attention: {{ currentPdfData.contact_person || 'N/A' }}</h4>
+                    <p><strong>Company:</strong> {{ currentPdfData.company_name || 'N/A' }}</p>
+                    <p><strong>Phone Number:</strong> {{ currentPdfData.phone || 'N/A' }}</p>
+                    <p><strong>Email:</strong> {{ currentPdfData.email || 'N/A' }}</p>
+                    <p><strong>Address:</strong> {{ currentPdfData.address || 'N/A' }}</p>
                 </div>
 
                 <table class="items-table">
@@ -322,14 +321,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in getVisibleItems()" :key="index">
+                        <tr v-for="(item, index) in getVisibleItems(currentPdfData, currentPdfData.additional_fee)"
+                            :key="index">
                             <td>{{ index + 1 }}</td>
                             <td>{{ item.description }}</td>
                             <td style="text-align: right;">{{ formatCurrency(item.amount) }}</td>
                         </tr>
 
-                        <div v-if="((formData.discount > 0 ? 2 : 4) - (getVisibleItems()?.length || 0)) > 0"
-                            v-for="index in (formData.discount > 0 ? 2 : 4) - (getVisibleItems()?.length || 0)"
+                        <div v-if="((formData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)) > 0"
+                            v-for="index in (formData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)"
                             :key="index" class="h-7 w-full">
                         </div>
 
@@ -340,23 +340,23 @@
                     <thead>
                         <tr>
                             <td>SUBTOTAL:</td>
-                            <td>₹{{ formatCurrency(calculateSubtotal()) }}</td>
+                            <td>₹{{ currentPdfData.sub_total }}</td>
                         </tr>
-                        <tr v-if="formData.discount > 0">
-                            <td>DISCOUNT ({{ formData.discount }}%):</td>
-                            <td>-₹{{ formatCurrency(calculateDiscount()) }}</td>
+                        <tr v-if="currentPdfData.discount > 0">
+                            <td>DISCOUNT ({{ currentPdfData.discount }}%):</td>
+                            <td>-₹{{ currentPdfData.discount_amount }}</td>
                         </tr>
                         <tr v-if="formData.discount > 0">
                             <td>AMOUNT AFTER DISCOUNT:</td>
-                            <td>₹{{ formatCurrency(calculateAmountAfterDiscount()) }}</td>
+                            <td>₹{{ currentPdfData.amount_after_discount }}</td>
                         </tr>
                         <tr>
                             <td>GST 18%:</td>
-                            <td>₹{{ formatCurrency(calculateGST()) }}</td>
+                            <td>₹{{ currentPdfData.GST_amount }}</td>
                         </tr>
                         <tr class="total-row">
                             <td>TOTAL:</td>
-                            <td>₹{{ formatCurrency(calculateTotal()) }}</td>
+                            <td>₹{{ currentPdfData.total }}</td>
                         </tr>
                     </thead>
                 </table>
@@ -493,9 +493,6 @@ const formData = ref({
 });
 
 const additionalItems = ref([]);
-const quotationNumber = ref('');
-const currentDate = ref('');
-const validUntilDate = ref('');
 const currentPdfData = ref(null);
 
 const openModal = () => {
@@ -572,29 +569,6 @@ const validateForm = () => {
     return isValid;
 };
 
-const generateQuotationNumber = () => {
-    const prefix = 'KA/';
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}${randomNum}`;
-};
-
-const getCurrentDate = () => {
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    return `${day}/${month}/${year}`;
-};
-
-const getValidUntilDate = () => {
-    const today = new Date();
-    today.setDate(today.getDate() + 30);
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    return `${day}/${month}/${year}`;
-};
-
 const addAdditionalItem = () => {
     additionalItems.value.push({ description: '', amount: 0 });
 };
@@ -642,38 +616,38 @@ const calculateTotal = () => {
     return calculateAmountAfterDiscount() + calculateGST();
 };
 
-const getVisibleItems = () => {
+const getVisibleItems = (Data, additionalData) => {
     const items = [];
 
-    if (parseFloat(formData.value.platformCharge) > 0) {
+    if (parseFloat(Data.platform_charge) > 0) {
         items.push({
-            description: `Platform Charge (${formData.value.platformChargeType})`,
-            amount: parseFloat(formData.value.platformCharge)
+            description: `Platform Charge (${Data.platform_charge_type})`,
+            amount: parseFloat(Data.platform_charge)
         });
     }
 
-    if (parseFloat(formData.value.walletRecharge) > 0) {
+    if (parseFloat(Data.wallet_recharge) > 0) {
         items.push({
             description: 'Wallet Recharge',
-            amount: parseFloat(formData.value.walletRecharge)
+            amount: parseFloat(Data.wallet_recharge)
         });
     }
 
-    if (parseFloat(formData.value.setupFee) > 0) {
+    if (parseFloat(Data.setup_fee) > 0) {
         items.push({
             description: 'Setup Fee',
-            amount: parseFloat(formData.value.setupFee)
+            amount: parseFloat(Data.setup_fee)
         });
     }
 
-    if (parseFloat(formData.value.customizationFee) > 0) {
+    if (parseFloat(Data.customization_fee) > 0) {
         items.push({
             description: 'Customization Fee',
-            amount: parseFloat(formData.value.customizationFee)
+            amount: parseFloat(Data.customization_fee)
         });
     }
 
-    additionalItems.value.forEach(item => {
+    additionalData.forEach(item => {
         if (item.description && parseFloat(item.amount) > 0) {
             items.push({
                 description: item.description,
@@ -686,9 +660,6 @@ const getVisibleItems = () => {
 };
 
 const generatePDFBlob = async () => {
-    quotationNumber.value = generateQuotationNumber();
-    currentDate.value = getCurrentDate();
-    validUntilDate.value = getValidUntilDate();
 
     await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -758,7 +729,7 @@ const generatePDFBlob = async () => {
     }
 
     // Generate filename
-    const fileName = `Quotation_${quotationNumber.value.replace('/', '_')}_${formData.value.companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    const fileName = `Quotation_${currentPdfData.value.quotation_number.replace('/', '_')}_${currentPdfData.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     generatedFileName.value = fileName;
 
     // Convert PDF to Blob
@@ -794,36 +765,45 @@ const generatePDF = async () => {
 
         const res = await axios.post("http://localhost:3000/api/v1/invoices", payload);
 
-        console.log("res", res);
 
-        if (res?.data?.success) {
-            toast.success('Invoice created successfully.');
-            currentPdfData.value = res?.data;
+        if (!res?.data?.success) {
+            throw new Error(res?.data?.message || "Failed to create invoice");
         }
 
-        throw new Error(res?.data?.message || "Failed to create invoice");
+        currentPdfData.value = res?.data?.data;
 
+        try {
+            const { blob } = await generatePDFBlob();
+            // Store the blob for sharing
+            generatedPdfBlob.value = blob;
 
-        // const { blob /* pdf, fileName*/ } = await generatePDFBlob();
+            const formData = new FormData();
+            formData.append("pdf_data", blob);
+            formData.append("pdf_type", "quotation");
+            formData.append("id", res?.data?.data.id);
 
-        // // Store the blob for sharing
-        // generatedPdfBlob.value = blob;
+            const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData);
 
-        // // Download PDF
-        // // pdf.save(fileName);
+            if (!uploadRes?.data?.success) {
+                throw new Error(uploadRes?.data?.message || "Failed to upload quotation PDF");
+            }
 
-        // toast.success('Quotation generated successfully!');
+            toast.success('Quotation invoice generated successfully!');
 
-        // // Close the form modal
-        // isModalOpen.value = false;
+            // Close the form modal
+            isModalOpen.value = false;
 
-        // // Show share options modal after a short delay
-        // setTimeout(() => {
-        //     showShareOptions.value = true;
-        // }, 300);
+            // Show share options modal after a short delay
+            setTimeout(() => {
+                showShareOptions.value = true;
+            }, 300);
+
+        } catch (error) {
+            toast.error(error.message || 'Error generating PDF. Please try again.');
+        }
+
 
     } catch (error) {
-        console.error('Error generating PDF:', error);
         toast.error(error.message || 'Error generating quotation. Please try again.');
     } finally {
         isGenerating.value = false;
@@ -849,7 +829,6 @@ const downloadPDF = () => {
 
         toast.success('PDF downloaded successfully!');
     } catch (error) {
-        console.error('Error downloading PDF:', error);
         toast.error('Error downloading PDF. Please try again.');
     }
 };
@@ -860,40 +839,60 @@ const shareOnWhatsApp = async () => {
         return;
     }
 
+    if (!currentPdfData.value.phone) {
+        toast.error('Phone number is required');
+        return;
+    }
+
     isSharing.value.whatsapp = true;
 
-    try {
-        // Create FormData
-        const formDataToSend = new FormData();
-        formDataToSend.append('pdf', generatedPdfBlob.value, generatedFileName.value);
-        formDataToSend.append('companyName', formData.value.companyName);
-        formDataToSend.append('contactPerson', formData.value.contactPerson);
-        formDataToSend.append('phone', formData.value.phone);
-        formDataToSend.append('email', formData.value.email || '');
-        formDataToSend.append('totalAmount', calculateTotal().toString());
 
-        // Call API - Replace with your actual endpoint
-        const response = await fetch('/api/share/whatsapp', {
-            method: 'POST',
-            body: formDataToSend,
+    try {
+        const url = URL.createObjectURL(generatedPdfBlob.value);
+        const fileName = `Quotation_${currentPdfData.value.quotation_number.replace('/', '_')}_${currentPdfData.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+        const response = await fetch("https://wa.nyife.chat/api/send/template", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer CWviyKoalNnI4AIlx1YdIXZrQXCnlTGX75XuetW8",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                phone: currentPdfData.value.phone,
+                template: {
+                    name: "quotation_invoice",
+                    language: { code: "en" },
+                    components: [
+                        {
+                            type: "header",
+                            parameters: [
+                                {
+                                    type: "document",
+                                    document: {
+                                        link: url,
+                                        filename: fileName || "invoice.pdf"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to share on WhatsApp');
+        const data = await response.json().catch(() => null);
+
+        if (data.data.success === false) {
+            throw new Error(data.data.message || "Failed to share on WhatsApp");
         }
 
-        const result = await response.json();
+        toast.success("Quotation shared on WhatsApp!");
 
-        toast.success('Quotation shared on WhatsApp successfully!');
-
-        // Optional: Close share modal after successful share
-        // setTimeout(() => {
-        //     closeShareModal();
-        // }, 1500);
+        setTimeout(() => {
+            closeShareModal();
+        }, 1500);
 
     } catch (error) {
-        console.error('Error sharing on WhatsApp:', error);
-        toast.error('Error sharing on WhatsApp. Please try again.');
+        toast.error(error.message || 'Error sharing on WhatsApp. Please try again.');
     } finally {
         isSharing.value.whatsapp = false;
     }
@@ -915,14 +914,6 @@ const shareViaEmail = async () => {
     try {
         // Create FormData
         const formDataToSend = new FormData();
-        formDataToSend.append('pdf', generatedPdfBlob.value, generatedFileName.value);
-        formDataToSend.append('companyName', formData.value.companyName);
-        formDataToSend.append('contactPerson', formData.value.contactPerson);
-        formDataToSend.append('phone', formData.value.phone);
-        formDataToSend.append('email', formData.value.email);
-        formDataToSend.append('totalAmount', calculateTotal().toString());
-        formDataToSend.append('validUntil', validUntilDate.value);
-        formDataToSend.append('date', currentDate.value);
 
         // Call API - Replace with your actual endpoint
         const response = await fetch('/api/share/email', {
@@ -944,12 +935,12 @@ const shareViaEmail = async () => {
         // }, 1500);-
 
     } catch (error) {
-        console.error('Error sending email:', error);
         toast.error('Error sending email. Please try again.');
     } finally {
         isSharing.value.email = false;
     }
 };
+
 </script>
 
 <style scoped>
