@@ -395,7 +395,7 @@
                     </tr>
                     <tr v-if="generateCurrentProformaPDF.discount > 0">
                         <td>DISCOUNT ({{ generateCurrentProformaPDF.sub_total / generateCurrentProformaPDF.discount
-                        }}%):</td>
+                            }}%):</td>
                         <td>-₹{{ generateCurrentProformaPDF.discount }}</td>
                     </tr>
                     <tr v-if="generateCurrentProformaPDF.discount > 0">
@@ -763,46 +763,18 @@ const generatePDFBlob = async () => {
 
 const downloadPDF = async () => {
     if (!currentPDF.value?.pdf) {
-        toast.error("No PDF available");
+        toast.error('No PDF available to download');
         return;
     }
 
-    let pdfUrl = currentPDF.value.pdf;
-    let objectUrl = null;
-
     try {
-        isSharing.value.downloading = true;
-
-        // 1) If URL is remote, fetch and convert to blob
-        if (/^https?:\/\//.test(pdfUrl)) {
-            const resp = await fetch(pdfUrl);
-            if (!resp.ok) throw new Error("Failed to fetch PDF");
-
-            const blob = await resp.blob();
-            objectUrl = URL.createObjectURL(blob);
-            pdfUrl = objectUrl;
-        }
-
-        // 2) Create link and download
-        const a = document.createElement("a");
-        a.href = pdfUrl;
-        a.download = currentPDF.value.pdfName || "invoice.pdf";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // 3) Revoke object URL after some time
-        if (objectUrl) {
-            setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-        }
-
-        toast.success("PDF downloaded!");
-    } catch (err) {
-        console.error(err);
-        toast.error("Download failed");
-    } finally {
-        isSharing.value.downloading = false;
-        closeShareModal();
+        const link = document.createElement('a');
+        link.href = currentPDF.value?.pdf;
+        link.download = currentPDF.value.pdfName || "invoice.pdf";
+        link.click();
+        toast.success('PDF downloaded successfully!');
+    } catch (error) {
+        toast.error('Error downloading PDF. Please try again.');
     }
 };
 

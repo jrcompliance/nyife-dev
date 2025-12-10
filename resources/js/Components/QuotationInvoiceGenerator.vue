@@ -468,8 +468,6 @@ const activePlans = computed(() => {
 const isModalOpen = ref(false);
 const isGenerating = ref(false);
 const showShareOptions = ref(false);
-const generatedPdfBlob = ref(null);
-const generatedFileName = ref('');
 const pdfTemplate = ref(null);
 const errors = ref({});
 const isSharing = ref({
@@ -527,8 +525,6 @@ const resetForm = () => {
     };
     additionalItems.value = [];
     errors.value = {};
-    generatedPdfBlob.value = null;
-    generatedFileName.value = '';
 };
 
 const updatePlatformCharge = () => {
@@ -730,7 +726,6 @@ const generatePDFBlob = async () => {
 
     // Generate filename
     const fileName = `Quotation_${currentPdfData.value.quotation_number.replace('/', '_')}_${currentPdfData.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    generatedFileName.value = fileName;
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output('blob');
@@ -773,22 +768,27 @@ const generatePDF = async () => {
         currentPdfData.value = res?.data?.data;
 
         try {
-            const { blob } = await generatePDFBlob();
-            // Store the blob for sharing
-            generatedPdfBlob.value = blob;
+            const { blob, fileName } = await generatePDFBlob();
 
             const formData = new FormData();
-            formData.append("pdf_data", blob);
+            formData.append("pdf_data", blob, fileName);
             formData.append("pdf_type", "quotation");
             formData.append("id", res?.data?.data.id);
 
-            const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData);
+            const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
 
             if (!uploadRes?.data?.success) {
                 throw new Error(uploadRes?.data?.message || "Failed to upload quotation PDF");
             }
 
             toast.success('Quotation invoice generated successfully!');
+            currentPdfData.value.quotation_invoice_pdf_url = uploadRes.data.data.file.url;
+            currentPdfData.value.quotation_invoice_pdf_download_url = uploadRes.data.data.file.downloadUrl;
+            currentPdfData.value.quotation_invoice_pdf_filename = uploadRes.data.data.file.filename;
 
             // Close the form modal
             isModalOpen.value = false;
@@ -810,23 +810,17 @@ const generatePDF = async () => {
     }
 };
 
-const downloadPDF = () => {
-    if (!generatedPdfBlob.value) {
+const downloadPDF = async () => {
+    if (!currentPdfData.value.quotation_invoice_pdf_download_url) {
         toast.error('No PDF available to download');
         return;
     }
 
     try {
-        // Create a download link
-        const url = URL.createObjectURL(generatedPdfBlob.value);
         const link = document.createElement('a');
-        link.href = url;
-        link.download = generatedFileName.value || 'Quotation.pdf';
-        document.body.appendChild(link);
+        link.href = currentPdfData.value.quotation_invoice_pdf_download_url;
+        link.download = currentPdfData.value.quotation_invoice_pdf_filename || "invoice.pdf";
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
         toast.success('PDF downloaded successfully!');
     } catch (error) {
         toast.error('Error downloading PDF. Please try again.');
@@ -834,7 +828,7 @@ const downloadPDF = () => {
 };
 
 const shareOnWhatsApp = async () => {
-    if (!generatedPdfBlob.value) {
+    if (!currentPdfData.value.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
@@ -848,8 +842,8 @@ const shareOnWhatsApp = async () => {
 
 
     try {
-        const url = URL.createObjectURL(generatedPdfBlob.value);
-        const fileName = `Quotation_${currentPdfData.value.quotation_number.replace('/', '_')}_${currentPdfData.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+        const url = currentPdfData.value.quotation_invoice_pdf_url;
+        const fileName = currentPdfData.value.quotation_invoice_pdf_filename;
         const response = await fetch("https://wa.nyife.chat/api/send/template", {
             method: "POST",
             headers: {
@@ -887,10 +881,6 @@ const shareOnWhatsApp = async () => {
 
         toast.success("Quotation shared on WhatsApp!");
 
-        setTimeout(() => {
-            closeShareModal();
-        }, 1500);
-
     } catch (error) {
         toast.error(error.message || 'Error sharing on WhatsApp. Please try again.');
     } finally {
@@ -899,7 +889,7 @@ const shareOnWhatsApp = async () => {
 };
 
 const shareViaEmail = async () => {
-    if (!generatedPdfBlob.value) {
+    if (!currentPdfData.value.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
@@ -912,27 +902,22 @@ const shareViaEmail = async () => {
     isSharing.value.email = true;
 
     try {
-        // Create FormData
-        const formDataToSend = new FormData();
 
-        // Call API - Replace with your actual endpoint
-        const response = await fetch('/api/share/email', {
-            method: 'POST',
-            body: formDataToSend,
-        });
+        const payload = {
+            customer_name: currentPdfData.value.contact_person,
+            invoice_type: 'Quotation',
+            invoice_number: currentPdfData.value.quotation_number,
+            invoice_url: currentPdfData.value.quotation_invoice_pdf_download_url,
+            email: currentPdfData.value.email
+        }
 
-        if (!response.ok) {
+        const response = await axios.post('http://localhost:3000/api/v1/email/share-invoice', payload);
+
+        if (!response?.data?.success) {
             throw new Error('Failed to send email');
         }
 
-        const result = await response.json();
-
-        toast.success(`Quotation sent to ${formData.value.email} successfully!`);
-
-        // Optional: Close share modal after successful share
-        // setTimeout(() => {
-        //     closeShareModal();
-        // }, 1500);-
+        toast.success(`Quotation sent to ${currentPdfData.value.email} successfully!`);
 
     } catch (error) {
         toast.error('Error sending email. Please try again.');
