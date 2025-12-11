@@ -20,7 +20,6 @@
                 </div>
             </div>
 
-            <!-- Pass data to table component -->
             <InvoiceAndPaymentTable />
         </div>
     </AppLayout>
@@ -30,11 +29,5 @@
 import { CreditCard } from "lucide-vue-next";
 import AppLayout from "./../Layout/App.vue";
 import InvoiceAndPaymentTable from '@/Components/Tables/InvoiceAndPaymentTable.vue';
-
-// const props = defineProps({
-//     title: String,
-//     rows: Object,
-//     filters: Object
-// });
 
 </script>

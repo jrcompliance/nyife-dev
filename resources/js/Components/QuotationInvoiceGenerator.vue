@@ -437,6 +437,10 @@ import FormInput from './FormInput.vue';
 import { CirclePlus, FileText } from 'lucide-vue-next';
 import axios from 'axios';
 
+const props = defineProps(['refresh']);
+const emit = defineEmits(['update:refresh']);
+
+
 // Compute active plans
 const activePlans = computed(() => {
     return [
@@ -807,8 +811,10 @@ const generatePDF = async () => {
         toast.error(error.message || 'Error generating quotation. Please try again.');
     } finally {
         isGenerating.value = false;
+        emit('update:refresh', !props.refresh);
     }
 };
+
 
 const downloadPDF = async () => {
     if (!currentPdfData.value.quotation_invoice_pdf_download_url) {
@@ -817,15 +823,31 @@ const downloadPDF = async () => {
     }
 
     try {
+        // Fetch the PDF as a blob
+        const response = await fetch(currentPdfData.value.quotation_invoice_pdf_download_url);
+        const blob = await response.blob();
+
+        // Create a blob URL
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create and trigger download
         const link = document.createElement('a');
-        link.href = currentPdfData.value.quotation_invoice_pdf_download_url;
+        link.href = blobUrl;
         link.download = currentPdfData.value.quotation_invoice_pdf_filename || "invoice.pdf";
+        document.body.appendChild(link);
         link.click();
+
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+
         toast.success('PDF downloaded successfully!');
     } catch (error) {
+        console.error('Download error:', error);
         toast.error('Error downloading PDF. Please try again.');
     }
 };
+
 
 const shareOnWhatsApp = async () => {
     if (!currentPdfData.value.quotation_invoice_pdf_url) {
