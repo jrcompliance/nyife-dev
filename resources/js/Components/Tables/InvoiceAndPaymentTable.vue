@@ -470,8 +470,7 @@
                                 <p>Quick & Secure Payment</p>
                             </div>
                             <div class="qr-code-wrapper">
-                                <img :src="generateCurrentProformaPDF.payment_url" alt="Payment QR Code"
-                                    class="qr-code">
+                                <img :src="generateCurrentProformaPDF.qrCode" alt="Payment QR Code" class="qr-code">
                             </div>
                         </div>
                     </div>
@@ -553,6 +552,8 @@ import { toast } from 'vue3-toastify';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import axios from 'axios';
+import QRCode from "qrcode";
+
 
 const invoiceData = ref([]);
 const loading = ref(false);
@@ -1002,7 +1003,17 @@ const generateProforma = async (item) => {
             throw new Error(res?.data?.message || 'Failed to generate proforma invoice');
         }
 
-        generateCurrentProformaPDF.value = res?.data?.data;
+        const qrCode = ref('');
+
+        const paymentUrl = res?.data?.data.payment_url;
+
+        qrCode.value = await QRCode.toDataURL(paymentUrl, { width: 180 });
+
+        generateCurrentProformaPDF.value = {
+            ...res?.data?.data,
+            qrCode: qrCode.value
+        };
+
 
         const { blob, fileName } = await generatePDFBlob();
 
@@ -1306,9 +1317,9 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 
 .qr-container {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 2px solid #ff5100;
+    border: 2px solid #ff5100cb;
     border-radius: 12px;
-    padding: 16px;
+    padding: 8px;
     text-align: center;
     box-shadow: 0 4px 12px rgba(255, 81, 0, 0.15);
 }
@@ -1327,8 +1338,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 }
 
 .qr-code-wrapper {
-    background: white;
-    padding: 12px;
+    background: black;
     border-radius: 8px;
     margin-bottom: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
