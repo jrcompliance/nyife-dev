@@ -179,12 +179,7 @@
                             Cancel
                         </button>
                         <button class="btn btn-primary" @click="generatePDF" :disabled="isGenerating">
-                            <svg v-if="!isGenerating" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
+                            <FileText v-if="!isGenerating" />
                             <span v-if="isGenerating">Generating...</span>
                             <span v-else>Generate PDF</span>
                         </button>
@@ -292,7 +287,7 @@
         </div>
 
         <!-- PDF Template (Hidden) -->
-        <div ref="pdfTemplate" class="pdf-template">
+        <div v-if="currentPdfData" ref="pdfTemplate" class="pdf-template">
             <div class="pdf-content relative pb-8">
                 <div class="pdf-header">
                     <div class="company-info">
@@ -303,18 +298,18 @@
                         <p>Delhi-110063, India</p>
                     </div>
                     <div class="quotation-info">
-                        <h3>QUOTATION #{{ quotationNumber }}</h3>
-                        <p><strong>Date:</strong> {{ currentDate }}</p>
-                        <p><strong>Valid Until:</strong> {{ validUntilDate }}</p>
+                        <h3>QUOTATION #{{ currentPdfData.quotation_number }}</h3>
+                        <p><strong>Date:</strong> {{ currentPdfData.quotation_date }}</p>
+                        <p><strong>Valid Until:</strong> {{ currentPdfData.quotation_valid_until_date }}</p>
                     </div>
                 </div>
 
                 <div class="client-info">
-                    <h4>Kind Attention: {{ formData.contactPerson || 'N/A' }}</h4>
-                    <p><strong>Company:</strong> {{ formData.companyName || 'N/A' }}</p>
-                    <p><strong>Phone Number:</strong> {{ formData.phone || 'N/A' }}</p>
-                    <p><strong>Email:</strong> {{ formData.email || 'N/A' }}</p>
-                    <p><strong>Address:</strong> {{ formData.address || 'N/A' }}</p>
+                    <h4>Kind Attention: {{ currentPdfData.contact_person || 'N/A' }}</h4>
+                    <p><strong>Company:</strong> {{ currentPdfData.company_name || 'N/A' }}</p>
+                    <p><strong>Phone Number:</strong> {{ currentPdfData.phone || 'N/A' }}</p>
+                    <p><strong>Email:</strong> {{ currentPdfData.email || 'N/A' }}</p>
+                    <p><strong>Address:</strong> {{ currentPdfData.address || 'N/A' }}</p>
                 </div>
 
                 <table class="items-table">
@@ -326,14 +321,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in getVisibleItems()" :key="index">
+                        <tr v-for="(item, index) in getVisibleItems(currentPdfData, currentPdfData.additional_fee)"
+                            :key="index">
                             <td>{{ index + 1 }}</td>
                             <td>{{ item.description }}</td>
                             <td style="text-align: right;">{{ formatCurrency(item.amount) }}</td>
                         </tr>
 
-                        <div v-if="((formData.discount > 0 ? 2 : 4) - (getVisibleItems()?.length || 0)) > 0"
-                            v-for="index in (formData.discount > 0 ? 2 : 4) - (getVisibleItems()?.length || 0)"
+                        <div v-if="((formData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)) > 0"
+                            v-for="index in (formData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)"
                             :key="index" class="h-7 w-full">
                         </div>
 
@@ -344,23 +340,23 @@
                     <thead>
                         <tr>
                             <td>SUBTOTAL:</td>
-                            <td>₹{{ formatCurrency(calculateSubtotal()) }}</td>
+                            <td>₹{{ currentPdfData.sub_total }}</td>
                         </tr>
-                        <tr v-if="formData.discount > 0">
-                            <td>DISCOUNT ({{ formData.discount }}%):</td>
-                            <td>-₹{{ formatCurrency(calculateDiscount()) }}</td>
+                        <tr v-if="currentPdfData.discount > 0">
+                            <td>DISCOUNT ({{ currentPdfData.discount }}%):</td>
+                            <td>-₹{{ currentPdfData.discount_amount }}</td>
                         </tr>
                         <tr v-if="formData.discount > 0">
                             <td>AMOUNT AFTER DISCOUNT:</td>
-                            <td>₹{{ formatCurrency(calculateAmountAfterDiscount()) }}</td>
+                            <td>₹{{ currentPdfData.amount_after_discount }}</td>
                         </tr>
                         <tr>
                             <td>GST 18%:</td>
-                            <td>₹{{ formatCurrency(calculateGST()) }}</td>
+                            <td>₹{{ currentPdfData.GST_amount }}</td>
                         </tr>
                         <tr class="total-row">
                             <td>TOTAL:</td>
-                            <td>₹{{ formatCurrency(calculateTotal()) }}</td>
+                            <td>₹{{ currentPdfData.total }}</td>
                         </tr>
                     </thead>
                 </table>
@@ -432,13 +428,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, toRaw } from 'vue';
+import { ref, computed } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
 import FormPhoneInput from './FormPhoneInput.vue';
 import FormInput from './FormInput.vue';
-import { CirclePlus } from 'lucide-vue-next';
+import { CirclePlus, FileText } from 'lucide-vue-next';
+import axios from 'axios';
+
+const props = defineProps(['refresh']);
+const emit = defineEmits(['update:refresh']);
+
 
 // Compute active plans
 const activePlans = computed(() => {
@@ -471,8 +472,6 @@ const activePlans = computed(() => {
 const isModalOpen = ref(false);
 const isGenerating = ref(false);
 const showShareOptions = ref(false);
-const generatedPdfBlob = ref(null);
-const generatedFileName = ref('');
 const pdfTemplate = ref(null);
 const errors = ref({});
 const isSharing = ref({
@@ -488,17 +487,15 @@ const formData = ref({
     address: '',
     selectedPlanId: '',
     platformChargeType: '',
-    platformCharge: '',
-    walletRecharge: '',
-    setupFee: '',
-    customizationFee: '',
+    platformCharge: 0,
+    walletRecharge: 0,
+    setupFee: 0,
+    customizationFee: 0,
     discount: 0
 });
 
 const additionalItems = ref([]);
-const quotationNumber = ref('');
-const currentDate = ref('');
-const validUntilDate = ref('');
+const currentPdfData = ref(null);
 
 const openModal = () => {
     isModalOpen.value = true;
@@ -524,16 +521,14 @@ const resetForm = () => {
         address: '',
         selectedPlanId: '',
         platformChargeType: '',
-        platformCharge: '',
-        walletRecharge: '',
-        setupFee: '',
-        customizationFee: '',
+        platformCharge: 0,
+        walletRecharge: 0,
+        setupFee: 0,
+        customizationFee: 0,
         discount: 0
     };
     additionalItems.value = [];
     errors.value = {};
-    generatedPdfBlob.value = null;
-    generatedFileName.value = '';
 };
 
 const updatePlatformCharge = () => {
@@ -574,31 +569,8 @@ const validateForm = () => {
     return isValid;
 };
 
-const generateQuotationNumber = () => {
-    const prefix = 'KA/';
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}${randomNum}`;
-};
-
-const getCurrentDate = () => {
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    return `${day}/${month}/${year}`;
-};
-
-const getValidUntilDate = () => {
-    const today = new Date();
-    today.setDate(today.getDate() + 30);
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    return `${day}/${month}/${year}`;
-};
-
 const addAdditionalItem = () => {
-    additionalItems.value.push({ description: '', amount: '' });
+    additionalItems.value.push({ description: '', amount: 0 });
 };
 
 const removeAdditionalItem = (index) => {
@@ -644,38 +616,38 @@ const calculateTotal = () => {
     return calculateAmountAfterDiscount() + calculateGST();
 };
 
-const getVisibleItems = () => {
+const getVisibleItems = (Data, additionalData) => {
     const items = [];
 
-    if (parseFloat(formData.value.platformCharge) > 0) {
+    if (parseFloat(Data.platform_charge) > 0) {
         items.push({
-            description: `Platform Charge (${formData.value.platformChargeType})`,
-            amount: parseFloat(formData.value.platformCharge)
+            description: `Platform Charge (${Data.platform_charge_type})`,
+            amount: parseFloat(Data.platform_charge)
         });
     }
 
-    if (parseFloat(formData.value.walletRecharge) > 0) {
+    if (parseFloat(Data.wallet_recharge) > 0) {
         items.push({
             description: 'Wallet Recharge',
-            amount: parseFloat(formData.value.walletRecharge)
+            amount: parseFloat(Data.wallet_recharge)
         });
     }
 
-    if (parseFloat(formData.value.setupFee) > 0) {
+    if (parseFloat(Data.setup_fee) > 0) {
         items.push({
             description: 'Setup Fee',
-            amount: parseFloat(formData.value.setupFee)
+            amount: parseFloat(Data.setup_fee)
         });
     }
 
-    if (parseFloat(formData.value.customizationFee) > 0) {
+    if (parseFloat(Data.customization_fee) > 0) {
         items.push({
             description: 'Customization Fee',
-            amount: parseFloat(formData.value.customizationFee)
+            amount: parseFloat(Data.customization_fee)
         });
     }
 
-    additionalItems.value.forEach(item => {
+    additionalData.forEach(item => {
         if (item.description && parseFloat(item.amount) > 0) {
             items.push({
                 description: item.description,
@@ -688,9 +660,6 @@ const getVisibleItems = () => {
 };
 
 const generatePDFBlob = async () => {
-    quotationNumber.value = generateQuotationNumber();
-    currentDate.value = getCurrentDate();
-    validUntilDate.value = getValidUntilDate();
 
     await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -760,8 +729,7 @@ const generatePDFBlob = async () => {
     }
 
     // Generate filename
-    const fileName = `Quotation_${quotationNumber.value.replace('/', '_')}_${formData.value.companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    generatedFileName.value = fileName;
+    const fileName = `Quotation_${currentPdfData.value.quotation_number.replace('/', '_')}_${currentPdfData.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output('blob');
@@ -776,104 +744,174 @@ const generatePDF = async () => {
     isGenerating.value = true;
 
     try {
-        const { blob /* pdf, fileName*/ } = await generatePDFBlob();
 
-        // Store the blob for sharing
-        generatedPdfBlob.value = blob;
+        const payload = {
+            company_name: formData.value.companyName,
+            contact_person: formData.value.contactPerson,
+            phone: formData.value.phone,
+            email: formData.value.email,
+            address: formData.value.address,
+            selected_plan_id: formData.value.selectedPlanId,
+            platform_charge_type: formData.value.platformChargeType,
+            platform_charge: formData.value.platformCharge,
+            wallet_recharge: formData.value.walletRecharge,
+            setup_fee: formData.value.setupFee,
+            customization_fee: formData.value.customizationFee,
+            additional_fee: additionalItems.value,
+            discount: formData.value.discount,
+            GST: 18
+        }
 
-        // Download PDF
-        // pdf.save(fileName);
+        const res = await axios.post("http://localhost:3000/api/v1/invoices", payload);
 
-        toast.success('Quotation generated successfully!');
 
-        // Close the form modal
-        isModalOpen.value = false;
+        if (!res?.data?.success) {
+            throw new Error(res?.data?.message || "Failed to create invoice");
+        }
 
-        // Show share options modal after a short delay
-        setTimeout(() => {
-            showShareOptions.value = true;
-        }, 300);
+        currentPdfData.value = res?.data?.data;
+
+        try {
+            const { blob, fileName } = await generatePDFBlob();
+
+            const formData = new FormData();
+            formData.append("pdf_data", blob, fileName);
+            formData.append("pdf_type", "quotation");
+            formData.append("id", res?.data?.data.id);
+
+            const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+
+            if (!uploadRes?.data?.success) {
+                throw new Error(uploadRes?.data?.message || "Failed to upload quotation PDF");
+            }
+
+            toast.success('Quotation invoice generated successfully!');
+            currentPdfData.value.quotation_invoice_pdf_url = uploadRes.data.data.file.url;
+            currentPdfData.value.quotation_invoice_pdf_download_url = uploadRes.data.data.file.downloadUrl;
+            currentPdfData.value.quotation_invoice_pdf_filename = uploadRes.data.data.file.filename;
+
+            // Close the form modal
+            isModalOpen.value = false;
+
+            // Show share options modal after a short delay
+            setTimeout(() => {
+                showShareOptions.value = true;
+            }, 300);
+
+        } catch (error) {
+            toast.error(error.message || 'Error generating PDF. Please try again.');
+        }
+
 
     } catch (error) {
-        console.error('Error generating PDF:', error);
-        toast.error('Error generating quotation. Please try again.');
+        toast.error(error.message || 'Error generating quotation. Please try again.');
     } finally {
         isGenerating.value = false;
+        emit('update:refresh', !props.refresh);
     }
 };
 
 
-const downloadPDF = () => {
-    if (!generatedPdfBlob.value) {
+const downloadPDF = async () => {
+    if (!currentPdfData.value.quotation_invoice_pdf_download_url) {
         toast.error('No PDF available to download');
         return;
     }
 
     try {
-        // Create a download link
-        const url = URL.createObjectURL(generatedPdfBlob.value);
+        // Fetch the PDF as a blob
+        const response = await fetch(currentPdfData.value.quotation_invoice_pdf_download_url);
+        const blob = await response.blob();
+
+        // Create a blob URL
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create and trigger download
         const link = document.createElement('a');
-        link.href = url;
-        link.download = generatedFileName.value || 'Quotation.pdf';
+        link.href = blobUrl;
+        link.download = currentPdfData.value.quotation_invoice_pdf_filename || "invoice.pdf";
         document.body.appendChild(link);
         link.click();
+
+        // Cleanup
         document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(blobUrl);
 
         toast.success('PDF downloaded successfully!');
     } catch (error) {
-        console.error('Error downloading PDF:', error);
+        console.error('Download error:', error);
         toast.error('Error downloading PDF. Please try again.');
     }
 };
 
+
 const shareOnWhatsApp = async () => {
-    if (!generatedPdfBlob.value) {
+    if (!currentPdfData.value.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
+        return;
+    }
+
+    if (!currentPdfData.value.phone) {
+        toast.error('Phone number is required');
         return;
     }
 
     isSharing.value.whatsapp = true;
 
-    try {
-        // Create FormData
-        const formDataToSend = new FormData();
-        formDataToSend.append('pdf', generatedPdfBlob.value, generatedFileName.value);
-        formDataToSend.append('companyName', formData.value.companyName);
-        formDataToSend.append('contactPerson', formData.value.contactPerson);
-        formDataToSend.append('phone', formData.value.phone);
-        formDataToSend.append('email', formData.value.email || '');
-        formDataToSend.append('totalAmount', calculateTotal().toString());
 
-        // Call API - Replace with your actual endpoint
-        const response = await fetch('/api/share/whatsapp', {
-            method: 'POST',
-            body: formDataToSend,
+    try {
+        const url = currentPdfData.value.quotation_invoice_pdf_url;
+        const fileName = currentPdfData.value.quotation_invoice_pdf_filename;
+        const response = await fetch("https://wa.nyife.chat/api/send/template", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer CWviyKoalNnI4AIlx1YdIXZrQXCnlTGX75XuetW8",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                phone: currentPdfData.value.phone,
+                template: {
+                    name: "quotation_invoice",
+                    language: { code: "en" },
+                    components: [
+                        {
+                            type: "header",
+                            parameters: [
+                                {
+                                    type: "document",
+                                    document: {
+                                        link: url,
+                                        filename: fileName || "invoice.pdf"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to share on WhatsApp');
+        const data = await response.json().catch(() => null);
+
+        if (data.data.success === false) {
+            throw new Error(data.data.message || "Failed to share on WhatsApp");
         }
 
-        const result = await response.json();
-
-        toast.success('Quotation shared on WhatsApp successfully!');
-
-        // Optional: Close share modal after successful share
-        // setTimeout(() => {
-        //     closeShareModal();
-        // }, 1500);
+        toast.success("Quotation shared on WhatsApp!");
 
     } catch (error) {
-        console.error('Error sharing on WhatsApp:', error);
-        toast.error('Error sharing on WhatsApp. Please try again.');
+        toast.error(error.message || 'Error sharing on WhatsApp. Please try again.');
     } finally {
         isSharing.value.whatsapp = false;
     }
 };
 
 const shareViaEmail = async () => {
-    if (!generatedPdfBlob.value) {
+    if (!currentPdfData.value.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
@@ -886,38 +924,24 @@ const shareViaEmail = async () => {
     isSharing.value.email = true;
 
     try {
-        // Create FormData
-        const formDataToSend = new FormData();
-        formDataToSend.append('pdf', generatedPdfBlob.value, generatedFileName.value);
-        formDataToSend.append('companyName', formData.value.companyName);
-        formDataToSend.append('contactPerson', formData.value.contactPerson);
-        formDataToSend.append('phone', formData.value.phone);
-        formDataToSend.append('email', formData.value.email);
-        formDataToSend.append('totalAmount', calculateTotal().toString());
-        formDataToSend.append('validUntil', validUntilDate.value);
-        formDataToSend.append('date', currentDate.value);
 
-        // Call API - Replace with your actual endpoint
-        const response = await fetch('/api/share/email', {
-            method: 'POST',
-            body: formDataToSend,
-        });
+        const payload = {
+            customer_name: currentPdfData.value.contact_person,
+            invoice_type: 'Quotation',
+            invoice_number: currentPdfData.value.quotation_number,
+            invoice_url: currentPdfData.value.quotation_invoice_pdf_download_url,
+            email: currentPdfData.value.email
+        }
 
-        if (!response.ok) {
+        const response = await axios.post('http://localhost:3000/api/v1/email/share-invoice', payload);
+
+        if (!response?.data?.success) {
             throw new Error('Failed to send email');
         }
 
-        const result = await response.json();
-
-        toast.success(`Quotation sent to ${formData.value.email} successfully!`);
-
-        // Optional: Close share modal after successful share
-        // setTimeout(() => {
-        //     closeShareModal();
-        // }, 1500);-
+        toast.success(`Quotation sent to ${currentPdfData.value.email} successfully!`);
 
     } catch (error) {
-        console.error('Error sending email:', error);
         toast.error('Error sending email. Please try again.');
     } finally {
         isSharing.value.email = false;
