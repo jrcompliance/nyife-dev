@@ -1319,7 +1319,6 @@ const emit = defineEmits(['update:modelValue', 'callback']);
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 2px solid #ff5100cb;
     border-radius: 12px;
-    padding: 8px;
     text-align: center;
     box-shadow: 0 4px 12px rgba(255, 81, 0, 0.15);
 }
@@ -1338,9 +1337,8 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 }
 
 .qr-code-wrapper {
-    background: black;
+    background: white;
     border-radius: 8px;
-    margin-bottom: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -1427,7 +1425,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 }
 
 .signature {
-    margin: 40px 0 60px 0;
+    margin: 100px 0 60px 0;
     text-align: right;
 }
 
