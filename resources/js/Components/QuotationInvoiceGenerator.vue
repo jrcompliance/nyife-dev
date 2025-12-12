@@ -428,7 +428,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
@@ -437,36 +437,28 @@ import FormInput from './FormInput.vue';
 import { CirclePlus, FileText } from 'lucide-vue-next';
 import axios from 'axios';
 
+const base_url = import.meta.env.VITE_BACKEND_API_URL;
+
 const props = defineProps(['refresh']);
 const emit = defineEmits(['update:refresh']);
 
 
-// Compute active plans
-const activePlans = computed(() => {
-    return [
-        {
-            id: 2,
-            uuid: "5b0e8ace-7181-4359-8c40-68f980ea77fe",
-            name: "Yearly",
-            price: "11000.00",
-            period: "yearly",
-            status: "active",
-            created_at: "29-Sep-25 05:27 AM",
-            updated_at: "29-Sep-25 05:27 AM",
-            deleted_at: null
-        },
-        {
-            id: 1,
-            uuid: "36a79017-1e1e-4f38-97f1-43b933275787",
-            name: "Monthly",
-            price: "1000.00",
-            period: "monthly",
-            status: "active",
-            created_at: "29-Sep-25 05:27 AM",
-            updated_at: "15-Oct-25 10:37 AM",
-            deleted_at: null
+const activePlans = ref([]);
+
+const fetchSubscriptionPlans = async () => {
+    try {
+        const res = await axios.get(`${base_url}/subscription-plans`);
+        if (!res?.data?.success) {
+            throw new Error(res?.data?.message || "Failed to fetch subscription plans");
         }
-    ].filter(plan => plan.status === 'active');
+        activePlans.value = res.data.data;
+    } catch (error) {
+        toast.error(error.message || 'Error fetching subscription plans. Please try again.');
+    }
+};
+
+onMounted(() => {
+    fetchSubscriptionPlans();
 });
 
 const isModalOpen = ref(false);
@@ -485,7 +477,7 @@ const formData = ref({
     phone: '',
     email: '',
     address: '',
-    selectedPlanId: '',
+    selectedPlanId: null,
     platformChargeType: '',
     platformCharge: 0,
     walletRecharge: 0,
@@ -519,7 +511,7 @@ const resetForm = () => {
         phone: '',
         email: '',
         address: '',
-        selectedPlanId: '',
+        selectedPlanId: null,
         platformChargeType: '',
         platformCharge: 0,
         walletRecharge: 0,
@@ -762,7 +754,7 @@ const generatePDF = async () => {
             GST: 18
         }
 
-        const res = await axios.post("http://localhost:3000/api/v1/invoices", payload);
+        const res = await axios.post(`${base_url}/invoices`, payload);
 
 
         if (!res?.data?.success) {
@@ -779,7 +771,7 @@ const generatePDF = async () => {
             formData.append("pdf_type", "quotation");
             formData.append("id", res?.data?.data.id);
 
-            const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData, {
+            const uploadRes = await axios.post(`${base_url}/uploads`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }
@@ -933,7 +925,7 @@ const shareViaEmail = async () => {
             email: currentPdfData.value.email
         }
 
-        const response = await axios.post('http://localhost:3000/api/v1/email/share-invoice', payload);
+        const response = await axios.post(`${base_url}/email/share-invoice`, payload);
 
         if (!response?.data?.success) {
             throw new Error('Failed to send email');

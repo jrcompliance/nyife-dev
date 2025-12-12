@@ -166,6 +166,19 @@
                                             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium w-fit">
                                             {{ getStatusText(item) }}
                                         </span>
+                                        <div v-if="item.payment_status === 'expired'"
+                                            class="text-xs text-gray-500 mt-1 ml-1">
+                                            Payment link expired
+                                        </div>
+                                        <div v-if="item.payment_status === 'paid'"
+                                            class="text-xs text-gray-500 mt-1 ml-1">
+                                            via {{ item.payment_method }}
+                                        </div>
+
+                                        <div v-else class="text-xs text-gray-500 mt-1 ml-1">
+                                            {{ item.payment_status }}
+                                        </div>
+
                                     </div>
                                 </td>
 
@@ -540,6 +553,11 @@
                 </p>
             </div>
         </div>
+        <!-- PDF Payment Receipt Template (Hidden) -->
+        <div v-if="generateCurrentPaymentReceiptPDF" ref="pdfTemplatePaymentReceipt"
+            class="pdf-template-payment-receipt">
+
+        </div>
     </div>
 </template>
 
@@ -553,6 +571,8 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import axios from 'axios';
 import QRCode from "qrcode";
+
+const base_url = import.meta.env.VITE_BACKEND_API_URL;
 
 
 const invoiceData = ref([]);
@@ -573,11 +593,13 @@ const isSharing = ref({
 const refresh = ref(false);
 
 const pdfTemplate = ref(null);
+const pdfTemplatePaymentReceipt = ref(null);
 const isSearching = ref(false);
 const showShareOptions = ref(false);
 const openDropdownId = ref(null);
 const currentPDF = ref(null);
 const generateCurrentProformaPDF = ref(null);
+const generateCurrentPaymentReceiptPDF = ref(null);
 
 
 // Action configuration - Config-driven approach
@@ -627,6 +649,7 @@ const closeShareModal = () => {
     showShareOptions.value = false;
     currentPDF.value = null;
     generateCurrentProformaPDF.value = null;
+    generateCurrentPaymentReceiptPDF.value = null;
 };
 
 // Dropdown methods
@@ -657,7 +680,7 @@ const handleClickOutside = (event) => {
 async function fetchInvoices() {
     loading.value = true;
     try {
-        const res = await axios.get('http://localhost:3000/api/v1/invoices', {
+        const res = await axios.get(`${base_url}/invoices`, {
             params: params.value,
         });
 
@@ -843,6 +866,85 @@ const generatePDFBlob = async () => {
     return { blob: pdfBlob, pdf, fileName };
 };
 
+const generatePaymentReceiptPDFBlob = async () => {
+
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    const element = pdfTemplatePaymentReceipt.value;
+
+    // Show element temporarily for rendering
+    element.style.position = 'fixed';
+    element.style.left = '0';
+    element.style.top = '0';
+    element.style.zIndex = '-1';
+    element.style.display = 'block';
+    element.style.width = '210mm';
+    element.style.minHeight = '297mm';
+
+    // High-quality canvas rendering
+    const canvas = await html2canvas(element, {
+        scale: 4,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: 793.7,
+        windowWidth: 793.7,
+        onclone: (clonedDoc) => {
+            const clonedElement = clonedDoc.querySelector('.pdf-template-payment-receipt');
+            if (clonedElement) {
+                clonedElement.style.display = 'block';
+                clonedElement.style.width = '210mm';
+            }
+        }
+    });
+
+    // Hide element after rendering
+    element.style.display = 'none';
+    element.style.position = 'absolute';
+    element.style.left = '-9999px';
+    element.style.zIndex = '';
+    element.style.width = '';
+    element.style.minHeight = '';
+
+    // Create PDF with high quality
+    const imgData = canvas.toDataURL('image/png', 1.0);
+
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+    });
+
+    const pdfWidth = 210;
+    const pdfHeight = 297;
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // Add first page
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+    heightLeft -= pdfHeight;
+
+    // Add additional pages if content overflows
+    while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pdfHeight;
+    }
+
+    // Generate filename
+    const fileName = `PaymentReceipt_${generateCurrentPaymentReceiptPDF.value.payment_id.replace('/', '_')}_${generateCurrentPaymentReceiptPDF.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+
+    // Convert PDF to Blob
+    const pdfBlob = pdf.output('blob');
+    return { blob: pdfBlob, pdf, fileName };
+};
+
 const downloadPDF = async () => {
     if (!currentPDF.value?.pdfDownloadUrl) {
         toast.error('No PDF available to download');
@@ -961,7 +1063,7 @@ const shareViaEmail = async () => {
             email: currentPDF.value.email
         }
 
-        const response = await axios.post('http://localhost:3000/api/v1/email/share-invoice', payload);
+        const response = await axios.post(`${base_url}/email/share-invoice`, payload);
 
         if (!response?.data?.success) {
             throw new Error('Failed to send email');
@@ -997,7 +1099,7 @@ const generateProforma = async (item) => {
     const tId = toast.loading('Generating proforma invoice...');
     try {
 
-        const res = await axios.put(`http://localhost:3000/api/v1/invoices/generate-proforma/${item.id}`);
+        const res = await axios.put(`${base_url}/invoices/generate-proforma/${item.id}`);
 
         if (!res?.data?.success) {
             throw new Error(res?.data?.message || 'Failed to generate proforma invoice');
@@ -1005,7 +1107,7 @@ const generateProforma = async (item) => {
 
         const qrCode = ref('');
 
-        const paymentUrl = res?.data?.data.payment_url;
+        const paymentUrl = res?.data?.data.payment_url?.payment_link_short_url;
 
         qrCode.value = await QRCode.toDataURL(paymentUrl, { width: 180 });
 
@@ -1022,7 +1124,7 @@ const generateProforma = async (item) => {
         formData.append("pdf_type", "proforma");
         formData.append("id", res?.data?.data.id);
 
-        const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData, {
+        const uploadRes = await axios.post(`${base_url}/uploads`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
@@ -1079,42 +1181,72 @@ const shareProforma = (item) => {
 };
 
 const generateReceipt = async (item) => {
+    const tId = toast.loading('Generating  payment receipt...');
     try {
-        const tId = toast.loading('Generating  payment receipt...');
 
         generateCurrentPaymentReceiptPDF.value = item;
 
-        const { blob, fileName } = await generatePDFBlob();
+        const { blob, fileName } = await generatePaymentReceiptPDFBlob();
 
-        // Store the blob for sharing --- THIS IS PENDING
+        const formData = new FormData();
+        formData.append("pdf_data", blob, fileName);
+        formData.append("pdf_type", "payment");
+        formData.append("id", res?.data?.data.id);
+
+        const uploadRes = await axios.post(`${base_url}/uploads`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+
+        if (!uploadRes?.data?.success) {
+            throw new Error(uploadRes?.data?.message || "Failed to upload payment receipt PDF");
+        }
+
+        toast.remove(tId);
+        toast.success('Payment receipt generated successfully!');
 
         currentPDF.value = {
             contactPerson: generateCurrentPaymentReceiptPDF.value.contact_person,
             companyName: generateCurrentPaymentReceiptPDF.value.company_name,
             phone: generateCurrentPaymentReceiptPDF.value.phone,
             email: generateCurrentPaymentReceiptPDF.value.email,
+            invoiceNumber: generateCurrentPaymentReceiptPDF.value.payment_id,
+            templateType: "Payment Receipt",
             templateName: "payment_receipt",
-            pdf: generateCurrentPaymentReceiptPDF.value.proforma_invoice_pdf_url,
-            pdfName: fileName
+            pdf: uploadRes.data.data.file.url,
+            pdfDownloadUrl: uploadRes.data.data.file.downloadUrl,
+            pdfName: uploadRes.data.data.file.filename
         };
 
-        openShareModal();
-        toast.remove(tId);
-        toast.success('Payment receipt generated successfully!');
+
+
+        // Show share options modal after a short delay
+        setTimeout(() => {
+            openShareModal();
+        }, 300);
+
     } catch (error) {
         toast.error(error.message || 'Error generating payment receipt. Please try again.');
+        toast.remove(tId);
+
+    } finally {
+        refresh.value = !refresh.value;
     }
 };
 
 const shareReceipt = (item) => {
     currentPDF.value = {
-        contactPerson: item.contact_person,
-        companyName: item.company_name,
-        phone: item.phone,
-        email: item.email,
+        contactPerson: item.value.contact_person,
+        companyName: item.value.company_name,
+        phone: item.value.phone,
+        email: item.value.email,
+        invoiceNumber: item.value.payment_id,
+        templateType: "Payment Receipt",
         templateName: "payment_receipt",
         pdf: item.payment_receipt_pdf_url,
-        pdfName: `PaymentReceipt_${item.payment_receipt_number.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        pdfDownloadUrl: `${item.payment_receipt_pdf_url}/download`,
+        pdfName: `PaymentReceipt_${item.payment_id.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
     };
     openShareModal();
 };
@@ -1201,7 +1333,8 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 
 /* Quotation Invoice Generator Styles */
 
-.pdf-template {
+.pdf-template,
+.pdf-template-payment-receipt {
     position: absolute;
     left: -9999px;
     display: none;
