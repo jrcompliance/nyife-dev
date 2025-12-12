@@ -72,9 +72,6 @@ class PaymentControllerRazorpay extends Controller
         }
 
         $paid_amount = $payment['amount'] / 100;
-
-        // Original paid amount
-        $paid_amount = $request->paid_amount;
         
         // Calculate GST (18%) 
         $gstAmount = $paid_amount * 0.18;
