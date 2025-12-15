@@ -66,6 +66,14 @@
                                 :error="errors.phone" />
                         </div>
 
+                        <!-- a vuejs date picker with a default date which was set from props it should have quick date option such as 7 days, 1 month, 2 months and 3 months -->
+                        <div class="form-group py-2">
+                            <FormDateInput v-model="formData.quotation_valid_until_date"
+                                :defaultDate="formData.quotation_valid_until_date" name="quotation_valid_until_date"
+                                label="Quotation Vaildity Date" :required="true" helperText="Select Validity Date"
+                                className="mb-4" />
+                        </div>
+
                     </div>
 
                     <div class="form-group">
@@ -235,7 +243,7 @@
                         </button>
 
                         <!-- Email Share -->
-                        <button @click="shareViaEmail" :disabled="isSharing.email || !formData.email"
+                        <button @click="shareViaEmail" :disabled="isSharing.email || !currentPdfData.email"
                             class="share-option email">
                             <div class="share-icon-wrapper email-bg">
                                 <svg v-if="!isSharing.email" width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -260,9 +268,9 @@
                             </div>
                             <div class="share-content">
                                 <h3>Share via Email</h3>
-                                <p v-if="!formData.email" class="text-red-500">Email not provided</p>
+                                <p v-if="!currentPdfData.email" class="text-red-500">Email not provided</p>
                                 <p v-else-if="isSharing.email">Sending...</p>
-                                <p v-else>Send to {{ formData.email }}</p>
+                                <p v-else>Send to {{ currentPdfData.email }}</p>
                             </div>
                         </button>
 
@@ -328,8 +336,8 @@
                             <td style="text-align: right;">{{ formatCurrency(item.amount) }}</td>
                         </tr>
 
-                        <div v-if="((formData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)) > 0"
-                            v-for="index in (formData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)"
+                        <div v-if="((currentPdfData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)) > 0"
+                            v-for="index in (currentPdfData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)"
                             :key="index" class="h-7 w-full">
                         </div>
 
@@ -346,7 +354,7 @@
                             <td>DISCOUNT ({{ currentPdfData.discount }}%):</td>
                             <td>-₹{{ currentPdfData.discount_amount }}</td>
                         </tr>
-                        <tr v-if="formData.discount > 0">
+                        <tr v-if="currentPdfData.discount > 0">
                             <td>AMOUNT AFTER DISCOUNT:</td>
                             <td>₹{{ currentPdfData.amount_after_discount }}</td>
                         </tr>
@@ -379,7 +387,7 @@
 
                         <div class="term-section">
                             <h5>Quotation Validity</h5>
-                            <p>This quotation is valid for 30 days from the date of issue. Prices and terms are
+                            <p>This quotation validity is mentioned in the top of the quotation. Prices and terms are
                                 subject to review after the validity period.</p>
                         </div>
 
@@ -428,7 +436,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
@@ -436,37 +444,30 @@ import FormPhoneInput from './FormPhoneInput.vue';
 import FormInput from './FormInput.vue';
 import { CirclePlus, FileText } from 'lucide-vue-next';
 import axios from 'axios';
+import FormDateInput from './FormDateInput.vue';
+
+const base_url = import.meta.env.VITE_BACKEND_API_URL;
 
 const props = defineProps(['refresh']);
 const emit = defineEmits(['update:refresh']);
 
 
-// Compute active plans
-const activePlans = computed(() => {
-    return [
-        {
-            id: 2,
-            uuid: "5b0e8ace-7181-4359-8c40-68f980ea77fe",
-            name: "Yearly",
-            price: "11000.00",
-            period: "yearly",
-            status: "active",
-            created_at: "29-Sep-25 05:27 AM",
-            updated_at: "29-Sep-25 05:27 AM",
-            deleted_at: null
-        },
-        {
-            id: 1,
-            uuid: "36a79017-1e1e-4f38-97f1-43b933275787",
-            name: "Monthly",
-            price: "1000.00",
-            period: "monthly",
-            status: "active",
-            created_at: "29-Sep-25 05:27 AM",
-            updated_at: "15-Oct-25 10:37 AM",
-            deleted_at: null
+const activePlans = ref([]);
+
+const fetchSubscriptionPlans = async () => {
+    try {
+        const res = await axios.get(`${base_url}/subscription-plans`);
+        if (!res?.data?.success) {
+            throw new Error(res?.data?.message || "Failed to fetch subscription plans");
         }
-    ].filter(plan => plan.status === 'active');
+        activePlans.value = res.data.data;
+    } catch (error) {
+        toast.error(error.message || 'Error fetching subscription plans. Please try again.');
+    }
+};
+
+onMounted(() => {
+    fetchSubscriptionPlans();
 });
 
 const isModalOpen = ref(false);
@@ -485,13 +486,15 @@ const formData = ref({
     phone: '',
     email: '',
     address: '',
-    selectedPlanId: '',
+    selectedPlanId: null,
     platformChargeType: '',
     platformCharge: 0,
     walletRecharge: 0,
     setupFee: 0,
     customizationFee: 0,
-    discount: 0
+    discount: 0,
+    quotation_valid_until_date: new Date(new Date().setMonth(new Date().getMonth() + 1))
+
 });
 
 const additionalItems = ref([]);
@@ -519,13 +522,14 @@ const resetForm = () => {
         phone: '',
         email: '',
         address: '',
-        selectedPlanId: '',
+        selectedPlanId: null,
         platformChargeType: '',
         platformCharge: 0,
         walletRecharge: 0,
         setupFee: 0,
         customizationFee: 0,
-        discount: 0
+        discount: 0,
+        quotation_valid_until_date: new Date(new Date().setMonth(new Date().getMonth() + 1))
     };
     additionalItems.value = [];
     errors.value = {};
@@ -759,10 +763,11 @@ const generatePDF = async () => {
             customization_fee: formData.value.customizationFee,
             additional_fee: additionalItems.value,
             discount: formData.value.discount,
-            GST: 18
+            GST: 18,
+            quotation_valid_until_date: formData.value.quotation_valid_until_date
         }
 
-        const res = await axios.post("http://localhost:3000/api/v1/invoices", payload);
+        const res = await axios.post(`${base_url}/invoices`, payload);
 
 
         if (!res?.data?.success) {
@@ -779,7 +784,7 @@ const generatePDF = async () => {
             formData.append("pdf_type", "quotation");
             formData.append("id", res?.data?.data.id);
 
-            const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData, {
+            const uploadRes = await axios.post(`${base_url}/uploads`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }
@@ -933,7 +938,7 @@ const shareViaEmail = async () => {
             email: currentPdfData.value.email
         }
 
-        const response = await axios.post('http://localhost:3000/api/v1/email/share-invoice', payload);
+        const response = await axios.post(`${base_url}/email/share-invoice`, payload);
 
         if (!response?.data?.success) {
             throw new Error('Failed to send email');
