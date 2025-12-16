@@ -217,7 +217,7 @@
                                                         class="text-teal-600 w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-gray-50">
                                                         <Eye size="18" class="flex-shrink-0" />
                                                         <span class="font-medium truncate">{{ $t("View details")
-                                                        }}</span>
+                                                            }}</span>
                                                     </button>
 
                                                     <button v-for="action in getAvailableActions(item)"
@@ -608,7 +608,7 @@
                             <div class="info-item">
                                 <span class="info-label">Payment Date</span>
                                 <span class="info-value">{{ formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Payment Method</span>
@@ -623,7 +623,7 @@
                                 <span class="info-label">Amount Paid</span>
                                 <span class="info-value">₹{{
                                     generateCurrentPaymentReceiptPDF?.payment_metadata?.amount_paid
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -644,17 +644,17 @@
                             <div class="info-item">
                                 <span class="info-label">Email Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Phone Number</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -1256,6 +1256,7 @@ const generateProforma = async (item) => {
     try {
 
         const payload = {
+
             proforma_valid_until_date: selectedDate.value.toISOString()
         }
 
