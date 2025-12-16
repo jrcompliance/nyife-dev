@@ -447,6 +447,7 @@ import axios from 'axios';
 import FormDateInput from './FormDateInput.vue';
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
+const whatsapp_token = import.meta.env.VITE_WA_TOKEN;
 
 const props = defineProps(['refresh']);
 const emit = defineEmits(['update:refresh']);
@@ -874,7 +875,7 @@ const shareOnWhatsApp = async () => {
         const response = await fetch("https://wa.nyife.chat/api/send/template", {
             method: "POST",
             headers: {
-                "Authorization": "Bearer CWviyKoalNnI4AIlx1YdIXZrQXCnlTGX75XuetW8",
+                "Authorization": `Bearer ${whatsapp_token}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
