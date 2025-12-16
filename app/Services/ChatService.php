@@ -48,8 +48,14 @@ class ChatService
 
     private function initializeWhatsappService()
     {
-        $config = Organization::where('id', $this->organizationId)->first()->metadata;
-        $config = $config ? json_decode($config, true) : [];
+        $organization = Organization::where('id', $this->organizationId)->first();
+        if (!$organization) {
+            Log::warning("Organization not found for ID: {$this->organizationId}");
+            $config = [];
+        } else {
+            $config = $organization->metadata;
+            $config = $config ? json_decode($config, true) : [];
+        }
 
         $accessToken = $config['whatsapp']['access_token'] ?? null;
         $apiVersion = config('graph.api_version');
@@ -62,7 +68,14 @@ class ChatService
 
     public function getChatList($request, $uuid = null, $searchTerm = null)
     {
-        $role = auth()->user()->teams[0]->role;
+        $user = auth()->user();
+        $role = null;
+        if ($user && $user->teams && count($user->teams) > 0) {
+            $role = $user->teams[0]->role;
+        } else {
+            Log::warning("User has no teams assigned", ['user_id' => $user?->id]);
+        }
+        
         $contact = new Contact;
         $unassigned = ChatTicket::where('assigned_to', NULL)->count();
         $closedCount = ChatTicket::where('status', 'closed')->count();
@@ -77,7 +90,7 @@ class ChatService
         $aimodule = CustomHelper::isModuleEnabled('AI Assistant');
 
         //Check if tickets module has been enabled
-        if($config->metadata != NULL){
+        if($config && $config->metadata != NULL){
             $settings = json_decode($config->metadata);
 
             if(isset($settings->tickets) && $settings->tickets->active === true){
@@ -211,8 +224,12 @@ class ChatService
 
     public function handleTicketAssignment($contactId){
         $organizationId = $this->organizationId;
-        $settings = Organization::where('id', $this->organizationId)->first();
-        $settings = json_decode($settings->metadata);
+        $organization = Organization::where('id', $this->organizationId)->first();
+        if (!$organization) {
+            Log::warning("Organization not found in handleTicketAssignment for ID: {$this->organizationId}");
+            return;
+        }
+        $settings = json_decode($organization->metadata);
 
         // Check if ticket functionality is active
         if(isset($settings->tickets) && $settings->tickets->active === true){
@@ -508,7 +525,14 @@ class ChatService
             );
         }
 
-        $role = auth()->user()->teams[0]->role;
+        $user = auth()->user();
+        $role = null;
+        if ($user && $user->teams && count($user->teams) > 0) {
+            $role = $user->teams[0]->role;
+        } else {
+            Log::warning("User has no teams assigned in getInboundChats", ['user_id' => $user?->id]);
+        }
+        
         $contact = new Contact;
         $unassigned = ChatTicket::where('assigned_to', NULL)->count();
         $closedCount = ChatTicket::where('status', 'closed')->count();
@@ -523,7 +547,7 @@ class ChatService
         $aimodule = CustomHelper::isModuleEnabled('AI Assistant');
 
         //Check if tickets module has been enabled
-        if ($config->metadata != NULL) {
+        if ($config && $config->metadata != NULL) {
             $settings = json_decode($config->metadata);
 
             if (isset($settings->tickets) && $settings->tickets->active === true) {

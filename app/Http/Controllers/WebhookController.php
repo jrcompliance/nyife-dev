@@ -215,10 +215,12 @@ class WebhookController extends BaseController
 
                         if($contact){
                             if($contact->first_name == NULL){
-                                $contactData = $res['value']['contacts'][0]['profile'];
-                                $contact->update([
-                                    'first_name' => $contactData['name'],
-                                ]);
+                                $contactData = $res['value']['contacts'][0]['profile'] ?? null;
+                                if($contactData && isset($contactData['name'])){
+                                    $contact->update([
+                                        'first_name' => $contactData['name'],
+                                    ]);
+                                }
                             }
 
                             $chat = Chat::where('wam_id', $response['id'])->where('organization_id', $organization->id)->first();

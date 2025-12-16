@@ -61,23 +61,7 @@ class WhatsappService
      */
     public function sendMessage($contactUuId, $messageContent, $userId = NULL, $type="text", $buttons = [], $header = [], $footer = null, $buttonLabel = null)
     {
-        // Log::info("--------------------------------");
-        // Log::info($contactUuId);
-        // Log::info("--------------------------------");
-        // Log::info($messageContent);
-        // Log::info("--------------------------------");
-        // Log::info($userId);
-        // Log::info("--------------------------------");
-        // Log::info($type);
-        // Log::info("--------------------------------");
-        // Log::info($buttons);
-        // Log::info("--------------------------------");
-        // Log::info($header);
-        // Log::info("--------------------------------");
-        // Log::info($footer);
-        // Log::info("--------------------------------");
-        // Log::info($buttonLabel);
-        // Log::info("--------------------------------");
+        Log::info("Sending message to contact {$contactUuId}, type: {$type}");
         $contact = Contact::where('uuid', $contactUuId)->first();
         $url = "https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages";
         
@@ -133,8 +117,9 @@ class WhatsappService
         }
 
         // Log::info("This is request",$requestData);
+        Log::info("This is request".json_encode($headers));
         $responseObject = $this->sendHttpRequest('POST', $url, $requestData, $headers);
-        // Log::info("This is response".json_encode($responseObject));
+        Log::info("This is response".json_encode($responseObject));
         if($responseObject->success === true){
             $response['text']['body'] = clean($messageContent);
             $response['type'] = 'text';
@@ -186,23 +171,23 @@ class WhatsappService
         $footer = null,
         $buttonLabel = null
     ) {
-        // Log::info("--------------------------------");
-        // Log::info($contactUuId);
-        // Log::info("--------------------------------");
-        // Log::info($messageContent);
-        // Log::info("--------------------------------");
-        // Log::info($userId);
-        // Log::info("--------------------------------");
-        // Log::info($type);
-        // Log::info("--------------------------------");
-        // Log::info($buttons);
-        // Log::info("--------------------------------");
-        // Log::info($header);
-        // Log::info("--------------------------------");
-        // Log::info($footer);
-        // Log::info("--------------------------------");
-        // Log::info($buttonLabel);
-        // Log::info("--------------------------------");
+        Log::info("--------------------------------");
+        Log::info($contactUuId);
+        Log::info("--------------------------------");
+        Log::info($messageContent);
+        Log::info("--------------------------------");
+        Log::info($userId);
+        Log::info("--------------------------------");
+        Log::info($type);
+        Log::info("--------------------------------");
+        Log::info($buttons);
+        Log::info("--------------------------------");
+        Log::info($header);
+        Log::info("--------------------------------");
+        Log::info($footer);
+        Log::info("--------------------------------");
+        Log::info($buttonLabel);
+        Log::info("--------------------------------");
     
         $contact = Contact::where('uuid', $contactUuId)->first();
         $url = "https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages";
@@ -268,7 +253,7 @@ class WhatsappService
         
         // Send request
         $responseObject = $this->sendHttpRequest('POST', $url, $requestData, $headers);
-        
+        Log::info("This is response".json_encode($responseObject));
         if($responseObject->success === true){
             $response['text']['body'] = clean($messageContent);
             $response['type'] = 'text';

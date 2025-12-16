@@ -26,8 +26,16 @@ class FlowExecutionService
 
     private function initializeWhatsappService()
     {
-        $config = Organization::where('id', $this->organizationId)->first()->metadata;
-        $config = $config ? json_decode($config, true) : [];
+        Log::info("Initializing WhatsApp service for organization: {$this->organizationId}");
+        $organization = Organization::where('id', $this->organizationId)->first();
+        
+        if (!$organization) {
+            Log::warning("Organization not found for ID: {$this->organizationId}");
+            $config = [];
+        } else {
+            $config = $organization->metadata;
+            $config = $config ? json_decode($config, true) : [];
+        }
 
         $accessToken = $config['whatsapp']['access_token'] ?? null;
         $apiVersion = config('graph.api_version');
@@ -48,12 +56,15 @@ class FlowExecutionService
      */
     public function executeFlow($chat, $isNewContact, $message)
     {
+        Log::info("Starting flow execution for contact: {$chat->contact_id}, isNewContact: {$isNewContact}, message: {$message}");
         if(CustomHelper::isModuleEnabled('Flow builder', $chat->organization_id)){
             // Find the current step for the user in the flow
+            Log::info("Looking up existing flow data for contact: {$chat->contact_id}");
             $flowData = FlowUserData::where('contact_id', $chat->contact_id)->first();
             $flowId = null;
 
             if($flowData && $flowData->exists){
+                Log::info("Existing flow data found for contact {$chat->contact_id}, flow_id: {$flowData->flow_id}");
                 // Check if the flow still exists in the database
                 $flow = Flow::find($flowData->flow_id);
                 
@@ -64,16 +75,19 @@ class FlowExecutionService
                     $flowData = null;
                 } else {
                     // Flow exists, proceed to process flow
+                    Log::info("Flow exists for contact {$chat->contact_id}, processing flow with id: {$flowData->flow_id}");
                     $flowId = $flowData->flow_id;
                     $result = $this->processFlow($chat, $isNewContact, $flowData, $chat->contact_id, strtolower(trim($message)));
                     
                     // If validation failed, don't delete flow data
                     if ($result === 'validation_failed') {
+                        Log::info("Validation failed for contact {$chat->contact_id}, keeping flow data");
                         return false; // Return false but don't delete flow data
                     }
                     
                     // If flow is delayed, don't delete flow data
                     if ($result === 'delayed') {
+                        Log::info("Flow execution delayed for contact {$chat->contact_id}, keeping flow data");
                         return false; // Return false but don't delete flow data
                     }
                     
@@ -83,14 +97,17 @@ class FlowExecutionService
 
             // If flowData doesn't exist or was deleted, proceed with flow determination logic
             if(!$flowData){
+                Log::info("No existing flow data for contact {$chat->contact_id}, determining flow based on trigger");
                 // Determine the flow based on trigger type
                 $flowQuery = Flow::where('organization_id', $chat->organization_id)->where('status', 'active');
                 $flow = null;
 
                 //Check if any flow trigger has been hit
                 if($isNewContact){
+                    Log::info("Checking for new_contact trigger flow for contact {$chat->contact_id}");
                     $flow = $flowQuery->where('trigger', 'new_contact')->first();
                 } else {
+                    Log::info("Checking for keyword trigger flow for contact {$chat->contact_id}, message: {$message}");
                     $msg = strtolower(trim($message)); // Normalize the message
                     $words = explode(' ', $msg); // Split message into individual words
 
@@ -99,7 +116,7 @@ class FlowExecutionService
 
                     // Condition to match the full message (as a sentence or phrase)
                     $conditions[] = "FIND_IN_SET(?, keywords)";
-                    $bindings[] = $msg; // Add the full message (spaces stripped, like in DB)
+                    $bindings[] = $msg;
 
                     // Add individual word checks
                     foreach ($words as $word) {
@@ -108,22 +125,24 @@ class FlowExecutionService
                         $bindings[] = $word;
                     }
 
-                    // Final query
+                    // Only try to find a flow for the specific keyword(s)
                     $flow = \DB::table('flows')->whereRaw(
                         '( `trigger` = ? AND organization_id = ?) AND (' . implode(' OR ', $conditions) . ')',
                         array_merge(['keywords', $chat->organization_id], $bindings)
                     )->first();
-
-                    //Log::info(json_encode($flow));
                 }
 
                 // Set the flow ID if a matching flow is found
                 if ($flow) {
+                    Log::info("Matching flow found for contact {$chat->contact_id}, flow_id: {$flow->id}");
                     $flowId = $flow->id;
+                } else {
+                    Log::info("No matching flow found for contact {$chat->contact_id}");
                 }
 
                 // If a flow ID was found, create a new FlowUserData record
                 if ($flowId) {
+                    Log::info("Creating new FlowUserData for contact {$chat->contact_id}, flow_id: {$flowId}");
                     $flowData = new FlowUserData();
                     $flowData->fill([
                         'contact_id' => $chat->contact_id,
@@ -152,8 +171,9 @@ class FlowExecutionService
     }
 
     public function hasActiveFlow($chat){
+        Log::info("Checking for active flow for contact: {$chat->contact_id}");
         $activeFlow = FlowUserData::where('contact_id', $chat->contact_id)->first();
-
+        Log::info("Active flow result for contact {$chat->contact_id}: " . ($activeFlow ? 'true' : 'false'));
         return $activeFlow ? true : false;
     }
 
@@ -167,6 +187,7 @@ class FlowExecutionService
      */
     public function continueDelayedFlow($contactId, $flowId, $currentStep)
     {
+        Log::info("Continuing delayed flow for contact: {$contactId}, flow_id: {$flowId}, current_step: {$currentStep}");
         // Find the flow user data
         $flowData = FlowUserData::where('contact_id', $contactId)
             ->where('flow_id', $flowId)
@@ -179,8 +200,34 @@ class FlowExecutionService
 
         // Update the current step if needed
         if ($flowData->current_step != $currentStep) {
+            Log::info("Updating current_step for contact {$contactId} from {$flowData->current_step} to {$currentStep}");
             $flowData->current_step = $currentStep;
             $flowData->save();
+        }
+
+        // CRITICAL FIX: Advance to the next step BEFORE continuing the flow
+        // This prevents re-executing the delay action that we just completed
+        $flow = Flow::find($flowData->flow_id);
+        if ($flow && !empty($flow->metadata)) {
+            $edgesArray = json_decode($flow->metadata, true);
+            $edges = \Arr::get($edgesArray, "edges", null);
+            
+            // Find the next step from the current delay action node
+            $nextNodes = [];
+            foreach ($edges as $edge) {
+                if (isset($edge['source']) && (string) $edge['source'] === (string) $flowData->current_step) {
+                    if (isset($edge['targetNode']['id'])) {
+                        $nextNodes[] = $edge['targetNode']['id'];
+                    }
+                }
+            }
+            
+            if (!empty($nextNodes)) {
+                $nextStep = $nextNodes[0];
+                Log::info("Moving to next step after delay: {$nextStep} for contact {$contactId}");
+                $flowData->current_step = $nextStep;
+                $flowData->save();
+            }
         }
 
         // Get the contact
@@ -196,19 +243,22 @@ class FlowExecutionService
             'organization_id' => $this->organizationId
         ];
 
-        // Continue processing the flow from the current step
+        // Continue processing the flow from the NEXT step (not the delay action)
         return $this->processFlow($chat, false, $flowData, $contactId, '');
     }
 
     public function processFlow($chat, $isNewContact, $flowData, $contactId, $message){
+        Log::info("Processing flow for contact: {$contactId}, flow_id: {$flowData->flow_id}, current_step: {$flowData->current_step}");
         $flow = Flow::find($flowData->flow_id);
 
         if (!$flow || empty($flow->metadata)) {
+            Log::warning("Flow not found or metadata empty for flow_id: {$flowData->flow_id}");
             return;
         }
 
         $contact = Contact::find($contactId);
         if (!$contact) {
+            Log::warning("Contact not found: {$contactId}");
             return false;
         }
 
@@ -221,6 +271,7 @@ class FlowExecutionService
         
         while ($iteration < $maxIterations) {
             $iteration++;
+            Log::info("Flow iteration {$iteration} for contact {$contactId}, current_step: {$flowData->current_step}");
             
             // Get the current node metadata
             $metadataArray = $this->findEdgesBySource($edges, $flowData->current_step, $message);
@@ -234,25 +285,30 @@ class FlowExecutionService
 
             // Check if this is an action node
             $nodeType = \Arr::get($metadataArray, "type", null);
+            Log::info("Processing node of type: {$nodeType} for contact {$contactId}");
             if ($nodeType === 'action') {
                 $result = $this->processActionNode($metadataArray, $contact, $message, $flowData, $contactId);
                 
                 if ($result === false) {
                     // Action failed, stop the flow
+                    Log::warning("Action node failed for contact {$contactId}");
                     return false;
                 }
                 
                 if ($result === 'validation_failed') {
                     // Validation failed (e.g., invalid email), stay on the same node
+                    Log::info("Action validation failed for contact {$contactId}, staying on same node");
                     return 'validation_failed'; // Return special value to indicate validation failure
                 }
                 
                 if ($result === 'delayed') {
                     // Flow is paused due to delay action, don't proceed to next step
+                    Log::info("Action delayed flow for contact {$contactId}");
                     return 'delayed'; // Return special value to indicate the flow is paused
                 }
                 
                 // Action completed successfully, refresh flowData and continue to next node
+                Log::info("Action completed successfully for contact {$contactId}, refreshing flow data");
                 $flowData = FlowUserData::where('contact_id', $contactId)->first();
                 if (!$flowData) {
                     Log::warning("DELETION POINT 7: FlowUserData not found after action, ending flow");
@@ -275,8 +331,10 @@ class FlowExecutionService
      */
     private function processMessageNode($metadataArray, $contact, $flowData, $contactId)
     {
+        Log::info("Processing message node for contact: {$contactId}");
         $fieldsArray = \Arr::get($metadataArray, "data.metadata.fields", null);
         $type = $fieldsArray['type'] ?? null;
+        Log::info("Message node type: {$type} for contact {$contactId}");
 
         $message = $this->replacePlaceholders($contact->uuid, $fieldsArray['body'] ?? '');
 
@@ -301,6 +359,7 @@ class FlowExecutionService
         }
 
         $response = null;
+        Log::info("Preparing to send message of type '{$type}' to contact: {$contactId}");
 
         switch ($type) {
             case 'text':
@@ -324,6 +383,17 @@ class FlowExecutionService
                 break;
     
             case 'interactive buttons':
+                $response = $this->whatsappService->sendMessage(
+                    $contact->uuid,
+                    $message,
+                    0,
+                    $buttonType,
+                    $buttonArray,
+                    $header,
+                    ($fieldsArray['footer'] ?? '')
+                );
+                break;
+
             case 'interactive list':
                 $response = $this->whatsappService->sendMessage(
                     $contact->uuid,
@@ -339,6 +409,8 @@ class FlowExecutionService
         }
 
         if($response){
+            // Log::info("Response: " . json_encode($response));
+            Log::info("Message sent successfully for contact {$contactId}, proceeding to next step");
             // Update to the next step
             $this->proceedToNextStep($flowData, $contactId);
             
@@ -352,6 +424,7 @@ class FlowExecutionService
             return true;
         } else {
             // Even if message sending fails, we should still proceed to next step to avoid getting stuck
+            Log::warning("Message sending failed for contact {$contactId}, but proceeding to next step to avoid getting stuck");
             $this->proceedToNextStep($flowData, $contactId);
             return true;
         }
@@ -362,30 +435,38 @@ class FlowExecutionService
      */
     private function processActionNode($metadataArray, $contact, $message, $flowData, $contactId)
     {
+        Log::info("Processing action node for contact: {$contactId}");
         $actionType = \Arr::get($metadataArray, "data.actionType", null);
         $config = \Arr::get($metadataArray, "data.config", []);
         $isActive = \Arr::get($metadataArray, "data.is_active", true);
+        Log::info("Action type: {$actionType}, is_active: {$isActive} for contact {$contactId}");
 
         if (!$actionType || !$isActive) {
             // If action is not active or has no type, just proceed to next step
+            Log::info("Action not active or has no type, proceeding to next step for contact {$contactId}");
             $this->proceedToNextStep($flowData, $contactId);
             return true;
         }
 
         // Normalize action type: convert hyphens to underscores
         $actionType = str_replace('-', '_', $actionType);
+        Log::info("Normalized action type: {$actionType}");
 
         // Initialize action execution service
+        Log::info("Initializing action execution service for action: {$actionType}");
         $actionService = new ActionExecutionService($this->organizationId);
 
         // Execute the action
+        Log::info("Executing action: {$actionType} for contact {$contactId}");
         $result = $actionService->executeAction($actionType, $config, $contact, $message, $flowData, $contactId);
 
         // Handle conditional actions specially
         if ($actionType === 'conditional') {
+            Log::info("Handling conditional action for contact: {$contactId}, condition result: {$result}");
             // Set current_step to this conditional node's ID before processing
             $conditionalNodeId = $metadataArray['id'] ?? null;
             if ($conditionalNodeId && $flowData->current_step != $conditionalNodeId) {
+                Log::info("Updating conditional node ID from {$flowData->current_step} to {$conditionalNodeId}");
                 FlowUserData::where('contact_id', $contactId)->update(['current_step' => $conditionalNodeId]);
                 $flowData = FlowUserData::where('contact_id', $contactId)->first();
             }
@@ -396,18 +477,25 @@ class FlowExecutionService
         if ($actionType === 'update_contact' && $result === false) {
             // Check if there's an invalid email message configured, which indicates validation failure
             $invalidMessage = $config['invalid_email_message'] ?? '';
-            //Log::info("Update contact validation failed, staying on same node for contact {$contactId}");
+            Log::info("Update contact validation failed, staying on same node for contact {$contactId}");
             return 'validation_failed'; // Special return value to indicate validation failure
+        }
+
+        // Check if action returned 'delayed' status
+        if ($result === 'delayed') {
+            Log::info("Delay action scheduled for contact {$contactId}, pausing flow");
+            return 'delayed'; // Return special value to indicate the flow is paused
         }
 
         if ($result === false) {
             // Action failed, stop the flow
-            Log::warning("DELETION POINT 4: Action failed, deleting FlowUserData for contact {$contactId}");
+            Log::warning("DELETION POINT 4: Action {$actionType} failed, deleting FlowUserData for contact {$contactId}");
             FlowUserData::where('contact_id', $contactId)->delete();
             return false;
         }
 
         // For other actions, proceed to next step
+        Log::info("Action {$actionType} completed successfully for contact {$contactId}");
         $this->proceedToNextStep($flowData, $contactId);
         return true;
     }
@@ -417,8 +505,10 @@ class FlowExecutionService
      */
     private function handleConditionalAction($conditionResult, $flowData, $contactId, $metadataArray)
     {
+        Log::info("Handling conditional action with result: {$conditionResult} for contact: {$contactId}");
         $flow = Flow::find($flowData->flow_id);
         if (!$flow || empty($flow->metadata)) {
+            Log::warning("Flow not found or empty metadata for conditional action, contact: {$contactId}");
             return false;
         }
 
@@ -433,7 +523,7 @@ class FlowExecutionService
             $sourceHandle = 'default|' . $currentStep;
         }
 
-        // \Log::info("Looking for edge with source: {$currentStep} and sourceHandle: {$sourceHandle}");
+        Log::info("Looking for edge with source: {$currentStep} and sourceHandle: {$sourceHandle}");
 
         foreach ($edges as $edge) {
             if (
@@ -442,8 +532,9 @@ class FlowExecutionService
             ) {
                 $targetNode = $edge['targetNode']['id'] ?? null;
                 if ($targetNode) {
-                    // \Log::info("Found matching edge, routing to node: " . $targetNode);
+                    Log::info("Found matching edge, routing to node: " . $targetNode . " for contact: {$contactId}");
                     // Reload flowData
+                    Log::info("Reloading flowData for contact: {$contactId}");
                     $flowData = FlowUserData::where('contact_id', $contactId)->first();
                     // Get the chat object (you may need to pass it in, or reconstruct it)
                     $chat = (object) [
@@ -468,6 +559,7 @@ class FlowExecutionService
      */
     private function proceedToNextStep($flowData, $contactId)
     {
+        Log::info("Proceeding to next step for contact: {$contactId}, current_step: {$flowData->current_step}");
         // Find the next node by looking at the edges
         $flow = Flow::find($flowData->flow_id);
         if (!$flow || empty($flow->metadata)) {
@@ -491,6 +583,7 @@ class FlowExecutionService
         if (!empty($nextNodes)) {
             // Use the first next node found
             $nextStep = $nextNodes[0];
+            Log::info("Found next step: {$nextStep} for contact {$contactId}, updating current_step");
             FlowUserData::where('contact_id', $contactId)->update(['current_step' => $nextStep]);
         } else {
             Log::warning("DELETION POINT 6: No next step found for current_step {$flowData->current_step}, ending flow");
@@ -558,7 +651,7 @@ class FlowExecutionService
         // Convert $sourceId to a string to handle loose type matching
         $sourceId = (string) $sourceId;
         
-        //Log::info("findEdgesBySource: sourceId={$sourceId}, message={$message}, total_edges=" . count($edges));
+        Log::debug("findEdgesBySource: sourceId={$sourceId}, message={$message}, total_edges=" . count($edges));
         
         // Initialize an empty array to store matching edges
         $matchingEdges = [];
@@ -569,12 +662,12 @@ class FlowExecutionService
             if (isset($edge['source']) && (string) $edge['source'] === $sourceId) {
                 // If there's a match, add this edge to the matching array
                 $matchingEdges[] = $edge;
-                //Log::info("Found matching edge: source={$edge['source']}, target=" . ($edge['targetNode']['id'] ?? 'unknown'));
+                Log::debug("Found matching edge: source={$edge['source']}, target=" . ($edge['targetNode']['id'] ?? 'unknown'));
             }
         }
 
         if (count($matchingEdges) === 1) {
-            //Log::info("Single edge found, returning targetNode");
+            Log::debug("Single edge found, returning targetNode");
             return $matchingEdges[0]['targetNode'] ?? [];
         } else if (count($matchingEdges) > 1) {
             $firstEdge = $matchingEdges[0];
@@ -598,15 +691,18 @@ class FlowExecutionService
                 // Check for a match with the message in the buttons array
                 foreach ($buttons as $buttonKey => $buttonValue) {
                     if (strtolower(trim($buttonValue)) === $message) {
+                        Log::debug("Button match found: {$buttonKey} = {$buttonValue}");
                         $handle = $buttonMapping[$buttonKey] ?? null;
                     }
                 }
 
                 
                 if($handle != null){
+                    Log::debug("Searching for edge with handle: {$handle}");
                     // Search for the edge with this handle and return its targetNode
                     foreach ($matchingEdges as $edge) {
                         if (isset($edge['sourceHandle']) && $edge['sourceHandle'] === $handle) {
+                            Log::debug("Found matching handle edge, routing to target node");
                             return $edge['targetNode'] ?? [];
                         }
                     }
@@ -621,6 +717,7 @@ class FlowExecutionService
                         foreach ($section['rows'] as $rowIndex => $row) {
                             if (isset($row['title']) && strtolower(trim($row['title'])) === strtolower(trim($message))) {
                                 // Construct the handle using section and row positions
+                                Log::debug("List item match found at section {$sectionIndex}, row {$rowIndex}");
                                 $handle = 'a' . $sectionIndex . $rowIndex;
                             }
                         }
@@ -628,8 +725,10 @@ class FlowExecutionService
                 }
 
                 if($handle != null){
+                    Log::debug("Searching for list edge with handle: {$handle}");
                     foreach ($matchingEdges as $edge) {
                         if (isset($edge['sourceHandle']) && $edge['sourceHandle'] === $handle) {
+                            Log::debug("Found matching list edge handle, routing to target node");
                             return $edge['targetNode'] ?? [];
                         }
                     }
@@ -643,6 +742,7 @@ class FlowExecutionService
     }
 
     private function replacePlaceholders($contactUuid, $message){
+        Log::info("Replacing placeholders in message: {$message} for contact UUID: {$contactUuid}");
         $organization = Organization::where('id', $this->organizationId)->first();
         $contact = Contact::with('contactGroups')->where('uuid', $contactUuid)->first();
         $address = $contact->address ? json_decode($contact->address, true) : [];
@@ -678,7 +778,7 @@ class FlowExecutionService
 
         $mergedData = array_merge($data, $transformedMetadata);
 
-        //Log::info($mergedData);
+        Log::debug("Placeholder data merged: " . json_encode($mergedData));
 
         return preg_replace_callback('/\{(\w+)\}/', function ($matches) use ($mergedData) {
             $key = $matches[1];
