@@ -1157,10 +1157,10 @@ const changeHeaderType = (value) => {
   }
 };
 
-// const handleNameInput = (event) => {
-//   const value = event.target.value.toLowerCase();
-//   form.value.name = value.replace(/[^a-zA-Z0-9_]/g, "");
-// };
+const handleNameInput = (event) => {
+  const value = event.target.value.toLowerCase();
+  form.value.name = value.replace(/[^a-zA-Z0-9_]/g, "");
+};
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
