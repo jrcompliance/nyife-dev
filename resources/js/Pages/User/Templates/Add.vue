@@ -23,8 +23,8 @@
             <div class="flex items-center space-x-3 flex-wrap ml-auto">
               <Link href="/templates"
                 class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-all duration-200 border border-slate-300 flex items-center space-x-2">
-              <ArrowLeft class="w-4 h-4" />
-              <span>{{ $t("Back") }}</span>
+                <ArrowLeft class="w-4 h-4" />
+                <span>{{ $t("Back") }}</span>
               </Link>
 
               <button v-if="selectedType === 'template'" @click="submitForm()" type="button"
@@ -84,8 +84,8 @@
 
                   <Link href="/settings/whatsapp"
                     class="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-[#ff5100] to-[#ff6422] hover:from-[#ff6422] hover:to-[#ff5100] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02]">
-                  <Zap class="w-5 h-5" />
-                  <span>{{ $t('Connect Whatsapp account') }}</span>
+                    <Zap class="w-5 h-5" />
+                    <span>{{ $t('Connect Whatsapp account') }}</span>
                   </Link>
                 </div>
               </div>
@@ -934,6 +934,7 @@ export default {
   },
   methods: {
     handleNameInput(event) {
+      console.log("handleNameInput");
       const value = event.target.value.toLowerCase();
       if (this.selectedType === 'template') {
         this.form.name = value.replace(/[^a-zA-Z0-9_]/g, "");
@@ -1154,6 +1155,11 @@ const changeHeaderType = (value) => {
     form.value.header.example = null;
     form.value.header.file_url = null;
   }
+};
+
+const handleNameInput = (event) => {
+  const value = event.target.value.toLowerCase();
+  form.value.name = value.replace(/[^a-zA-Z0-9_]/g, "");
 };
 
 const handleFileUpload = (event) => {
@@ -1626,7 +1632,7 @@ function CardsubmitForm() {
     .filter((val) => val);
 
   const finalJson = {
-    name: `crousel_${cardform.value.name}`,
+    name: `crousel_${cardform.value.name?.toLowerCase()}`,
     language: cardform.value.language,
     category: cardform.value.category,
     components: [
@@ -1696,7 +1702,7 @@ function FlowSubmitForm() {
   isModalOpen.value = true;
 
   const finalFlowJson = {
-    name: `flow_${flowform.value.name}`,
+    name: `flow_${flowform.value.name?.toLowerCase()}`,
     language: flowform.value.language,
     category: flowform.value.category,
     components: [
