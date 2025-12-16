@@ -884,10 +884,10 @@
           <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <X class="w-8 h-8 text-red-600" />
           </div>
-          <h4 class="text-lg text-slate-800 font-semibold mb-2 text-start">{{ error.error.error_user_title
+          <h4 class="text-lg text-slate-800 font-semibold mb-2 text-start">{{ error?.error?.error_user_title || "Error"
           }}
           </h4>
-          <p class="text-sm text-slate-600 mb-6 text-start">{{ error.error.error_user_msg }}</p>
+          <p class="text-sm text-slate-600 mb-6 text-start">{{ error?.error?.error_user_msg || error }}</p>
           <button @click="closeModal"
             class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors">
             Close
@@ -1026,9 +1026,9 @@ const bodyCharacterLimit = ref("1098");
 const bodyCharacterCount = ref("0");
 const footerCharacterLimit = ref("60");
 const footerCharacterCount = ref("0");
-const isLoading = ref(false);
 const imageUrl = ref(null);
 const isModalOpen = ref(false);
+const isLoading = ref(false);
 const error = ref(null);
 const selectedType = ref("template");
 
@@ -1149,7 +1149,7 @@ const changeHeaderType = (value) => {
 
   if (previousExamples.value[value] !== undefined) {
     form.value.header.example = previousExamples.value[value];
-    form.value.header.file_url = URL.createObjectURL(previousExamples.value[value]);
+    form.value.header.file_url = URL.createObjectURL(previousExamples?.value[value]);
 
   } else {
     form.value.header.example = null;
@@ -1406,9 +1406,10 @@ const submitForm = () => {
       },
     })
     .then((response) => {
-      if (response.data.success === false) {
+      if (!response?.data?.success) {
+        console.log("submitForm response : ", response);
         isLoading.value = false;
-        error.value = response.data.message || "Internal server error";;
+        error.value = response?.data?.message || "Internal server error";;
       } else {
         router.visit("/templates", {
           method: "get",
@@ -1416,7 +1417,7 @@ const submitForm = () => {
       }
     })
     .catch((err) => {
-      error.value = err.response.data.error || "Internal server error";
+      error.value = err?.response?.data?.error || "Internal server error";
       console.error("Submit error:", err);
       isLoading.value = false;
     });
