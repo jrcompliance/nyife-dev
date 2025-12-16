@@ -35,7 +35,7 @@ const updateValue = (event) => {
 <!-- ================================ NEW CODE ================================ -->
 
 <script setup>
-import { defineProps, defineEmits, ref, computed, watch, toRefs } from 'vue';
+import { ref, computed, watch, toRefs } from 'vue';
 
 const props = defineProps({
     modelValue: [String, Number],
