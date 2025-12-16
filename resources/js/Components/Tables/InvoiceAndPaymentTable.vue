@@ -74,7 +74,7 @@
                             <tr>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    <span>{{ $t('Quotation No.') }}</span>
+                                    <span>{{ $t('Q/PI No.') }}</span>
                                 </th>
                                 <th
                                     class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -114,7 +114,10 @@
                                     <div class="text-sm font-semibold text-gray-900">
                                         {{ item.quotation_number }}
                                     </div>
-                                    <div v-if="item.proforma_number" class="text-xs text-gray-500 mt-1">
+                                    <div v-if="item.payment_id" class="text-xs text-gray-500 mt-1">
+                                        {{ item.payment_id }}
+                                    </div>
+                                    <div v-else="item.proforma_number" class="text-xs text-gray-500 mt-1">
                                         {{ item.proforma_number }}
                                     </div>
                                 </td>
@@ -142,9 +145,15 @@
                                 <!-- Date -->
                                 <td class="px-6 py-5 whitespace-nowrap">
                                     <div class="text-sm font-semibold text-gray-900">
-                                        {{ item.quotation_date }}
+                                        {{ item.proforma_date || item.quotation_date }}
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1">
+                                    <div v-if="item.paid_at" class="text-xs text-gray-500 mt-1">
+                                        Paid at: {{ item.paid_at.split('T')[0] }}
+                                    </div>
+                                    <div v-else-if="item.proforma_valid_until_date" class="text-xs text-gray-500 mt-1">
+                                        Valid: {{ item.proforma_valid_until_date }}
+                                    </div>
+                                    <div v-else class="text-xs text-gray-500 mt-1">
                                         Valid: {{ item.quotation_valid_until_date }}
                                     </div>
                                 </td>
@@ -166,6 +175,19 @@
                                             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium w-fit">
                                             {{ getStatusText(item) }}
                                         </span>
+                                        <div v-if="item.payment_status === 'expired'"
+                                            class="text-xs text-gray-500 mt-1 ml-1">
+                                            Payment link expired
+                                        </div>
+                                        <div v-if="item.payment_status === 'paid'"
+                                            class="text-xs text-gray-500 mt-1 ml-1">
+                                            via {{ item.payment_method }}
+                                        </div>
+
+                                        <div v-else class="text-xs text-gray-500 mt-1 ml-1">
+                                            {{ item.payment_status }}
+                                        </div>
+
                                     </div>
                                 </td>
 
@@ -191,6 +213,13 @@
                                             <div v-if="openDropdownId === item.id"
                                                 class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
                                                 <div class="py-1">
+                                                    <button @click="openInvoiceModal(item); closeDropdown()"
+                                                        class="text-teal-600 w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-gray-50">
+                                                        <Eye size="18" class="flex-shrink-0" />
+                                                        <span class="font-medium truncate">{{ $t("View details")
+                                                            }}</span>
+                                                    </button>
+
                                                     <button v-for="action in getAvailableActions(item)"
                                                         :key="action.key"
                                                         @click="handleAction(action.key, item); closeDropdown()"
@@ -317,6 +346,10 @@
                 </div>
             </div>
         </div>
+        <!-- Date Picker Modal -->
+        <DatePickerModal :isOpen="isDateModalOpen" @close="closeDateModal" @submit="handleDateSubmit"
+            v-model="selectedDate" label="Select Proforma Validity" :defaultDate="new Date()" :required="true"
+            helperText="Pick a date from the calendar" placeholder="Select date" :closeBtn="true" :showHeader="true" />
         <!-- Share Options Modal -->
         <div v-if="showShareOptions" class="modal-overlay" @click.self="closeShareModal">
             <div class="share-modal">
@@ -416,7 +449,7 @@
                 </div>
             </div>
         </div>
-        <!-- PDF Template (Hidden) -->
+        <!-- PDF Proforma Invoice Template (Hidden) -->
         <div v-if="generateCurrentProformaPDF" ref="pdfTemplate" class="pdf-template">
             <div class="pdf-content relative pb-8">
                 <div class="pdf-header">
@@ -511,7 +544,7 @@
                         </div>
                         <div class="term-section">
                             <h5>Invoice Validity</h5>
-                            <p>This proforma invoice is valid for 7 days from the date of issue. Services will commence
+                            <p>This proforma validity is mentioned in the top of the proforma. Services will commence
                                 upon payment confirmation.</p>
                         </div>
                         <div class="term-section">
@@ -540,19 +573,122 @@
                 </p>
             </div>
         </div>
+        <!-- PDF Payment Receipt Template (Hidden) -->
+        <div v-if="generateCurrentPaymentReceiptPDF" ref="pdfTemplatePaymentReceipt"
+            class="pdf-template-payment-receipt">
+            <div class="receipt-container">
+                <div class="receipt-header">
+                    <div class="success-icon">
+                        <Check />
+                    </div>
+                    <h1 class="receipt-title">Payment Receipt</h1>
+                    <p class="receipt-subtitle">Your payment has been received successfully</p>
+                </div>
+
+                <div class="receipt-body">
+                    <div class="company-info pb-4">
+                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" class="h-16 aspect-auto"></img>
+                        <h2>Complia Services Ltd</h2>
+                        <p>nyife.chat | info@nyife.chat | +91 11 430 22 315 | GST No: 07AALCC1963C1ZT</p>
+                        <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
+                        <p>Delhi-110063, India</p>
+                    </div>
+                    <div class="proforma-reference">
+                        <p><strong>Payment Receipt Against Proforma Invoice:</strong>
+                            {{ generateCurrentPaymentReceiptPDF?.proforma_number }}</p>
+                    </div>
+
+                    <div class="section">
+                        <h2 class="section-title">Payment Information</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Payment ID</span>
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.payment_id }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Payment Date</span>
+                                <span class="info-value">{{ formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
+                                }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Payment Method</span>
+                                <span class="info-value">{{
+                                    generateCurrentPaymentReceiptPDF?.payment_method?.toUpperCase() }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Payment Status</span>
+                                <span class="info-value">Paid</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Amount Paid</span>
+                                <span class="info-value">₹{{
+                                    generateCurrentPaymentReceiptPDF?.payment_metadata?.amount_paid
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2 class="section-title">Customer Information</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Company Name</span>
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.company_name || `Not
+                                    provided` }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Contact Person</span>
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.contact_person || `Not
+                                    provided` }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Email Address</span>
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not provided`
+                                    }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Phone Number</span>
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not provided`
+                                    }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not provided`
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <div class="footer-note">
+                        This is a computer-generated receipt and does not require a physical signature.<br>
+                        For any queries, please contact us at info@nyife.chat
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Details Modal -->
+        <InvoiceDetailsModal :isOpen="isInvoiceModalOpen" @close="closeInvoiceModal" :invoiceData="invoiceModalData"
+            :closeBtn="true" :showHeader="true" />
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import debounce from 'lodash/debounce';
-import { FileText, FileCheck, Receipt, Plus, RefreshCcw } from 'lucide-vue-next';
+import { FileText, FileCheck, Receipt, Plus, RefreshCcw, Check, Eye } from 'lucide-vue-next';
 import QuotationInvoiceGenerator from '../QuotationInvoiceGenerator.vue';
 import { toast } from 'vue3-toastify';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import axios from 'axios';
 import QRCode from "qrcode";
+import DatePickerModal from '../DatePickerModal.vue';
+import InvoiceDetailsModal from '../InvoiceDetailsModal.vue';
+
+const base_url = import.meta.env.VITE_BACKEND_API_URL;
 
 
 const invoiceData = ref([]);
@@ -573,12 +709,49 @@ const isSharing = ref({
 const refresh = ref(false);
 
 const pdfTemplate = ref(null);
+const pdfTemplatePaymentReceipt = ref(null);
 const isSearching = ref(false);
 const showShareOptions = ref(false);
 const openDropdownId = ref(null);
 const currentPDF = ref(null);
 const generateCurrentProformaPDF = ref(null);
+const generateCurrentPaymentReceiptPDF = ref(null);
 
+const isDateModalOpen = ref(false);
+const selectedDate = ref(new Date().setDate(new Date().getDate() + 7));
+const tempProformaData = ref(null);
+
+
+const isInvoiceModalOpen = ref(false);
+
+const invoiceModalData = ref({});
+
+function openInvoiceModal(item) {
+    isInvoiceModalOpen.value = true;
+    invoiceModalData.value = item;
+}
+
+function closeInvoiceModal() {
+    isInvoiceModalOpen.value = false;
+    setTimeout(() => {
+        invoiceModalData.value = {}
+    }, 1000)
+}
+
+function openDateModal(item) {
+    isDateModalOpen.value = true;
+    tempProformaData.value = item;
+}
+
+function closeDateModal() {
+    isDateModalOpen.value = false;
+    tempProformaData.value = null;
+}
+
+function handleDateSubmit(date) {
+    selectedDate.value = date;
+    generateProforma(tempProformaData.value);
+}
 
 // Action configuration - Config-driven approach
 const actionConfig = {
@@ -608,14 +781,14 @@ const actionConfig = {
         label: 'Generate & Share Payment Receipt',
         icon: Plus,
         colorClass: 'text-orange-600',
-        condition: (item) => item.payment_receipt && !item.payment_receipt_pdf_url,
+        condition: (item) => item.payment_receipt && !item.payment_invoice_pdf_url,
     },
     shareReceipt: {
         key: 'shareReceipt',
         label: 'Share Payment Receipt',
         icon: Receipt,
         colorClass: 'text-orange-600',
-        condition: (item) => item.payment_receipt_number && item.payment_receipt_pdf_url,
+        condition: (item) => item.payment_receipt && item.payment_invoice_pdf_url,
     }
 };
 
@@ -627,6 +800,7 @@ const closeShareModal = () => {
     showShareOptions.value = false;
     currentPDF.value = null;
     generateCurrentProformaPDF.value = null;
+    generateCurrentPaymentReceiptPDF.value = null;
 };
 
 // Dropdown methods
@@ -657,7 +831,7 @@ const handleClickOutside = (event) => {
 async function fetchInvoices() {
     loading.value = true;
     try {
-        const res = await axios.get('http://localhost:3000/api/v1/invoices', {
+        const res = await axios.get(`${base_url}/invoices`, {
             params: params.value,
         });
 
@@ -699,7 +873,8 @@ const handleAction = (actionKey, item) => {
             shareQuotation(item);
             break;
         case 'generateProforma':
-            generateProforma(item);
+            openDateModal(item);
+            // generateProforma(item);
             break;
         case 'shareProforma':
             shareProforma(item);
@@ -843,6 +1018,85 @@ const generatePDFBlob = async () => {
     return { blob: pdfBlob, pdf, fileName };
 };
 
+const generatePaymentReceiptPDFBlob = async () => {
+
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    const element = pdfTemplatePaymentReceipt.value;
+
+    // Show element temporarily for rendering
+    element.style.position = 'fixed';
+    element.style.left = '0';
+    element.style.top = '0';
+    element.style.zIndex = '-1';
+    element.style.display = 'block';
+    element.style.width = '210mm';
+    element.style.minHeight = '297mm';
+
+    // High-quality canvas rendering
+    const canvas = await html2canvas(element, {
+        scale: 4,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: 793.7,
+        windowWidth: 793.7,
+        onclone: (clonedDoc) => {
+            const clonedElement = clonedDoc.querySelector('.pdf-template-payment-receipt');
+            if (clonedElement) {
+                clonedElement.style.display = 'block';
+                clonedElement.style.width = '210mm';
+            }
+        }
+    });
+
+    // Hide element after rendering
+    element.style.display = 'none';
+    element.style.position = 'absolute';
+    element.style.left = '-9999px';
+    element.style.zIndex = '';
+    element.style.width = '';
+    element.style.minHeight = '';
+
+    // Create PDF with high quality
+    const imgData = canvas.toDataURL('image/png', 1.0);
+
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+    });
+
+    const pdfWidth = 210;
+    const pdfHeight = 297;
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // Add first page
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+    heightLeft -= pdfHeight;
+
+    // Add additional pages if content overflows
+    while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pdfHeight;
+    }
+
+    // Generate filename
+    const fileName = `PaymentReceipt_${generateCurrentPaymentReceiptPDF.value.payment_id.replace('/', '_')}_${generateCurrentPaymentReceiptPDF.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+
+    // Convert PDF to Blob
+    const pdfBlob = pdf.output('blob');
+    return { blob: pdfBlob, pdf, fileName };
+};
+
 const downloadPDF = async () => {
     if (!currentPDF.value?.pdfDownloadUrl) {
         toast.error('No PDF available to download');
@@ -961,7 +1215,7 @@ const shareViaEmail = async () => {
             email: currentPDF.value.email
         }
 
-        const response = await axios.post('http://localhost:3000/api/v1/email/share-invoice', payload);
+        const response = await axios.post(`${base_url}/email/share-invoice`, payload);
 
         if (!response?.data?.success) {
             throw new Error('Failed to send email');
@@ -997,7 +1251,12 @@ const generateProforma = async (item) => {
     const tId = toast.loading('Generating proforma invoice...');
     try {
 
-        const res = await axios.put(`http://localhost:3000/api/v1/invoices/generate-proforma/${item.id}`);
+
+        const payload = {
+            proforma_valid_until_date: selectedDate.value.toISOString()
+        }
+
+        const res = await axios.put(`${base_url}/invoices/generate-proforma/${item.id}`, payload);
 
         if (!res?.data?.success) {
             throw new Error(res?.data?.message || 'Failed to generate proforma invoice');
@@ -1005,7 +1264,7 @@ const generateProforma = async (item) => {
 
         const qrCode = ref('');
 
-        const paymentUrl = res?.data?.data.payment_url;
+        const paymentUrl = res?.data?.data.payment_url?.payment_link_short_url;
 
         qrCode.value = await QRCode.toDataURL(paymentUrl, { width: 180 });
 
@@ -1022,7 +1281,7 @@ const generateProforma = async (item) => {
         formData.append("pdf_type", "proforma");
         formData.append("id", res?.data?.data.id);
 
-        const uploadRes = await axios.post("http://localhost:3000/api/v1/uploads", formData, {
+        const uploadRes = await axios.post(`${base_url}/uploads`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
@@ -1032,7 +1291,7 @@ const generateProforma = async (item) => {
             throw new Error(uploadRes?.data?.message || "Failed to upload proforma PDF");
         }
 
-        toast.remove(tId);
+        closeDateModal();
         toast.success('Proforma invoice generated successfully!');
 
         currentPDF.value = {
@@ -1048,6 +1307,7 @@ const generateProforma = async (item) => {
             pdfName: uploadRes.data.data.file.filename
         };
 
+
         // Show share options modal after a short delay
         setTimeout(() => {
             openShareModal();
@@ -1055,10 +1315,10 @@ const generateProforma = async (item) => {
 
     } catch (error) {
         toast.error(error.message || 'Error generating proforma invoice. Please try again.');
-        toast.remove(tId);
 
     } finally {
         refresh.value = !refresh.value;
+        toast.remove(tId);
     }
 };
 
@@ -1079,30 +1339,56 @@ const shareProforma = (item) => {
 };
 
 const generateReceipt = async (item) => {
+    const tId = toast.loading('Generating  payment receipt...');
     try {
-        const tId = toast.loading('Generating  payment receipt...');
 
         generateCurrentPaymentReceiptPDF.value = item;
 
-        const { blob, fileName } = await generatePDFBlob();
+        const { blob, fileName } = await generatePaymentReceiptPDFBlob();
 
-        // Store the blob for sharing --- THIS IS PENDING
+        const formData = new FormData();
+        formData.append("pdf_data", blob, fileName);
+        formData.append("pdf_type", "payment");
+        formData.append("id", item.id);
+
+        const uploadRes = await axios.post(`${base_url}/uploads`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+
+        if (!uploadRes?.data?.success) {
+            throw new Error(uploadRes?.data?.message || "Failed to upload payment receipt PDF");
+        }
+
+        toast.success('Payment receipt generated successfully!');
 
         currentPDF.value = {
             contactPerson: generateCurrentPaymentReceiptPDF.value.contact_person,
             companyName: generateCurrentPaymentReceiptPDF.value.company_name,
             phone: generateCurrentPaymentReceiptPDF.value.phone,
             email: generateCurrentPaymentReceiptPDF.value.email,
+            invoiceNumber: generateCurrentPaymentReceiptPDF.value.payment_id,
+            templateType: "Payment Receipt",
             templateName: "payment_receipt",
-            pdf: generateCurrentPaymentReceiptPDF.value.proforma_invoice_pdf_url,
-            pdfName: fileName
+            pdf: uploadRes.data.data.file.url,
+            pdfDownloadUrl: uploadRes.data.data.file.downloadUrl,
+            pdfName: uploadRes.data.data.file.filename
         };
 
-        openShareModal();
-        toast.remove(tId);
-        toast.success('Payment receipt generated successfully!');
+
+
+        // Show share options modal after a short delay
+        setTimeout(() => {
+            openShareModal();
+        }, 300);
+
     } catch (error) {
         toast.error(error.message || 'Error generating payment receipt. Please try again.');
+
+    } finally {
+        refresh.value = !refresh.value;
+        toast.remove(tId);
     }
 };
 
@@ -1112,9 +1398,12 @@ const shareReceipt = (item) => {
         companyName: item.company_name,
         phone: item.phone,
         email: item.email,
+        invoiceNumber: item.payment_id,
+        templateType: "Payment Receipt",
         templateName: "payment_receipt",
-        pdf: item.payment_receipt_pdf_url,
-        pdfName: `PaymentReceipt_${item.payment_receipt_number.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        pdf: item.payment_invoice_pdf_url,
+        pdfDownloadUrl: `${item.payment_invoice_pdf_url}/download`,
+        pdfName: `PaymentReceipt_${item.payment_id.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
     };
     openShareModal();
 };
@@ -1172,13 +1461,27 @@ const goToLastPage = () => {
     fetchInvoices();
 }
 
-
 const formatAmount = (amount) => {
     return new Intl.NumberFormat('en-IN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(amount);
 };
+
+function formatDateTimeIST(isoString) {
+    if (!isoString) return '';
+
+    return new Intl.DateTimeFormat('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    }).format(new Date(isoString));
+}
+
 
 const emit = defineEmits(['update:modelValue', 'callback']);
 </script>
@@ -1199,8 +1502,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
     padding: 1rem;
 }
 
-/* Quotation Invoice Generator Styles */
-
+/* Proforma Invoice Generator Styles */
 .pdf-template {
     position: absolute;
     left: -9999px;
@@ -1319,7 +1621,6 @@ const emit = defineEmits(['update:modelValue', 'callback']);
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 2px solid #ff5100cb;
     border-radius: 12px;
-    padding: 8px;
     text-align: center;
     box-shadow: 0 4px 12px rgba(255, 81, 0, 0.15);
 }
@@ -1338,9 +1639,8 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 }
 
 .qr-code-wrapper {
-    background: black;
+    background: white;
     border-radius: 8px;
-    margin-bottom: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -1427,7 +1727,7 @@ const emit = defineEmits(['update:modelValue', 'callback']);
 }
 
 .signature {
-    margin: 40px 0 60px 0;
+    margin: 100px 0 60px 0;
     text-align: right;
 }
 
@@ -1458,6 +1758,181 @@ const emit = defineEmits(['update:modelValue', 'callback']);
     color: #999;
     font-style: italic;
     margin-top: 2px;
+}
+
+/* Payment Receipt Generator Styles */
+
+.pdf-template-payment-receipt {
+    position: absolute;
+    left: -9999px;
+    display: none;
+    width: 793px;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.receipt-container {
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.receipt-header {
+    background: linear-gradient(135deg, #ff5100 0%, #ff7d47 100%);
+    padding: 20px;
+    text-align: center;
+    color: white;
+}
+
+.success-icon {
+    width: 52px;
+    height: 52px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 24px;
+    color: #ff5100;
+}
+
+.receipt-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.receipt-subtitle {
+    font-size: 15px;
+    opacity: 0.95;
+}
+
+.receipt-body {
+    padding-top: 16px;
+    padding-bottom: 0;
+    background-image: url("../../../images/nyife-bg.png");
+    background-size: 70%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.section {
+    margin-bottom: 32px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #ff5100;
+}
+
+.info-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #212529;
+    font-weight: 600;
+    text-align: right;
+    max-width: 60%;
+}
+
+.proforma-reference {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 32px;
+}
+
+.proforma-reference p {
+    font-size: 13px;
+    color: #5d4037;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.proforma-reference strong {
+    color: #ff5100;
+}
+
+.footer {
+    background: #f8f9fa;
+    padding: 16px 40px;
+    text-align: center;
+    border-top: 1px solid #e9ecef;
+}
+
+.company-logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ff5100;
+    margin-bottom: 16px;
+}
+
+.company-details {
+    font-size: 12px;
+    color: #6c757d;
+    line-height: 1.8;
+    margin-bottom: 20px;
+}
+
+.footer-note {
+    font-size: 11px;
+    color: #737980;
+}
+
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    .receipt-container {
+        box-shadow: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .receipt-body {
+        padding: 24px;
+    }
+
+    .amount-value {
+        font-size: 36px;
+    }
+
+    .info-value {
+        max-width: 55%;
+    }
 }
 
 /* Share Modal Styles */

@@ -23,8 +23,8 @@
             <div class="flex items-center space-x-3 flex-wrap ml-auto">
               <Link href="/templates"
                 class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-all duration-200 border border-slate-300 flex items-center space-x-2">
-              <ArrowLeft class="w-4 h-4" />
-              <span>{{ $t("Back") }}</span>
+                <ArrowLeft class="w-4 h-4" />
+                <span>{{ $t("Back") }}</span>
               </Link>
 
               <button v-if="selectedType === 'template'" @click="submitForm()" type="button"
@@ -84,8 +84,8 @@
 
                   <Link href="/settings/whatsapp"
                     class="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-[#ff5100] to-[#ff6422] hover:from-[#ff6422] hover:to-[#ff5100] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02]">
-                  <Zap class="w-5 h-5" />
-                  <span>{{ $t('Connect Whatsapp account') }}</span>
+                    <Zap class="w-5 h-5" />
+                    <span>{{ $t('Connect Whatsapp account') }}</span>
                   </Link>
                 </div>
               </div>
@@ -884,10 +884,10 @@
           <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <X class="w-8 h-8 text-red-600" />
           </div>
-          <h4 class="text-lg text-slate-800 font-semibold mb-2 text-start">{{ error.error.error_user_title
+          <h4 class="text-lg text-slate-800 font-semibold mb-2 text-start">{{ error?.error?.error_user_title || "Error"
           }}
           </h4>
-          <p class="text-sm text-slate-600 mb-6 text-start">{{ error.error.error_user_msg }}</p>
+          <p class="text-sm text-slate-600 mb-6 text-start">{{ error?.error?.error_user_msg || error }}</p>
           <button @click="closeModal"
             class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors">
             Close
@@ -934,6 +934,7 @@ export default {
   },
   methods: {
     handleNameInput(event) {
+      console.log("handleNameInput");
       const value = event.target.value.toLowerCase();
       if (this.selectedType === 'template') {
         this.form.name = value.replace(/[^a-zA-Z0-9_]/g, "");
@@ -1025,9 +1026,9 @@ const bodyCharacterLimit = ref("1098");
 const bodyCharacterCount = ref("0");
 const footerCharacterLimit = ref("60");
 const footerCharacterCount = ref("0");
-const isLoading = ref(false);
 const imageUrl = ref(null);
 const isModalOpen = ref(false);
+const isLoading = ref(false);
 const error = ref(null);
 const selectedType = ref("template");
 
@@ -1148,12 +1149,17 @@ const changeHeaderType = (value) => {
 
   if (previousExamples.value[value] !== undefined) {
     form.value.header.example = previousExamples.value[value];
-    form.value.header.file_url = URL.createObjectURL(previousExamples.value[value]);
+    form.value.header.file_url = URL.createObjectURL(previousExamples?.value[value]);
 
   } else {
     form.value.header.example = null;
     form.value.header.file_url = null;
   }
+};
+
+const handleNameInput = (event) => {
+  const value = event.target.value.toLowerCase();
+  form.value.name = value.replace(/[^a-zA-Z0-9_]/g, "");
 };
 
 const handleFileUpload = (event) => {
@@ -1400,9 +1406,10 @@ const submitForm = () => {
       },
     })
     .then((response) => {
-      if (response.data.success === false) {
+      if (!response?.data?.success) {
+        console.log("submitForm response : ", response);
         isLoading.value = false;
-        error.value = response.data.message || "Internal server error";;
+        error.value = response?.data?.message || "Internal server error";;
       } else {
         router.visit("/templates", {
           method: "get",
@@ -1410,7 +1417,7 @@ const submitForm = () => {
       }
     })
     .catch((err) => {
-      error.value = err.response.data.error || "Internal server error";
+      error.value = err?.response?.data?.error || "Internal server error";
       console.error("Submit error:", err);
       isLoading.value = false;
     });
@@ -1626,7 +1633,7 @@ function CardsubmitForm() {
     .filter((val) => val);
 
   const finalJson = {
-    name: `crousel_${cardform.value.name}`,
+    name: `crousel_${cardform.value.name?.toLowerCase()}`,
     language: cardform.value.language,
     category: cardform.value.category,
     components: [
@@ -1696,7 +1703,7 @@ function FlowSubmitForm() {
   isModalOpen.value = true;
 
   const finalFlowJson = {
-    name: `flow_${flowform.value.name}`,
+    name: `flow_${flowform.value.name?.toLowerCase()}`,
     language: flowform.value.language,
     category: flowform.value.category,
     components: [

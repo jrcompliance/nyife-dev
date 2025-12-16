@@ -65,50 +65,50 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link href="/contacts/add"
                 class="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 hover:scale-[1.02]">
-              <div class="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
-              <div class="relative flex items-center justify-between">
-                <div>
-                  <div class="bg-white/30 backdrop-blur rounded-xl p-2.5 w-fit mb-3">
-                    <UserPlus class="w-5 h-5 text-white" />
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                <div class="relative flex items-center justify-between">
+                  <div>
+                    <div class="bg-white/30 backdrop-blur rounded-xl p-2.5 w-fit mb-3">
+                      <UserPlus class="w-5 h-5 text-white" />
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-1">{{ $t("Add contact") }}</h4>
+                    <p class="text-blue-50 text-sm">Create new contact entry</p>
                   </div>
-                  <h4 class="text-white font-bold text-lg mb-1">{{ $t("Add contact") }}</h4>
-                  <p class="text-blue-50 text-sm">Create new contact entry</p>
+                  <ArrowUpRight
+                    class="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
                 </div>
-                <ArrowUpRight
-                  class="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-              </div>
               </Link>
 
               <Link href="/campaigns/create"
                 class="group relative overflow-hidden bg-primary rounded-2xl p-5 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02]">
-              <div class="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
-              <div class="relative flex items-center justify-between">
-                <div>
-                  <div class="bg-white/30 backdrop-blur rounded-xl p-2.5 w-fit mb-3">
-                    <Rocket class="w-5 h-5 text-white" />
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                <div class="relative flex items-center justify-between">
+                  <div>
+                    <div class="bg-white/30 backdrop-blur rounded-xl p-2.5 w-fit mb-3">
+                      <Rocket class="w-5 h-5 text-white" />
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-1">{{ $t("Create campaign") }}</h4>
+                    <p class="text-orange-50 text-sm">Launch new campaign</p>
                   </div>
-                  <h4 class="text-white font-bold text-lg mb-1">{{ $t("Create campaign") }}</h4>
-                  <p class="text-orange-50 text-sm">Launch new campaign</p>
+                  <ArrowUpRight
+                    class="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
                 </div>
-                <ArrowUpRight
-                  class="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-              </div>
               </Link>
 
               <Link href="/templates/create"
                 class="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02]">
-              <div class="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
-              <div class="relative flex items-center justify-between">
-                <div>
-                  <div class="bg-white/30 backdrop-blur rounded-xl p-2.5 w-fit mb-3">
-                    <FileText class="w-5 h-5 text-white" />
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                <div class="relative flex items-center justify-between">
+                  <div>
+                    <div class="bg-white/30 backdrop-blur rounded-xl p-2.5 w-fit mb-3">
+                      <FileText class="w-5 h-5 text-white" />
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-1">{{ $t("Create template") }}</h4>
+                    <p class="text-purple-50 text-sm">Design message template</p>
                   </div>
-                  <h4 class="text-white font-bold text-lg mb-1">{{ $t("Create template") }}</h4>
-                  <p class="text-purple-50 text-sm">Design message template</p>
+                  <ArrowUpRight
+                    class="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
                 </div>
-                <ArrowUpRight
-                  class="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-              </div>
               </Link>
             </div>
           </div>
@@ -141,8 +141,8 @@
             <p class="text-gray-900 text-3xl font-bold mb-3">{{ props.contactCount }}</p>
             <Link href="/contacts"
               class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium group-hover:gap-2 transition-all">
-            <span>{{ $t("View contacts") }}</span>
-            <ArrowRight class="w-4 h-4" />
+              <span>{{ $t("View contacts") }}</span>
+              <ArrowRight class="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -165,8 +165,8 @@
             <p class="text-gray-900 text-3xl font-bold mb-3">{{ props.campaignCount }}</p>
             <Link href="/campaigns"
               class="inline-flex items-center gap-1 text-primary hover:text-primary text-sm font-medium group-hover:gap-2 transition-all">
-            <span>{{ $t("View campaigns") }}</span>
-            <ArrowRight class="w-4 h-4" />
+              <span>{{ $t("View campaigns") }}</span>
+              <ArrowRight class="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -190,8 +190,8 @@
             <p class="text-gray-900 text-3xl font-bold mb-3">{{ props.templateCount }}</p>
             <Link href="/templates"
               class="inline-flex items-center gap-1 text-purple-600 hover:text-purple-700 text-sm font-medium group-hover:gap-2 transition-all">
-            <span>{{ $t("View templates") }}</span>
-            <ArrowRight class="w-4 h-4" />
+              <span>{{ $t("View templates") }}</span>
+              <ArrowRight class="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -215,8 +215,8 @@
             <p class="text-gray-900 text-3xl font-bold mb-3">{{ props.chatCount }}</p>
             <Link href="/chats"
               class="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-sm font-medium group-hover:gap-2 transition-all">
-            <span>{{ $t("View chats") }}</span>
-            <ArrowRight class="w-4 h-4" />
+              <span>{{ $t("View chats") }}</span>
+              <ArrowRight class="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -273,8 +273,8 @@
                 </p>
                 <Link href="/campaigns/create"
                   class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
-                <Plus class="w-4 h-4" />
-                <span>{{ $t("Create campaign") }}</span>
+                  <Plus class="w-4 h-4" />
+                  <span>{{ $t("Create campaign") }}</span>
                 </Link>
               </div>
 
@@ -303,8 +303,8 @@
 
                 <Link href="/campaigns"
                   class="inline-flex items-center gap-2 text-sm text-pink-600 hover:text-pink-700 font-medium mt-4 group/link">
-                <span>{{ $t("View more campaigns") }}</span>
-                <ArrowRight class="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                  <span>{{ $t("View more campaigns") }}</span>
+                  <ArrowRight class="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
@@ -378,16 +378,16 @@
                 <Link v-if="props.auth.user.teams[0].role === 'owner' && props.subscription?.status === 'trial'"
                   href="/subscription"
                   class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-900 font-bold px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 shadow-xl">
-                <Zap class="w-4 h-4" />
-                <span>{{ $t("Subscribe") }}</span>
+                  <Zap class="w-4 h-4" />
+                  <span>{{ $t("Subscribe") }}</span>
                 </Link>
 
                 <Link
                   v-if="props.auth.user.teams[0].role === 'owner' && props.subscription?.status === 'active' && !subscriptionIsActive"
                   href="/billing"
                   class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-900 font-bold px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 shadow-xl">
-                <CreditCard class="w-4 h-4" />
-                <span>{{ $t("Add payment") }}</span>
+                  <CreditCard class="w-4 h-4" />
+                  <span>{{ $t("Add payment") }}</span>
                 </Link>
               </div>
             </div>
@@ -417,8 +417,8 @@
 
               <Link v-else href="/settings/whatsapp"
                 class="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
-              <span>{{ $t("Setup whatsapp") }}</span>
-              <ArrowRight class="w-4 h-4" />
+                <span>{{ $t("Setup whatsapp") }}</span>
+                <ArrowRight class="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -441,8 +441,8 @@
               <div class="flex flex-col gap-3">
                 <Link href="team"
                   class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
-                <UserPlus class="w-4 h-4" />
-                <span>{{ $t("Add users") }}</span>
+                  <UserPlus class="w-4 h-4" />
+                  <span>{{ $t("Add users") }}</span>
                 </Link>
 
                 <button @click="dismissNotification()"
@@ -462,19 +462,19 @@
         <div v-if="isHistoryModalOpen"
           class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
           @click.self="closeHistoryModal">
-          <div class="relative w-full max-w-6xl max-h-[90vh] flex flex-col">
+          <div class="relative w-full max-w-6xl max-h-[80vh] flex flex-col">
             <!-- Glow Effect -->
-            <div class="absolute -inset-1 bg-gradient-to-r from-primary/40 to-blue-400 rounded-3xl blur-xl opacity-30">
-            </div>
+            <!-- <div class="absolute -inset-1 bg-gradient-to-r from-primary/40 to-blue-400 rounded-3xl blur-xl opacity-30">
+            </div> -->
 
             <!-- Modal Content -->
             <div
               class="relative bg-white border border-primary/20 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
               <!-- Modal Header -->
-              <div class="relative overflow-hidden px-8 py-6 border-b border-primary/20">
+              <div class="relative px-8 py-6 border-b border-primary/20">
                 <div class="relative flex items-center justify-between">
                   <div class="flex items-center gap-4">
-                    <div class="rounded-2xl p-3.5 shadow-lg shadow-primary/30">
+                    <div class="rounded-2xl p-3.5 shadow-lg">
                       <History class="w-7 h-7 text-black" />
                     </div>
                     <div>
@@ -561,7 +561,7 @@
               </div>
 
               <!-- Modal Footer -->
-              <div class="relative overflow-hidden px-8 py-6 border-t border-primary/10">
+              <div class="relative px-8 py-6 border-t border-primary/10">
                 <div class="relative flex justify-end gap-4">
                   <button @click="router.visit('/billing')"
                     class="inline-flex items-center gap-2 bg-green-500/80 hover:bg-green-500 text-white font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
@@ -772,25 +772,5 @@ const closeHistoryModal = () => {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Custom scrollbar for light theme */
-:deep(*::-webkit-scrollbar) {
-  width: 8px;
-  height: 8px;
-}
-
-:deep(*::-webkit-scrollbar-track) {
-  background: rgba(99, 102, 241, 0.05);
-  border-radius: 10px;
-}
-
-:deep(*::-webkit-scrollbar-thumb) {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 10px;
-}
-
-:deep(*::-webkit-scrollbar-thumb:hover) {
-  background: rgba(99, 102, 241, 0.5);
 }
 </style>

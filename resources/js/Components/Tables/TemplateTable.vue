@@ -341,8 +341,8 @@ const getCategoryColor = (category) => {
                         <Link v-if="item.status == 'APPROVED' || item.status == 'REJECTED' || item.status == 'PAUSED'"
                             :href="'/templates/' + item.uuid"
                             class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary/90 hover:bg-primary text-white font-semibold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
-                        <Edit class="w-4 h-4" />
-                        <span>{{ $t('Edit') }}</span>
+                            <Edit class="w-4 h-4" />
+                            <span>{{ $t('Edit') }}</span>
                         </Link>
                         <button @click="openAlert(item.uuid)"
                             class="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-300">
