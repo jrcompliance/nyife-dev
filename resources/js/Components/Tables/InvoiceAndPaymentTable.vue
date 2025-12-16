@@ -348,7 +348,7 @@
         </div>
         <!-- Date Picker Modal -->
         <DatePickerModal :isOpen="isDateModalOpen" @close="closeDateModal" @submit="handleDateSubmit"
-            v-model="selectedDate" label="Select Proforma Validity" :defaultDate="new Date()" :required="true"
+            v-model="selectedDate" label="Select Proforma Validity" :defaultDate="selectedDate" :required="true"
             helperText="Pick a date from the calendar" placeholder="Select date" :closeBtn="true" :showHeader="true" />
         <!-- Share Options Modal -->
         <div v-if="showShareOptions" class="modal-overlay" @click.self="closeShareModal">
@@ -689,6 +689,7 @@ import DatePickerModal from '../DatePickerModal.vue';
 import InvoiceDetailsModal from '../InvoiceDetailsModal.vue';
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
+const whatsapp_token = import.meta.env.VITE_WA_TOKEN;
 
 
 const invoiceData = ref([]);
@@ -718,7 +719,10 @@ const generateCurrentProformaPDF = ref(null);
 const generateCurrentPaymentReceiptPDF = ref(null);
 
 const isDateModalOpen = ref(false);
-const selectedDate = ref(new Date().setDate(new Date().getDate() + 7));
+const selectedDate = ref(
+    new Date(new Date().setDate(new Date().getDate() + 7))
+);
+
 const tempProformaData = ref(null);
 
 
@@ -1147,7 +1151,7 @@ const shareOnWhatsApp = async () => {
         const response = await fetch("https://wa.nyife.chat/api/send/template", {
             method: "POST",
             headers: {
-                "Authorization": "Bearer CWviyKoalNnI4AIlx1YdIXZrQXCnlTGX75XuetW8",
+                "Authorization": `Bearer ${whatsapp_token}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
@@ -1251,8 +1255,8 @@ const generateProforma = async (item) => {
     const tId = toast.loading('Generating proforma invoice...');
     try {
 
-
         const payload = {
+
             proforma_valid_until_date: selectedDate.value.toISOString()
         }
 
