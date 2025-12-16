@@ -1149,7 +1149,7 @@ const changeHeaderType = (value) => {
 
   if (previousExamples.value[value] !== undefined) {
     form.value.header.example = previousExamples.value[value];
-    form.value.header.file_url = URL.createObjectURL(previousExamples.value[value]);
+    form.value.header.file_url = URL.createObjectURL(previousExamples?.value[value]);
 
   } else {
     form.value.header.example = null;
