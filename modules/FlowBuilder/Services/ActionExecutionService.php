@@ -275,6 +275,30 @@ class ActionExecutionService
         
         // If we have flow data, schedule a delayed job to continue the flow
         if ($flowData && $contactId) {
+            // Determine the active queue driver
+            $queueDriver = config('queue.default') ?? env('QUEUE_CONNECTION', 'sync');
+
+            // If the app is using the synchronous queue driver, dispatch->delay will execute immediately.
+            // In that case, perform a synchronous fallback: sleep for the duration and then continue the flow.
+            if ($queueDriver === 'sync' || env('QUEUE_CONNECTION') === 'sync') {
+                Log::info("Queue driver is 'sync' — performing synchronous delay fallback for contact {$contactId} for {$duration} minutes");
+                // Sleep for the configured duration (in seconds)
+                sleep($duration * 60);
+
+                try {
+                    $flowExecutionService = new \Modules\FlowBuilder\Services\FlowExecutionService($this->organizationId);
+                    $flowExecutionService->continueDelayedFlow($contactId, $flowData->flow_id, $flowData->current_step);
+                } catch (\Exception $e) {
+                    Log::error("Error continuing delayed flow after sleep: " . $e->getMessage());
+                }
+
+                // Returning 'delayed' indicates the flow should be paused —
+                // we already resumed the flow synchronously above, but
+                // returning 'delayed' ensures the original caller stops processing
+                // and avoids duplicate execution of the next node.
+                return 'delayed';
+            }
+
             // Create a delayed job that will continue the flow after the delay
             \Modules\FlowBuilder\Jobs\ProcessDelayedFlowJob::dispatch($contactId, $flowData->flow_id, $flowData->current_step, $this->organizationId)
                 ->delay(now()->addMinutes($duration));

@@ -12,6 +12,7 @@ use Modules\FlowBuilder\Services\FlowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class FlowController extends BaseController
 {
@@ -27,9 +28,9 @@ class FlowController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-        public function index(Request $request)
+    public function index(Request $request)
     {
-        // Log::info('FlowController index called', ['request' => $request->all()]);
+        Log::info('FlowController index called', ['request' => $request->all()]);
         if(!CustomHelper::isModuleEnabled('Flow builder')){
             abort(404);
         }
@@ -42,7 +43,7 @@ class FlowController extends BaseController
         $data['analytics'] = $flows[0];
 
         $data['filters'] = request()->all();     
-        // Log::info('FlowController index returning view', ['data' => $data]);   
+        Log::info('FlowController index returning view', ['data' => $data]);   
         return Inertia::render('FlowBuilder::User/Index', $data);
     }
 
