@@ -217,7 +217,7 @@
                                                         class="text-teal-600 w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-gray-50">
                                                         <Eye size="18" class="flex-shrink-0" />
                                                         <span class="font-medium truncate">{{ $t("View details")
-                                                        }}</span>
+                                                            }}</span>
                                                     </button>
 
                                                     <button v-for="action in getAvailableActions(item)"
@@ -454,7 +454,7 @@
             <div class="pdf-content relative pb-8">
                 <div class="pdf-header">
                     <div class="company-info">
-                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" class="h-16 aspect-auto"></img>
+                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" width='220' height="73"></img>
                         <h2>Complia Services Ltd</h2>
                         <p>nyife.chat | info@nyife.chat | +91 11 430 22 315 | GST No: 07AALCC1963C1ZT</p>
                         <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
@@ -587,7 +587,7 @@
 
                 <div class="receipt-body">
                     <div class="company-info pb-4">
-                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" class="h-16 aspect-auto"></img>
+                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" width='220' height="73"></img>
                         <h2>Complia Services Ltd</h2>
                         <p>nyife.chat | info@nyife.chat | +91 11 430 22 315 | GST No: 07AALCC1963C1ZT</p>
                         <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
@@ -608,7 +608,7 @@
                             <div class="info-item">
                                 <span class="info-label">Payment Date</span>
                                 <span class="info-value">{{ formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Payment Method</span>
@@ -623,7 +623,7 @@
                                 <span class="info-label">Amount Paid</span>
                                 <span class="info-value">₹{{
                                     generateCurrentPaymentReceiptPDF?.payment_metadata?.amount_paid
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -644,17 +644,17 @@
                             <div class="info-item">
                                 <span class="info-label">Email Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Phone Number</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>

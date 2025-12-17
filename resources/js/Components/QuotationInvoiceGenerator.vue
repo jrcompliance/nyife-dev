@@ -299,25 +299,25 @@
             <div class="pdf-content relative pb-8">
                 <div class="pdf-header">
                     <div class="company-info">
-                        <img src="../../images/nyifeBrand.svg" alt="nyife-logo" class="h-16 aspect-auto"></img>
+                        <img src="../../images/nyifeBrand.svg" alt="nyife-logo" width='181' height="60"></img>
                         <h2>Complia Services Ltd</h2>
                         <p>nyife.chat | info@nyife.chat | +91 11 430 22 315 | GST No: 07AALCC1963C1ZT</p>
                         <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
                         <p>Delhi-110063, India</p>
                     </div>
                     <div class="quotation-info">
-                        <h3>QUOTATION #{{ currentPdfData.quotation_number }}</h3>
-                        <p><strong>Date:</strong> {{ currentPdfData.quotation_date }}</p>
-                        <p><strong>Valid Until:</strong> {{ currentPdfData.quotation_valid_until_date }}</p>
+                        <h3>QUOTATION #{{ currentPdfData?.quotation_number }}</h3>
+                        <p><strong>Date:</strong> {{ currentPdfData?.quotation_date }}</p>
+                        <p><strong>Valid Until:</strong> {{ currentPdfData?.quotation_valid_until_date }}</p>
                     </div>
                 </div>
 
                 <div class="client-info">
-                    <h4>Kind Attention: {{ currentPdfData.contact_person || 'N/A' }}</h4>
-                    <p><strong>Company:</strong> {{ currentPdfData.company_name || 'N/A' }}</p>
-                    <p><strong>Phone Number:</strong> {{ currentPdfData.phone || 'N/A' }}</p>
-                    <p><strong>Email:</strong> {{ currentPdfData.email || 'N/A' }}</p>
-                    <p><strong>Address:</strong> {{ currentPdfData.address || 'N/A' }}</p>
+                    <h4>Kind Attention: {{ currentPdfData?.contact_person || 'N/A' }}</h4>
+                    <p><strong>Company:</strong> {{ currentPdfData?.company_name || 'N/A' }}</p>
+                    <p><strong>Phone Number:</strong> {{ currentPdfData?.phone || 'N/A' }}</p>
+                    <p><strong>Email:</strong> {{ currentPdfData?.email || 'N/A' }}</p>
+                    <p><strong>Address:</strong> {{ currentPdfData?.address || 'N/A' }}</p>
                 </div>
 
                 <table class="items-table">
@@ -329,15 +329,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in getVisibleItems(currentPdfData, currentPdfData.additional_fee)"
+                        <tr v-for="(item, index) in getVisibleItems(currentPdfData, currentPdfData?.additional_fee)"
                             :key="index">
                             <td>{{ index + 1 }}</td>
-                            <td>{{ item.description }}</td>
-                            <td style="text-align: right;">{{ formatCurrency(item.amount) }}</td>
+                            <td>{{ item?.description }}</td>
+                            <td style="text-align: right;">{{ formatCurrency(item?.amount) }}</td>
                         </tr>
 
-                        <div v-if="((currentPdfData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)) > 0"
-                            v-for="index in (currentPdfData.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData.additional_fee)?.length || 0)"
+                        <div v-if="((currentPdfData?.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData?.additional_fee)?.length || 0)) > 0"
+                            v-for="index in (currentPdfData?.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData?.additional_fee)?.length || 0)"
                             :key="index" class="h-7 w-full">
                         </div>
 
@@ -348,23 +348,23 @@
                     <thead>
                         <tr>
                             <td>SUBTOTAL:</td>
-                            <td>₹{{ currentPdfData.sub_total }}</td>
+                            <td>₹{{ currentPdfData?.sub_total }}</td>
                         </tr>
-                        <tr v-if="currentPdfData.discount > 0">
-                            <td>DISCOUNT ({{ currentPdfData.discount }}%):</td>
-                            <td>-₹{{ currentPdfData.discount_amount }}</td>
+                        <tr v-if="currentPdfData?.discount > 0">
+                            <td>DISCOUNT ({{ currentPdfData?.discount }}%):</td>
+                            <td>-₹{{ currentPdfData?.discount_amount }}</td>
                         </tr>
-                        <tr v-if="currentPdfData.discount > 0">
+                        <tr v-if="currentPdfData?.discount > 0">
                             <td>AMOUNT AFTER DISCOUNT:</td>
-                            <td>₹{{ currentPdfData.amount_after_discount }}</td>
+                            <td>₹{{ currentPdfData?.amount_after_discount }}</td>
                         </tr>
                         <tr>
                             <td>GST 18%:</td>
-                            <td>₹{{ currentPdfData.GST_amount }}</td>
+                            <td>₹{{ currentPdfData?.GST_amount }}</td>
                         </tr>
                         <tr class="total-row">
                             <td>TOTAL:</td>
-                            <td>₹{{ currentPdfData.total }}</td>
+                            <td>₹{{ currentPdfData?.total }}</td>
                         </tr>
                     </thead>
                 </table>
@@ -624,39 +624,39 @@ const calculateTotal = () => {
 const getVisibleItems = (Data, additionalData) => {
     const items = [];
 
-    if (parseFloat(Data.platform_charge) > 0) {
+    if (parseFloat(Data?.platform_charge) > 0) {
         items.push({
-            description: `Platform Charge (${Data.platform_charge_type})`,
-            amount: parseFloat(Data.platform_charge)
+            description: `Platform Charge (${Data?.platform_charge_type})`,
+            amount: parseFloat(Data?.platform_charge)
         });
     }
 
-    if (parseFloat(Data.wallet_recharge) > 0) {
+    if (parseFloat(Data?.wallet_recharge) > 0) {
         items.push({
             description: 'Wallet Recharge',
-            amount: parseFloat(Data.wallet_recharge)
+            amount: parseFloat(Data?.wallet_recharge)
         });
     }
 
-    if (parseFloat(Data.setup_fee) > 0) {
+    if (parseFloat(Data?.setup_fee) > 0) {
         items.push({
             description: 'Setup Fee',
-            amount: parseFloat(Data.setup_fee)
+            amount: parseFloat(Data?.setup_fee)
         });
     }
 
-    if (parseFloat(Data.customization_fee) > 0) {
+    if (parseFloat(Data?.customization_fee) > 0) {
         items.push({
             description: 'Customization Fee',
-            amount: parseFloat(Data.customization_fee)
+            amount: parseFloat(Data?.customization_fee)
         });
     }
 
-    additionalData.forEach(item => {
-        if (item.description && parseFloat(item.amount) > 0) {
+    additionalData?.forEach(item => {
+        if (item?.description && parseFloat(item?.amount) > 0) {
             items.push({
-                description: item.description,
-                amount: parseFloat(item.amount)
+                description: item?.description,
+                amount: parseFloat(item?.amount)
             });
         }
     });
@@ -809,6 +809,9 @@ const generatePDF = async () => {
             }, 300);
 
         } catch (error) {
+            if (currentPdfData.value.id) {
+                await axios.delete(`${base_url}/invoices/${currentPdfData.value.id}`);
+            }
             toast.error(error.message || 'Error generating PDF. Please try again.');
         }
 
