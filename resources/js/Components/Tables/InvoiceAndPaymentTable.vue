@@ -391,7 +391,37 @@
                                 </svg>
                             </div>
                             <div class="share-content">
-                                <h3>Share on WhatsApp</h3>
+                                <h3>Share on WhatsApp (Template)</h3>
+                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
+                            </div>
+                        </button>
+
+                        <!-- Share on Free WhatsApp -->
+                        <button @click="shareOnFreeWhatsApp" :disabled="isSharing.whatsapp"
+                            class="share-option whatsapp">
+                            <div class="share-icon-wrapper whatsapp-bg">
+                                <svg v-if="!isSharing.whatsapp" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                    </path>
+                                </svg>
+                                <svg v-else class="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                </svg>
+                            </div>
+
+                            <div class="share-content">
+                                <h3>Share on WhatsApp (Direct)</h3>
                                 <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
                             </div>
                         </button>
@@ -1134,6 +1164,86 @@ const downloadPDF = async () => {
         console.error('Download error:', error);
         toast.error('Error downloading PDF. Please try again.');
     }
+};
+
+const shareOnFreeWhatsApp = async () => {
+
+
+    if (!currentPDF.value.pdf) {
+        toast.error('No PDF available to share');
+        return;
+    }
+
+    if (!currentPDF.value.phone) {
+        toast.error('Phone number is required');
+        return;
+    }
+
+    isSharing.value.whatsapp = true;
+
+    try {
+        const response = await fetch("https://wa.nyife.chat/api/send/media", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${whatsapp_token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                phone: currentPDF.value.phone,
+                media_type: "document",
+                media_url: currentPDF.value.pdf,
+                file_name: currentPDF.value.pdfName,
+                caption: `Hi Sir,
+
+    Thank you for your interest! Please download your ${currentPDF.value.templateType?.toLowerCase()} invoice by clicking on the link below:
+
+    If you have any questions or need any changes, feel free to reply here.
+
+    Looking forward to assisting you.`,
+
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error("WhatsApp API Error:", errorData);
+            throw new Error("Failed to share on WhatsApp");
+        }
+
+        toast.success("Invoice shared on WhatsApp!");
+
+
+    } catch (error) {
+        console.error("Error sharing on WhatsApp:", error);
+        toast.error("Error sharing on WhatsApp. Please try again.");
+    } finally {
+        isSharing.value.whatsapp = false;
+    }
+
+    // ========================== SECOND METHOD ========================
+
+
+    //     const message = `
+    // Hi Sir,
+
+    // Thank you for your interest! Please download your ${currentPDF.value.templateType?.toLowerCase()} invoice by clicking on the link below:
+
+    // If you have any questions or need any changes, feel free to reply here.
+
+    // Looking forward to assisting you.
+
+    // Url : ${currentPDF.value.pdfDownloadUrl}
+    //     `.trim();
+
+    //     const encodedMessage = encodeURIComponent(message);
+
+    //     // remove spaces & non-digits, keep country code
+    //     const phone = currentPDF.value.phone.replace(/\D/g, '');
+
+    //     const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+    //     window.open(whatsappUrl, '_blank');
+
 };
 
 const shareOnWhatsApp = async () => {
