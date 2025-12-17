@@ -239,6 +239,12 @@
                       {{ form.header.format === 'IMAGE' ? 'PNG or JPG files only' :
                         form.header.format === 'VIDEO' ? 'MP4 files only' : 'PDF files only' }}
                     </span>
+                    <span class="text-xs text-slate-400">
+                      {{
+                        form.header.format === 'DOCUMENT' ? `File size should be less than or equal to 1 MB` : `File size
+                      should
+                      be less than or equal to 512 KB` }}
+                    </span>
                   </label>
                 </div>
               </div>
@@ -1018,6 +1024,7 @@ import {
   Reply,
   SquareArrowOutUpRight,
 } from "lucide-vue-next";
+import { toast } from "vue3-toastify";
 
 const props = defineProps(["languages", "settings"]);
 const headerCharacterLimit = ref("60");
@@ -1031,6 +1038,12 @@ const isModalOpen = ref(false);
 const isLoading = ref(false);
 const error = ref(null);
 const selectedType = ref("template");
+
+const MAX_FILE_SIZE = {
+  IMAGE: 0.5 * 1024 * 1024, // 2 MB
+  VIDEO: 0.5 * 1024 * 1024, // 10 MB
+  DOCUMENT: 1 * 1024 * 1024 // 5 MB (PDF)
+};
 
 const form = ref({
   name: null,
@@ -1164,6 +1177,22 @@ const handleNameInput = (event) => {
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
+
+  let maxSize;
+
+  const format = form.value.header.format;
+  if (format === 'IMAGE') maxSize = MAX_FILE_SIZE.IMAGE;
+  else if (format === 'VIDEO') maxSize = MAX_FILE_SIZE.VIDEO;
+  else maxSize = MAX_FILE_SIZE.DOCUMENT;
+
+  if (file.size > maxSize) {
+    toast.error(
+      `File size exceeds ${(maxSize / 1024).toFixed(0)} KB limit`
+    );
+    event.target.value = ''; // reset input
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = (e) => {
     imageUrl.value = e.target.result;
