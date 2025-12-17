@@ -454,7 +454,8 @@
             <div class="pdf-content relative pb-8">
                 <div class="pdf-header">
                     <div class="company-info">
-                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" width='220' height="73"></img>
+                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" width='220' height="73"
+                            style="width: 220px !important; height: 73px !important;"></img>
                         <h2>Complia Services Ltd</h2>
                         <p>nyife.chat | info@nyife.chat | +91 11 430 22 315 | GST No: 07AALCC1963C1ZT</p>
                         <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
@@ -587,7 +588,8 @@
 
                 <div class="receipt-body">
                     <div class="company-info pb-4">
-                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" width='220' height="73"></img>
+                        <img src="../../../images/nyifeBrand.svg" alt="nyife-logo" width='181' height="60"
+                            style="width: 181px !important; height: 60px !important;"></img>
                         <h2>Complia Services Ltd</h2>
                         <p>nyife.chat | info@nyife.chat | +91 11 430 22 315 | GST No: 07AALCC1963C1ZT</p>
                         <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
