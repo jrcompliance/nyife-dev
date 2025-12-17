@@ -667,7 +667,7 @@
                 <p class="text-sm text-slate-600 flex items-start space-x-2">
                   <Info class="w-4 h-4 mt-0.5 flex-shrink-0 text-[#ff5100]" />
                   <span>{{ $t("Note: Use the popup to create your flow. Copy the JSON from there and paste it above.")
-                  }}</span>
+                    }}</span>
                 </p>
               </div>
             </div>
@@ -891,7 +891,7 @@
             <X class="w-8 h-8 text-red-600" />
           </div>
           <h4 class="text-lg text-slate-800 font-semibold mb-2 text-start">{{ error?.error?.error_user_title || "Error"
-          }}
+            }}
           </h4>
           <p class="text-sm text-slate-600 mb-6 text-start">{{ error?.error?.error_user_msg || error }}</p>
           <button @click="closeModal"
