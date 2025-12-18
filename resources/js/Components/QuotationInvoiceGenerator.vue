@@ -74,6 +74,23 @@
                                 className="mb-4" />
                         </div>
 
+                        <div class="form-group">
+                            <label>Signature <span class="required">*</span></label>
+                            <input type="text" v-model="formData.signature" placeholder="Enter signature"
+                                :class="{ 'error-input': errors.signature }">
+                            <span v-if="errors.signature" class="error-text">{{ errors.signature }}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Designation <span class="required">*</span></label>
+                            <select v-model="formData.designation">
+                                <option value="" disabled>Select designation</option>
+                                <option v-for="designation in Designations" :key="designation" :value="designation">
+                                    {{ designation }}
+                                </option>
+                            </select>
+                            <span v-if="errors.designation" class="error-text">{{ errors.designation }}</span>
+                        </div>
+
                     </div>
 
                     <div class="form-group">
@@ -214,33 +231,6 @@
                     <p class="share-subtitle">Choose how you want to share this quotation</p>
 
                     <div class="share-options">
-                        <!-- WhatsApp Share -->
-                        <button @click="shareOnWhatsApp" :disabled="isSharing.whatsapp" class="share-option whatsapp">
-                            <div class="share-icon-wrapper whatsapp-bg">
-                                <svg v-if="!isSharing.whatsapp" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path
-                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
-                                    </path>
-                                </svg>
-                                <svg v-else class="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="2" x2="12" y2="6"></line>
-                                    <line x1="12" y1="18" x2="12" y2="22"></line>
-                                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-                                    <line x1="2" y1="12" x2="6" y2="12"></line>
-                                    <line x1="18" y1="12" x2="22" y2="12"></line>
-                                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-                                </svg>
-                            </div>
-                            <div class="share-content">
-                                <h3>Share on WhatsApp (Template)</h3>
-                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
-                            </div>
-                        </button>
                         <!-- Share on Free WhatsApp -->
                         <button @click="shareOnFreeWhatsApp" :disabled="isSharing.freeWhatsapp"
                             class="share-option whatsapp">
@@ -270,6 +260,35 @@
                                 <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
                             </div>
                         </button>
+
+                        <!-- WhatsApp Share -->
+                        <button @click="shareOnWhatsApp" :disabled="isSharing.whatsapp" class="share-option whatsapp">
+                            <div class="share-icon-wrapper whatsapp-bg">
+                                <svg v-if="!isSharing.whatsapp" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                    </path>
+                                </svg>
+                                <svg v-else class="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                </svg>
+                            </div>
+                            <div class="share-content">
+                                <h3>Share on WhatsApp (Template)</h3>
+                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
+                            </div>
+                        </button>
+
 
                         <!-- Email Share -->
                         <button @click="shareViaEmail" :disabled="isSharing.email || !currentPdfData.email"
@@ -466,8 +485,8 @@
                     <p>If you have any questions concerning this quotation, please contact us at info@nyife.chat
                     </p>
                     <p class="signature-line">____________________</p>
-                    <p class="name">Abhishek Anand</p>
-                    <p class="title">Business Manager</p>
+                    <p class="name">{{ currentPdfData.signature }}</p>
+                    <p class="title">{{ currentPdfData.designation }}</p>
                 </div>
 
                 <!-- This is auto generated -->
@@ -490,8 +509,14 @@ import { CirclePlus, FileText } from 'lucide-vue-next';
 import axios from 'axios';
 import FormDateInput from './FormDateInput.vue';
 
+import { usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
 const whatsapp_token = import.meta.env.VITE_WA_TOKEN;
+
+const Designations = ref(["Business Manager", "Sales Agent", "Customer Support Agent", "Marketing Agent", "Finance Agent"]);
 
 const props = defineProps(['refresh']);
 const emit = defineEmits(['update:refresh']);
@@ -540,7 +565,9 @@ const formData = ref({
     setupFee: 0,
     customizationFee: 0,
     discount: 0,
-    quotation_valid_until_date: new Date(new Date().setMonth(new Date().getMonth() + 1))
+    quotation_valid_until_date: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    signature: page?.props?.auth?.user?.full_name || page?.props?.auth?.user?.first_name || '',
+    designation: Designations.value[0]
 
 });
 
@@ -576,7 +603,9 @@ const resetForm = () => {
         setupFee: 0,
         customizationFee: 0,
         discount: 0,
-        quotation_valid_until_date: new Date(new Date().setMonth(new Date().getMonth() + 1))
+        quotation_valid_until_date: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+        signature: page?.props?.auth?.user?.full_name || page?.props?.auth?.user?.first_name || '',
+        designation: Designations.value[0]
     };
     additionalItems.value = [];
     errors.value = {};
@@ -609,6 +638,16 @@ const validateForm = () => {
 
     if (!formData.value.phone.trim()) {
         errors.value.phone = 'Phone number is required';
+        isValid = false;
+    }
+
+    if (!formData.value.signature.trim()) {
+        errors.value.signature = 'Signature is required';
+        isValid = false;
+    }
+
+    if (!formData.value.designation.trim()) {
+        errors.value.designation = 'Designation is required';
         isValid = false;
     }
 
@@ -811,7 +850,9 @@ const generatePDF = async () => {
             additional_fee: additionalItems.value,
             discount: formData.value.discount,
             GST: 18,
-            quotation_valid_until_date: formData.value.quotation_valid_until_date
+            quotation_valid_until_date: formData.value.quotation_valid_until_date,
+            signature: formData.value.signature,
+            designation: formData.value.designation
         }
 
         const res = await axios.post(`${base_url}/invoices`, payload);
