@@ -93,7 +93,7 @@ watch(() => props.isOpen, (newVal) => {
                             <div v-if="props.showHeader" class="flex justify-between items-center px-6 py-4"
                                 style="background: linear-gradient(135deg, #ff5100 0%, #ff7a3d 100%);">
                                 <DialogTitle as="h3" class="text-xl font-bold text-white">
-                                    Update Payment Details
+                                    Update Payment To Paid
                                 </DialogTitle>
 
                                 <span @click="closeUpdatePaymentModal" v-if="closeBtn"
