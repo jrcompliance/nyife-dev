@@ -231,7 +231,7 @@ const getPaymentStatusText = computed(() => {
                                         </div>
                                         <div class="flex justify-between items-center">
                                             <span class="text-sm font-medium text-gray-700">GST ({{ invoiceData.GST
-                                                }}%)</span>
+                                            }}%)</span>
                                             <span class="text-sm font-bold text-gray-900">{{
                                                 formatCurrency(invoiceData.GST_amount) }}</span>
                                         </div>
@@ -276,11 +276,16 @@ const getPaymentStatusText = computed(() => {
                                             <p class="text-sm font-mono font-semibold text-green-900 mt-1">{{
                                                 invoiceData.payment_id || 'N/A' }}</p>
                                         </div>
-                                        <div>
-                                            <label class="text-xs font-medium text-green-700 uppercase">Razorpay Payment
-                                                ID</label>
-                                            <p class="text-sm font-mono font-semibold text-green-900 mt-1">{{
-                                                invoiceData.razorpay_payment_id || 'N/A' }}</p>
+                                        <div v-if="invoiceData.payment_id && invoiceData?.razorpay_payment_id">
+                                            <label class="text-xs font-medium text-green-700 uppercase">Payment
+                                                updated by</label>
+                                            <p class="text-sm font-mono font-semibold text-green-900 mt-1">Razorpay
+                                            </p>
+                                        </div>
+                                        <div v-else-if="invoiceData.payment_id && !invoiceData?.razorpay_payment_id">
+                                            <label class="text-xs font-medium text-green-700 uppercase">Payment
+                                                updated by</label>
+                                            <p class="text-sm font-mono font-semibold text-green-900 mt-1">Manually</p>
                                         </div>
                                         <div>
                                             <label class="text-xs font-medium text-green-700 uppercase">Amount
