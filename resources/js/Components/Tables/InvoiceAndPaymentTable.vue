@@ -718,13 +718,17 @@
         <!-- Invoice Details Modal -->
         <InvoiceDetailsModal :isOpen="isInvoiceModalOpen" @close="closeInvoiceModal" :invoiceData="invoiceModalData"
             :closeBtn="true" :showHeader="true" />
+
+        <!-- Update Payment Modal -->
+        <UpdatePaymentModal :isOpen="isUpdatePaymentModalOpen" @close="closeUpdatePaymentModal"
+            @submit="updatePaymentConfirm" :updatePaymentData="updatePaymentData" :closeBtn="true" :showHeader="true" />
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import debounce from 'lodash/debounce';
-import { FileText, FileCheck, Receipt, Plus, RefreshCcw, Check, Eye } from 'lucide-vue-next';
+import { FileText, FileCheck, Receipt, Plus, RefreshCcw, Check, Eye, IndianRupee } from 'lucide-vue-next';
 import QuotationInvoiceGenerator from '../QuotationInvoiceGenerator.vue';
 import { toast } from 'vue3-toastify';
 import html2canvas from 'html2canvas';
@@ -733,6 +737,7 @@ import axios from 'axios';
 import QRCode from "qrcode";
 import DatePickerModal from '../DatePickerModal.vue';
 import InvoiceDetailsModal from '../InvoiceDetailsModal.vue';
+import UpdatePaymentModal from '../UpdatePaymentModal.vue';
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
 const whatsapp_token = import.meta.env.VITE_WA_TOKEN;
@@ -776,6 +781,9 @@ const tempProformaData = ref(null);
 const isInvoiceModalOpen = ref(false);
 
 const invoiceModalData = ref({});
+
+const isUpdatePaymentModalOpen = ref(false);
+const updatePaymentData = ref({});
 
 function openInvoiceModal(item) {
     isInvoiceModalOpen.value = true;
@@ -826,6 +834,13 @@ const actionConfig = {
         icon: FileCheck,
         colorClass: 'text-purple-600',
         condition: (item) => item.proforma_invoice,
+    },
+    updatePayment: {
+        key: 'updatePayment',
+        label: 'Update Payment manually',
+        icon: IndianRupee,
+        colorClass: 'text-green-600',
+        condition: (item) => item.proforma_invoice && !item.payment_receipt && !item.payment_invoice_pdf_url,
     },
     generateReceipt: {
         key: 'generateReceipt',
@@ -929,6 +944,9 @@ const handleAction = (actionKey, item) => {
             break;
         case 'shareProforma':
             shareProforma(item);
+            break;
+        case 'updatePayment':
+            updatePayment(item);
             break;
         case 'generateReceipt':
             generateReceipt(item);
@@ -1475,6 +1493,64 @@ const shareProforma = (item) => {
     };
     openShareModal();
 };
+
+const updatePayment = async (item) => {
+    isUpdatePaymentModalOpen.value = true;
+    updatePaymentData.value.id = item.id;
+    updatePaymentData.value.total = item.total;
+};
+
+const closeUpdatePaymentModal = () => {
+    isUpdatePaymentModalOpen.value = false;
+    updatePaymentData.value = {};
+};
+
+const updatePaymentConfirm = async (paymentData) => {
+    const tId = toast.loading('Updating payment...');
+
+    if (!paymentData?.id) {
+        toast.error('Please select a invoice');
+        return;
+    }
+
+    if (!paymentData?.payment_id) {
+        toast.error('Please enter a payment ID');
+    }
+
+    if (!paymentData?.payment_method) {
+        toast.error('Please select a payment method');
+    }
+
+    if (!paymentData?.paid_at) {
+        toast.error('Please enter a paid at date');
+    }
+
+    try {
+
+        const payload = {
+            payment_id: paymentData?.payment_id,
+            payment_method: paymentData?.payment_method,
+            paid_at: paymentData?.paid_at,
+            payment_metadata: { amount_paid: paymentData?.total } || {}
+        }
+
+        const res = await axios.put(`${base_url}/invoices/update-payment/${paymentData?.id}`, payload);
+
+        if (!res?.data?.success) {
+            throw new Error(res?.data?.message || 'Failed to update payment');
+        }
+
+        toast.success('Payment updated successfully!');
+
+
+    } catch (error) {
+        toast.error(error.message || 'Error updating payment. Please try again.');
+
+    } finally {
+        refresh.value = !refresh.value;
+        toast.remove(tId);
+    }
+}
 
 const generateReceipt = async (item) => {
     const tId = toast.loading('Generating  payment receipt...');
