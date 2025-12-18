@@ -237,16 +237,16 @@
                                 </svg>
                             </div>
                             <div class="share-content">
-                                <h3>Share on WhatsApp</h3>
+                                <h3>Share on WhatsApp (Template)</h3>
                                 <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
                             </div>
                         </button>
                         <!-- Share on Free WhatsApp -->
-                        <button @click="shareOnFreeWhatsApp" :disabled="isSharing.whatsapp"
+                        <button @click="shareOnFreeWhatsApp" :disabled="isSharing.freeWhatsapp"
                             class="share-option whatsapp">
                             <div class="share-icon-wrapper whatsapp-bg">
-                                <svg v-if="!isSharing.whatsapp" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                <svg v-if="!isSharing.freeWhatsapp" width="28" height="28" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
                                     <path
                                         d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
@@ -266,8 +266,8 @@
                             </div>
 
                             <div class="share-content">
-                                <h3>Share on WhatsApp</h3>
-                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
+                                <h3>Share on WhatsApp (Direct)</h3>
+                                <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
                             </div>
                         </button>
 
@@ -304,18 +304,32 @@
                         </button>
 
                         <!-- Download Again -->
-                        <button @click="downloadPDF" class="share-option download">
+                        <button @click="downloadPDF" :disabled="isSharing.downloading" class="share-option download">
                             <div class="share-icon-wrapper download-bg">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg v-if="!isSharing.downloading" width="28" height="28" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
+                                <svg v-else class="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                </svg>
                             </div>
                             <div class="share-content">
-                                <h3>Download</h3>
-                                <p>Save copy of the PDF</p>
+                                <h3 v-if="isSharing.downloading">Downloading...</h3>
+                                <h3 v-else>Download</h3>
+                                <p v-if="isSharing.downloading">Please wait...</p>
+                                <p v-else>Save copy of the PDF</p>
                             </div>
                         </button>
                     </div>
@@ -508,7 +522,9 @@ const pdfTemplate = ref(null);
 const errors = ref({});
 const isSharing = ref({
     whatsapp: false,
-    email: false
+    freeWhatsapp: false,
+    email: false,
+    downloading: false
 });
 
 const formData = ref({
@@ -861,6 +877,8 @@ const downloadPDF = async () => {
         return;
     }
 
+    isSharing.value.downloading = true;
+
     try {
         // Fetch the PDF as a blob
         const response = await fetch(currentPdfData.value.quotation_invoice_pdf_download_url);
@@ -884,6 +902,8 @@ const downloadPDF = async () => {
     } catch (error) {
         console.error('Download error:', error);
         toast.error('Error downloading PDF. Please try again.');
+    } finally {
+        isSharing.value.downloading = false;
     }
 };
 
@@ -901,7 +921,7 @@ const shareOnFreeWhatsApp = async () => {
         return;
     }
 
-    isSharing.value.whatsapp = true;
+    isSharing.value.freeWhatsapp = true;
 
     try {
         const response = await fetch("https://wa.nyife.chat/api/send/media", {
@@ -915,13 +935,13 @@ const shareOnFreeWhatsApp = async () => {
                 media_type: "document",
                 media_url: currentPdfData.value.quotation_invoice_pdf_url,
                 file_name: currentPdfData.value.quotation_invoice_pdf_filename,
-                caption: `Hi Sir,
+                caption: `Dear ${currentPdfData?.value?.contact_person || 'Sir'},
 
-    Thank you for your interest! Please download your quotation invoice by clicking on the link below:
+Thank you for your interest! Please download your quotation invoice.
 
-    If you have any questions or need any changes, feel free to reply here.
+If you have any questions, feel free to reply here.
 
-    Looking forward to assisting you.`,
+Looking forward to assisting you.`,
 
             })
         });
@@ -939,7 +959,7 @@ const shareOnFreeWhatsApp = async () => {
         console.error("Error sharing on WhatsApp:", error);
         toast.error("Error sharing on WhatsApp. Please try again.");
     } finally {
-        isSharing.value.whatsapp = false;
+        isSharing.value.freeWhatsapp = false;
     }
 
     // ========================== SECOND METHOD ========================
