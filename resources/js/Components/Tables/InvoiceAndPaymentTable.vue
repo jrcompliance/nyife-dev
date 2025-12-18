@@ -217,7 +217,7 @@
                                                         class="text-teal-600 w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-gray-50">
                                                         <Eye size="18" class="flex-shrink-0" />
                                                         <span class="font-medium truncate">{{ $t("View details")
-                                                        }}</span>
+                                                            }}</span>
                                                     </button>
 
                                                     <button v-for="action in getAvailableActions(item)"
@@ -285,7 +285,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="invoiceData?.invoices?.length > 10" class="flex items-center justify-start gap-2">
+                <div v-if="invoiceData?.totalInvoices > 10" class="flex items-center justify-start gap-2">
                     <p>{{ invoiceData?.totalInvoices }} {{ " " }}Items</p>
 
                     <div class="flex items-center gap-3">
@@ -397,11 +397,11 @@
                         </button>
 
                         <!-- Share on Free WhatsApp -->
-                        <button @click="shareOnFreeWhatsApp" :disabled="isSharing.whatsapp"
+                        <button @click="shareOnFreeWhatsApp" :disabled="isSharing.freeWhatsapp"
                             class="share-option whatsapp">
                             <div class="share-icon-wrapper whatsapp-bg">
-                                <svg v-if="!isSharing.whatsapp" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                <svg v-if="!isSharing.freeWhatsapp" width="28" height="28" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
                                     <path
                                         d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
@@ -422,7 +422,7 @@
 
                             <div class="share-content">
                                 <h3>Share on WhatsApp (Direct)</h3>
-                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
+                                <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
                             </div>
                         </button>
 
@@ -461,11 +461,23 @@
                         <!-- Download Again -->
                         <button @click="downloadPDF" :disabled="isSharing.downloading" class="share-option download">
                             <div class="share-icon-wrapper download-bg">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg v-if="!isSharing.downloading" width="28" height="28" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <svg v-else class="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
                                 </svg>
                             </div>
                             <div class="share-content">
@@ -640,7 +652,7 @@
                             <div class="info-item">
                                 <span class="info-label">Payment Date</span>
                                 <span class="info-value">{{ formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Payment Method</span>
@@ -655,7 +667,7 @@
                                 <span class="info-label">Amount Paid</span>
                                 <span class="info-value">₹{{
                                     generateCurrentPaymentReceiptPDF?.payment_metadata?.amount_paid
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -676,17 +688,17 @@
                             <div class="info-item">
                                 <span class="info-label">Email Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Phone Number</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not provided`
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
                     </div>
@@ -735,6 +747,7 @@ const params = ref({
 
 const isSharing = ref({
     whatsapp: false,
+    freeWhatsapp: false,
     email: false,
     downloading: false
 });
@@ -1139,6 +1152,8 @@ const downloadPDF = async () => {
         return;
     }
 
+    isSharing.value.downloading = true;
+
     try {
         // Fetch the PDF as a blob
         const response = await fetch(currentPDF.value.pdfDownloadUrl);
@@ -1163,6 +1178,8 @@ const downloadPDF = async () => {
     } catch (error) {
         console.error('Download error:', error);
         toast.error('Error downloading PDF. Please try again.');
+    } finally {
+        isSharing.value.downloading = false;
     }
 };
 
@@ -1179,7 +1196,7 @@ const shareOnFreeWhatsApp = async () => {
         return;
     }
 
-    isSharing.value.whatsapp = true;
+    isSharing.value.freeWhatsapp = true;
 
     try {
         const response = await fetch("https://wa.nyife.chat/api/send/media", {
@@ -1193,13 +1210,13 @@ const shareOnFreeWhatsApp = async () => {
                 media_type: "document",
                 media_url: currentPDF.value.pdf,
                 file_name: currentPDF.value.pdfName,
-                caption: `Hi Sir,
-
-    Thank you for your interest! Please download your ${currentPDF.value.templateType?.toLowerCase()} invoice by clicking on the link below:
-
-    If you have any questions or need any changes, feel free to reply here.
-
-    Looking forward to assisting you.`,
+                caption: `Dear ${currentPDF?.value?.contactPerson || 'Sir'},
+                
+Thank you for your interest! Please download your ${currentPDF.value.templateType?.toLowerCase()} invoice.
+                
+If you have any questions, feel free to reply here.
+                
+Looking forward to assisting you.`,
 
             })
         });
@@ -1217,7 +1234,7 @@ const shareOnFreeWhatsApp = async () => {
         console.error("Error sharing on WhatsApp:", error);
         toast.error("Error sharing on WhatsApp. Please try again.");
     } finally {
-        isSharing.value.whatsapp = false;
+        isSharing.value.freeWhatsapp = false;
     }
 
     // ========================== SECOND METHOD ========================
@@ -1328,7 +1345,8 @@ const shareViaEmail = async () => {
             invoice_type: currentPDF.value.templateType,
             invoice_number: currentPDF.value.invoiceNumber,
             invoice_url: currentPDF.value.pdfDownloadUrl,
-            email: currentPDF.value.email
+            email: currentPDF.value.email,
+            payment_url: currentPDF.value.payment_url
         }
 
         const response = await axios.post(`${base_url}/email/share-invoice`, payload);
@@ -1418,6 +1436,7 @@ const generateProforma = async (item) => {
             invoiceNumber: generateCurrentProformaPDF.value.proforma_number,
             templateType: "Proforma",
             templateName: "proforma_invoice",
+            payment_url: generateCurrentProformaPDF.value.payment_url?.payment_link_short_url,
             pdf: uploadRes.data.data.file.url,
             pdfDownloadUrl: uploadRes.data.data.file.downloadUrl,
             pdfName: uploadRes.data.data.file.filename
@@ -1448,6 +1467,7 @@ const shareProforma = (item) => {
         templateType: "Proforma",
         invoiceNumber: item.proforma_number,
         pdf: item.proforma_invoice_pdf_url,
+        payment_url: item.payment_url?.payment_link_short_url,
         pdfDownloadUrl: `${item.proforma_invoice_pdf_url}/download`,
         pdfName: `Proforma_${item.proforma_number.replace('/', '_')}_${item.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
     };
