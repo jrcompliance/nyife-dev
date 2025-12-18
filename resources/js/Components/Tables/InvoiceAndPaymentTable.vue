@@ -368,34 +368,6 @@
                     <p class="share-subtitle">Choose how you want to share this pdf</p>
 
                     <div class="share-options">
-                        <!-- WhatsApp Share -->
-                        <button @click="shareOnWhatsApp" :disabled="isSharing.whatsapp" class="share-option whatsapp">
-                            <div class="share-icon-wrapper whatsapp-bg">
-                                <svg v-if="!isSharing.whatsapp" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path
-                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
-                                    </path>
-                                </svg>
-                                <svg v-else class="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="2" x2="12" y2="6"></line>
-                                    <line x1="12" y1="18" x2="12" y2="22"></line>
-                                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-                                    <line x1="2" y1="12" x2="6" y2="12"></line>
-                                    <line x1="18" y1="12" x2="22" y2="12"></line>
-                                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-                                </svg>
-                            </div>
-                            <div class="share-content">
-                                <h3>Share on WhatsApp (Template)</h3>
-                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
-                            </div>
-                        </button>
-
                         <!-- Share on Free WhatsApp -->
                         <button @click="shareOnFreeWhatsApp" :disabled="isSharing.freeWhatsapp"
                             class="share-option whatsapp">
@@ -425,6 +397,36 @@
                                 <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
                             </div>
                         </button>
+
+                        <!-- WhatsApp Share -->
+                        <button @click="shareOnWhatsApp" :disabled="isSharing.whatsapp" class="share-option whatsapp">
+                            <div class="share-icon-wrapper whatsapp-bg">
+                                <svg v-if="!isSharing.whatsapp" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                    </path>
+                                </svg>
+                                <svg v-else class="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                </svg>
+                            </div>
+                            <div class="share-content">
+                                <h3>Share on WhatsApp (Template)</h3>
+                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
+                            </div>
+                        </button>
+
+
 
                         <!-- Email Share -->
                         <button @click="shareViaEmail" :disabled="isSharing.email || !currentPDF.email"
@@ -505,19 +507,19 @@
                     </div>
                     <div class="invoice-info">
                         <h3>PROFORMA INVOICE</h3>
-                        <p><strong>Invoice #:</strong> {{ generateCurrentProformaPDF.proforma_number }}</p>
-                        <p><strong>Date:</strong> {{ generateCurrentProformaPDF.proforma_date }}</p>
-                        <p><strong>Due Date:</strong> {{ generateCurrentProformaPDF.proforma_valid_until_date }}</p>
+                        <p><strong>Invoice #:</strong> {{ generateCurrentProformaPDF?.proforma_number }}</p>
+                        <p><strong>Date:</strong> {{ generateCurrentProformaPDF?.proforma_date }}</p>
+                        <p><strong>Due Date:</strong> {{ generateCurrentProformaPDF?.proforma_valid_until_date }}</p>
                     </div>
                 </div>
 
                 <div class="client-info">
                     <h4>Bill To:</h4>
-                    <p><strong>{{ generateCurrentProformaPDF.contact_person || 'N/A' }}</strong></p>
-                    <p><strong>Company:</strong> {{ generateCurrentProformaPDF.company_name || 'N/A' }}</p>
-                    <p><strong>Phone:</strong> {{ generateCurrentProformaPDF.phone || 'N/A' }}</p>
-                    <p><strong>Email:</strong> {{ generateCurrentProformaPDF.email || 'N/A' }}</p>
-                    <p><strong>Address:</strong> {{ generateCurrentProformaPDF.address || 'N/A' }}</p>
+                    <p><strong>{{ generateCurrentProformaPDF?.contact_person || 'N/A' }}</strong></p>
+                    <p><strong>Company:</strong> {{ generateCurrentProformaPDF?.company_name || 'N/A' }}</p>
+                    <p><strong>Phone:</strong> {{ generateCurrentProformaPDF?.phone || 'N/A' }}</p>
+                    <p><strong>Email:</strong> {{ generateCurrentProformaPDF?.email || 'N/A' }}</p>
+                    <p><strong>Address:</strong> {{ generateCurrentProformaPDF?.address || 'N/A' }}</p>
                 </div>
 
                 <table class="items-table">
@@ -529,11 +531,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in getVisibleItems(generateCurrentProformaPDF, generateCurrentProformaPDF.additional_fee)"
+                        <tr v-for="(item, index) in getVisibleItems(generateCurrentProformaPDF, generateCurrentProformaPDF?.additional_fee)"
                             :key="index">
                             <td>{{ index + 1 }}</td>
-                            <td>{{ item.description }}</td>
-                            <td style="text-align: right;">{{ formatCurrency(item.amount) }}</td>
+                            <td>{{ item?.description }}</td>
+                            <td style="text-align: right;">{{ formatCurrency(item?.amount) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -546,7 +548,7 @@
                                 <p>Quick & Secure Payment</p>
                             </div>
                             <div class="qr-code-wrapper">
-                                <img :src="generateCurrentProformaPDF.qrCode" alt="Payment QR Code" class="qr-code">
+                                <img :src="generateCurrentProformaPDF?.qrCode" alt="Payment QR Code" class="qr-code">
                             </div>
                         </div>
                     </div>
@@ -557,21 +559,21 @@
                                 <td>SUBTOTAL:</td>
                                 <td>₹{{ generateCurrentProformaPDF.sub_total }}</td>
                             </tr>
-                            <tr v-if="generateCurrentProformaPDF.discount > 0">
-                                <td>DISCOUNT ({{ generateCurrentProformaPDF.discount }}%):</td>
-                                <td class="discount-amount">-₹{{ generateCurrentProformaPDF.discount_amount }}</td>
+                            <tr v-if="generateCurrentProformaPDF?.discount > 0">
+                                <td>DISCOUNT ({{ generateCurrentProformaPDF?.discount }}%):</td>
+                                <td class="discount-amount">-₹{{ generateCurrentProformaPDF?.discount_amount }}</td>
                             </tr>
-                            <tr v-if="generateCurrentProformaPDF.discount > 0">
+                            <tr v-if="generateCurrentProformaPDF?.discount > 0">
                                 <td>AMOUNT AFTER DISCOUNT:</td>
-                                <td>₹{{ generateCurrentProformaPDF.amount_after_discount }}</td>
+                                <td>₹{{ generateCurrentProformaPDF?.amount_after_discount }}</td>
                             </tr>
                             <tr>
                                 <td>GST 18%:</td>
-                                <td>₹{{ generateCurrentProformaPDF.GST_amount }}</td>
+                                <td>₹{{ generateCurrentProformaPDF?.GST_amount }}</td>
                             </tr>
                             <tr class="total-row">
                                 <td><strong>TOTAL AMOUNT DUE:</strong></td>
-                                <td><strong>₹{{ generateCurrentProformaPDF.total }}</strong></td>
+                                <td><strong>₹{{ generateCurrentProformaPDF?.total }}</strong></td>
                             </tr>
                         </thead>
                     </table>
@@ -606,9 +608,9 @@
                 <div class="signature">
                     <p>For any queries regarding this invoice, please contact us at info@nyife.chat</p>
                     <p class="signature-line">____________________</p>
-                    <p class="name">Abhishek Anand</p>
-                    <p class="title">Business Manager</p>
-                    <p class="company-stamp">Complia Services Ltd</p>
+                    <p class="name">{{ generateCurrentProformaPDF?.signature }}</p>
+                    <p class="title">{{ generateCurrentProformaPDF?.designation }}</p>
+                    <!-- <p class="company-stamp">Complia Services Ltd</p> -->
                 </div>
 
                 <p class="absolute text-nowrap bottom-4 left-[50%] -translate-x-[50%] text-xs text-black/50">
@@ -1889,12 +1891,12 @@ const emit = defineEmits(['update:modelValue', 'callback']);
     color: #666;
 }
 
-.signature .company-stamp {
+/* .signature .company-stamp {
     font-size: 10px;
     color: #999;
     font-style: italic;
     margin-top: 2px;
-}
+} */
 
 /* Payment Receipt Generator Styles */
 
