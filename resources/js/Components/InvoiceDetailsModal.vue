@@ -1,3 +1,4 @@
+<!-- InvoiceDetailsModal -->
 <script setup>
 import { computed } from 'vue';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';

@@ -64,6 +64,10 @@
                 </div>
             </div>
 
+            <!-- Invoice Analytics -->
+
+            <!-- <InvoiceAnalyticsDashboard /> -->
+
             <!-- Table Container -->
             <div class="bg-white rounded-3xl shadow-md border-2 border-primary/10 p-4">
                 <!-- Table -->
@@ -217,7 +221,7 @@
                                                         class="text-teal-600 w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-gray-50">
                                                         <Eye size="18" class="flex-shrink-0" />
                                                         <span class="font-medium truncate">{{ $t("View details")
-                                                            }}</span>
+                                                        }}</span>
                                                     </button>
 
                                                     <button v-for="action in getAvailableActions(item)"
@@ -394,7 +398,7 @@
 
                             <div class="share-content">
                                 <h3>Share on WhatsApp (Direct)</h3>
-                                <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
+                                <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send pdf when chat is open' }}</p>
                             </div>
                         </button>
 
@@ -422,7 +426,7 @@
                             </div>
                             <div class="share-content">
                                 <h3>Share on WhatsApp (Template)</h3>
-                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf via WhatsApp' }}</p>
+                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf when chat is not open yet' }}</p>
                             </div>
                         </button>
 
@@ -654,7 +658,7 @@
                             <div class="info-item">
                                 <span class="info-label">Payment Date</span>
                                 <span class="info-value">{{ formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Payment Method</span>
@@ -669,7 +673,7 @@
                                 <span class="info-label">Amount Paid</span>
                                 <span class="info-value">₹{{
                                     generateCurrentPaymentReceiptPDF?.payment_metadata?.amount_paid
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -690,17 +694,17 @@
                             <div class="info-item">
                                 <span class="info-label">Email Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not provided`
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Phone Number</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not provided`
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not provided`
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -738,6 +742,7 @@ import QRCode from "qrcode";
 import DatePickerModal from '../DatePickerModal.vue';
 import InvoiceDetailsModal from '../InvoiceDetailsModal.vue';
 import UpdatePaymentModal from '../UpdatePaymentModal.vue';
+import InvoiceAnalyticsDashboard from '../InvoiceAnalyticsDashboard.vue';
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
 const whatsapp_token = import.meta.env.VITE_WA_TOKEN;

@@ -257,7 +257,7 @@
 
                             <div class="share-content">
                                 <h3>Share on WhatsApp (Direct)</h3>
-                                <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
+                                <p>{{ isSharing.freeWhatsapp ? 'Sharing...' : 'Send pdf when chat is open' }}</p>
                             </div>
                         </button>
 
@@ -285,7 +285,7 @@
                             </div>
                             <div class="share-content">
                                 <h3>Share on WhatsApp (Template)</h3>
-                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send quotation via WhatsApp' }}</p>
+                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf when chat is not open yet' }}</p>
                             </div>
                         </button>
 
@@ -499,7 +499,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, toRaw } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
@@ -852,7 +852,8 @@ const generatePDF = async () => {
             GST: 18,
             quotation_valid_until_date: formData.value.quotation_valid_until_date,
             signature: formData.value.signature,
-            designation: formData.value.designation
+            designation: formData.value.designation,
+            created_by: page?.props?.auth?.user || null
         }
 
         const res = await axios.post(`${base_url}/invoices`, payload);
