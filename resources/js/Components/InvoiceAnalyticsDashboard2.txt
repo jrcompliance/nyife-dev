@@ -1,0 +1,1012 @@
+i want to update invoice dashboard Ui filter as it is like we inplemented in API's 
+startDate-endDate and createdBy should be global filter and others filter suchas : paymentStatus, platformChargeType filter should be in Stats Cards ui only and groupBy filter should be in Revenue Trend ui only like currently as it is. also show filter in that ui at top-corner
+
+const { Op, fn, col, literal } = require('sequelize');
+const database = require('../config/database');
+const ApiError = require('../utils/ApiError');
+
+class AnalyticsService {
+    getInvoice() {
+        return database.getModels().Invoice;
+    }
+
+    // Get dashboard overview statistics
+    async getDashboardStats(query) {
+        const Invoice = this.getInvoice();
+        try {
+            const { startDate, endDate, paymentStatus, platformChargeType, createdBy } = query;
+
+            // Build where clause for filters
+            const whereClause = {};
+            if (startDate && endDate) {
+                whereClause.created_at = {
+                    [Op.between]: [new Date(startDate), new Date(endDate)]
+                };
+            }
+            if (paymentStatus) {
+                whereClause.payment_status = paymentStatus;
+            }
+            if (platformChargeType) {
+                whereClause.platform_charge_type = platformChargeType;
+            }
+
+            if (createdBy) {
+                whereClause[Op.and] = [literal(`JSON_EXTRACT(created_by, '$.id') = ${createdBy}`)];
+            }
+
+            // Total Revenue
+            const revenueData = await Invoice.findOne({
+                attributes: [
+                    [fn('SUM', col('total')), 'totalRevenue'],
+                    [fn('SUM', col('platform_charge')), 'platformRevenue'],
+                    [fn('SUM', col('wallet_recharge')), 'walletRevenue'],
+                    [fn('SUM', col('discount_amount')), 'totalDiscount'],
+                    [fn('SUM', col('GST_amount')), 'totalGST']
+                ],
+                where: whereClause,
+                raw: true
+            });
+
+            // Payment Status Breakdown
+            const paymentStatusCount = await Invoice.findAll({
+                attributes: [
+                    'payment_status',
+                    [fn('COUNT', col('id')), 'count'],
+                    [fn('SUM', col('total')), 'amount']
+                ],
+                where: whereClause,
+                group: ['payment_status'],
+                raw: true
+            });
+
+            // Total Invoices
+            const totalInvoices = await Invoice.count({ where: whereClause });
+
+            // Paid vs Unpaid
+            const paidInvoices = paymentStatusCount.find(s => s.payment_status === 'paid') || { count: 0, amount: 0 };
+            const unpaidInvoices = paymentStatusCount.find(s => s.payment_status === 'unpaid') || { count: 0, amount: 0 };
+
+            return {
+                totalRevenue: parseFloat(revenueData.totalRevenue || 0),
+                platformRevenue: parseFloat(revenueData.platformRevenue || 0),
+                walletRevenue: parseFloat(revenueData.walletRevenue || 0),
+                totalGST: parseFloat(revenueData.totalGST || 0),
+                totalDiscount: parseFloat(revenueData.totalDiscount || 0),
+                totalInvoices,
+                paidInvoices: {
+                    count: parseInt(paidInvoices.count),
+                    amount: parseFloat(paidInvoices.amount || 0)
+                },
+                unpaidInvoices: {
+                    count: parseInt(unpaidInvoices.count),
+                    amount: parseFloat(unpaidInvoices.amount || 0)
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            throw ApiError.internal(error.message || 'Failed to get dashboard stats');
+        }
+    }
+
+    // Revenue trend over time (daily/weekly/monthly)
+    async getRevenueTrend(query) {
+        const Invoice = this.getInvoice();
+        try {
+            const { groupBy = 'day', startDate, endDate, createdBy } = query;
+
+            const whereClause = {};
+            if (startDate && endDate) {
+                whereClause.created_at = {
+                    [Op.between]: [new Date(startDate), new Date(endDate)]
+                };
+            }
+
+            if (createdBy) {
+                whereClause[Op.and] = [literal(`JSON_EXTRACT(created_by, '$.id') = ${createdBy}`)];
+            }
+
+            let dateFormat;
+            switch (groupBy) {
+                case 'month':
+                    dateFormat = '%Y-%m';
+                    break;
+                case 'week':
+                    dateFormat = '%Y-%U';
+                    break;
+                case 'day':
+                default:
+                    dateFormat = '%Y-%m-%d';
+                    break;
+            }
+
+            const revenueTrend = await Invoice.findAll({
+                attributes: [
+                    [fn('DATE_FORMAT', col('created_at'), dateFormat), 'period'],
+                    [fn('SUM', col('total')), 'revenue'],
+                    [fn('SUM', col('platform_charge')), 'platformCharge'],
+                    [fn('SUM', col('wallet_recharge')), 'walletRecharge'],
+                    [fn('COUNT', col('id')), 'invoiceCount']
+                ],
+                where: whereClause,
+                group: [literal('period')],
+                order: [[literal('period'), 'ASC']],
+                raw: true
+            });
+
+            return revenueTrend.map(item => ({
+                period: item.period,
+                revenue: parseFloat(item.revenue || 0),
+                platformCharge: parseFloat(item.platformCharge || 0),
+                walletRecharge: parseFloat(item.walletRecharge || 0),
+                invoiceCount: parseInt(item.invoiceCount)
+            }))
+        } catch (error) {
+            console.error('Error fetching revenue trend:', error);
+            throw ApiError.internal(error.message || 'Failed to get revenue trend');
+        }
+    }
+
+    // Payment method analysis
+    async getPaymentMethodAnalysis(query) {
+        const Invoice = this.getInvoice();
+        try {
+            const { startDate, endDate, createdBy } = query;
+
+            const whereClause = { payment_status: 'paid' };
+            if (startDate && endDate) {
+                whereClause.created_at = {
+                    [Op.between]: [new Date(startDate), new Date(endDate)]
+                };
+            }
+
+            if (createdBy) {
+                whereClause[Op.and] = [literal(`JSON_EXTRACT(created_by, '$.id') = ${createdBy}`)];
+            }
+
+            const paymentMethods = await Invoice.findAll({
+                attributes: [
+                    'payment_method',
+                    [fn('COUNT', col('id')), 'count'],
+                    [fn('SUM', col('total')), 'totalAmount']
+                ],
+                where: whereClause,
+                group: ['payment_method'],
+                raw: true
+            });
+
+            return paymentMethods.map(method => ({
+                method: method.payment_method || 'Unknown',
+                count: parseInt(method.count),
+                totalAmount: parseFloat(method.totalAmount || 0)
+            }))
+        } catch (error) {
+            console.error('Error fetching payment method analysis:', error);
+            throw ApiError.internal(error.message || 'Failed to get payment method analysis');
+        }
+    }
+
+    // Platform charge type analysis
+    async getPlatformChargeAnalysis(query) {
+        const Invoice = this.getInvoice();
+        try {
+            const { startDate, endDate, createdBy } = query;
+
+            const whereClause = {};
+            if (startDate && endDate) {
+                whereClause.created_at = {
+                    [Op.between]: [new Date(startDate), new Date(endDate)]
+                };
+            }
+
+            if (createdBy) {
+                whereClause[Op.and] = [literal(`JSON_EXTRACT(created_by, '$.id') = ${createdBy}`)];
+            }
+
+            const chargeTypes = await Invoice.findAll({
+                attributes: [
+                    'platform_charge_type',
+                    [fn('COUNT', col('id')), 'count'],
+                    [fn('SUM', col('platform_charge')), 'totalCharge'],
+                    [fn('AVG', col('platform_charge')), 'avgCharge']
+                ],
+                where: whereClause,
+                group: ['platform_charge_type'],
+                raw: true
+            });
+
+            return chargeTypes.map(type => ({
+                type: type.platform_charge_type || 'Not Set',
+                count: parseInt(type.count),
+                totalCharge: parseFloat(type.totalCharge || 0),
+                avgCharge: parseFloat(type.avgCharge || 0)
+            })).filter(i => i.type !== 'Not Set');
+        } catch (error) {
+            console.error('Error fetching platform charge analysis:', error);
+            throw ApiError.internal(error.message || 'Failed to get platform charge analysis');
+        }
+    }
+
+    // Top customers by revenue
+    async getTopCustomers(query) {
+        const Invoice = this.getInvoice();
+        try {
+            const { limit = 10, startDate, endDate, createdBy } = query;
+
+            const whereClause = {};
+            if (startDate && endDate) {
+                whereClause.created_at = {
+                    [Op.between]: [new Date(startDate), new Date(endDate)]
+                };
+            }
+
+            if (createdBy) {
+                whereClause[Op.and] = [literal(`JSON_EXTRACT(created_by, '$.id') = ${createdBy}`)];
+            }
+
+            const topCustomers = await Invoice.findAll({
+                attributes: [
+                    'company_name',
+                    'contact_person',
+                    'email',
+                    [fn('COUNT', col('id')), 'invoiceCount'],
+                    [fn('SUM', col('total')), 'totalRevenue'],
+                    [fn('AVG', col('total')), 'avgInvoiceValue']
+                ],
+                where: whereClause,
+                group: ['company_name', 'contact_person', 'email'],
+                order: [[fn('SUM', col('total')), 'DESC']],
+                limit: parseInt(limit),
+                raw: true
+            });
+
+            return topCustomers.map(customer => ({
+                companyName: customer.company_name,
+                contactPerson: customer.contact_person,
+                email: customer.email,
+                invoiceCount: parseInt(customer.invoiceCount),
+                totalRevenue: parseFloat(customer.totalRevenue || 0),
+                avgInvoiceValue: parseFloat(customer.avgInvoiceValue || 0)
+            }))
+        } catch (error) {
+            console.error('Error fetching top customers:', error);
+            throw ApiError.internal(error.message || 'Failed to get top customers');
+        }
+    }
+
+    // Discount analysis
+    async getDiscountAnalysis(query) {
+        const Invoice = this.getInvoice();
+        try {
+            const { startDate, endDate, createdBy } = query;
+
+            const whereClause = {
+                discount: { [Op.gt]: 0 }
+            };
+            if (startDate && endDate) {
+                whereClause.created_at = {
+                    [Op.between]: [new Date(startDate), new Date(endDate)]
+                };
+            }
+            if (createdBy) {
+                whereClause[Op.and] = [literal(`JSON_EXTRACT(created_by, '$.id') = ${createdBy}`)];
+            }
+
+            const discountStats = await Invoice.findOne({
+                attributes: [
+                    [fn('COUNT', col('id')), 'totalDiscountedInvoices'],
+                    [fn('SUM', col('discount_amount')), 'totalDiscountGiven'],
+                    [fn('AVG', col('discount')), 'avgDiscountPercent'],
+                    [fn('SUM', col('sub_total')), 'totalSubTotal']
+                ],
+                where: whereClause,
+                raw: true
+            });
+
+            const totalInvoices = await Invoice.count({
+                where: startDate && endDate ? { created_at: whereClause.created_at } : {}
+            });
+
+            return {
+                totalDiscountedInvoices: parseInt(discountStats.totalDiscountedInvoices || 0),
+                totalDiscountGiven: parseFloat(discountStats.totalDiscountGiven || 0),
+                avgDiscountPercent: parseFloat(discountStats.avgDiscountPercent || 0),
+                discountRate: ((discountStats.totalDiscountedInvoices / totalInvoices) * 100).toFixed(2)
+            }
+
+        } catch (error) {
+            console.error('Error fetching discount analysis:', error);
+            throw ApiError.internal(error.message || 'Failed to get discount analysis');
+        }
+    }
+};
+
+module.exports = new AnalyticsService();
+
+
+here is my UI please make it look good and make it responsive with filter and other stuff
+
+please build using vuejs, tailwindcss, lucide-icons
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
+import {
+    DollarSign,
+    FileText,
+    CheckCircle,
+    AlertCircle,
+    CreditCard,
+    RefreshCw,
+    Loader2
+} from 'lucide-vue-next';
+import Chart from 'chart.js/auto';
+
+const props = defineProps({
+    apiBaseUrl: {
+        type: String,
+        default: import.meta.env.VITE_BACKEND_API_URL || ''
+    },
+    initialFilters: {
+        type: Object,
+        default: () => ({
+            startDate: '',
+            endDate: '',
+            paymentStatus: '',
+            platformChargeType: ''
+        })
+    },
+    showFilters: {
+        type: Boolean,
+        default: true
+    },
+    showStats: {
+        type: Boolean,
+        default: true
+    },
+    showCharts: {
+        type: Boolean,
+        default: true
+    },
+    showTopCustomers: {
+        type: Boolean,
+        default: true
+    },
+    showDiscountAnalysis: {
+        type: Boolean,
+        default: true
+    },
+    topCustomersLimit: {
+        type: Number,
+        default: 10
+    },
+    autoFetch: {
+        type: Boolean,
+        default: true
+    },
+    enableExternalControl: {
+        type: Boolean,
+        default: false
+    }
+});
+
+const emit = defineEmits(['dataLoaded', 'error', 'filterChange']);
+
+// State
+const loading = ref(false);
+const filters = ref({ ...props.initialFilters });
+const revenueTrendGroupBy = ref('day');
+
+const dashboardStats = ref({
+    totalRevenue: 0,
+    platformRevenue: 0,
+    walletRevenue: 0,
+    totalGST: 0,
+    totalInvoices: 0,
+    avgInvoiceValue: 0,
+    paidInvoices: { count: 0, amount: 0 },
+    unpaidInvoices: { count: 0, amount: 0 }
+});
+
+const revenueTrend = ref([]);
+const paymentMethods = ref([]);
+const platformCharges = ref([]);
+const topCustomers = ref([]);
+const discountAnalysis = ref({
+    totalDiscountedInvoices: 0,
+    totalDiscountGiven: 0,
+    avgDiscountPercent: 0,
+    discountRate: 0
+});
+
+const charts = ref({
+    revenueTrend: null,
+    platformCharge: null
+});
+
+// Refs for chart canvases
+const revenueTrendChart = ref(null);
+const platformChargeChart = ref(null);
+
+// Methods
+const formatCurrency = (value) => {
+    if (!value && value !== 0) return '0.00';
+    return new Intl.NumberFormat('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+};
+
+const buildQueryParams = (additionalParams = {}) => {
+    return new URLSearchParams({ ...filters.value, ...additionalParams }).toString();
+};
+
+const fetchDashboardStats = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/dashboard/stats?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            dashboardStats.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'stats', error });
+    }
+};
+
+const fetchRevenueTrend = async () => {
+    try {
+        const params = buildQueryParams({ groupBy: revenueTrendGroupBy.value });
+        const response = await fetch(`${props.apiBaseUrl}/analytics/revenue/trend?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            revenueTrend.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'revenueTrend', error });
+    }
+};
+
+const fetchPaymentMethods = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/payment-methods?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            paymentMethods.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'paymentMethods', error });
+    }
+};
+
+const fetchPlatformCharges = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/platform-charges?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            platformCharges.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'platformCharges', error });
+    }
+};
+
+const fetchTopCustomers = async () => {
+    try {
+        const params = buildQueryParams({ limit: props.topCustomersLimit });
+        const response = await fetch(`${props.apiBaseUrl}/analytics/top-customers?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            topCustomers.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'topCustomers', error });
+    }
+};
+
+const fetchDiscountAnalysis = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/discounts?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            discountAnalysis.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'discountAnalysis', error });
+    }
+};
+
+const fetchAllData = async () => {
+    loading.value = true;
+    destroyCharts();
+
+    try {
+        const promises = [];
+
+        if (props.showStats) promises.push(fetchDashboardStats());
+        if (props.showCharts) {
+            promises.push(fetchRevenueTrend());
+            promises.push(fetchPaymentMethods());
+            promises.push(fetchPlatformCharges());
+        }
+        if (props.showTopCustomers) promises.push(fetchTopCustomers());
+        if (props.showDiscountAnalysis) promises.push(fetchDiscountAnalysis());
+
+        await Promise.all(promises);
+
+        emit('dataLoaded', {
+            stats: dashboardStats.value,
+            revenueTrend: revenueTrend.value,
+            paymentMethods: paymentMethods.value,
+            platformCharges: platformCharges.value,
+            topCustomers: topCustomers.value,
+            discountAnalysis: discountAnalysis.value
+        });
+
+        loading.value = false;
+        await nextTick();
+
+        setTimeout(() => {
+            if (props.showCharts) {
+                if (revenueTrend.value?.length) renderRevenueTrendChart();
+                if (platformCharges.value?.length) renderPlatformChargeChart();
+            }
+        }, 100);
+
+    } catch (error) {
+        loading.value = false;
+        emit('error', { type: 'fetchAll', error });
+    }
+};
+
+const renderRevenueTrendChart = () => {
+    if (charts.value.revenueTrend) {
+        charts.value.revenueTrend.destroy();
+        charts.value.revenueTrend = null;
+    }
+
+    if (!revenueTrendChart.value || !revenueTrend.value?.length) return;
+
+    try {
+        const ctx = revenueTrendChart.value.getContext('2d');
+        if (!ctx) return;
+
+        charts.value.revenueTrend = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: revenueTrend.value.map(item => item.period || ''),
+                datasets: [
+                    {
+                        label: 'Total Revenue',
+                        data: revenueTrend.value.map(item => item.revenue || 0),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Platform Charge',
+                        data: revenueTrend.value.map(item => item.platformCharge || 0),
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        emit('error', { type: 'chartRender', error });
+    }
+};
+
+const renderPlatformChargeChart = () => {
+    if (charts.value.platformCharge) {
+        charts.value.platformCharge.destroy();
+        charts.value.platformCharge = null;
+    }
+
+    if (!platformChargeChart.value || !platformCharges.value?.length) return;
+
+    try {
+        const ctx = platformChargeChart.value.getContext('2d');
+        if (!ctx) return;
+
+        charts.value.platformCharge = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: platformCharges.value.map(item => item.type || 'Unknown'),
+                datasets: [{
+                    label: 'Total Charge',
+                    data: platformCharges.value.map(item => item.totalCharge || 0),
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        emit('error', { type: 'chartRender', error });
+    }
+};
+
+const onFilterChange = () => {
+    emit('filterChange', filters.value);
+    if (!props.enableExternalControl) {
+        fetchAllData();
+    }
+};
+
+const resetFilters = () => {
+    filters.value = { ...props.initialFilters };
+    onFilterChange();
+};
+
+const destroyCharts = () => {
+    if (charts.value.revenueTrend) {
+        charts.value.revenueTrend.destroy();
+        charts.value.revenueTrend = null;
+    }
+    if (charts.value.platformCharge) {
+        charts.value.platformCharge.destroy();
+        charts.value.platformCharge = null;
+    }
+};
+
+// Expose methods for external control
+defineExpose({
+    fetchAllData,
+    resetFilters,
+    updateFilters: (newFilters) => {
+        filters.value = { ...filters.value, ...newFilters };
+        onFilterChange();
+    },
+    getStats: () => dashboardStats.value,
+    getData: () => ({
+        stats: dashboardStats.value,
+        revenueTrend: revenueTrend.value,
+        paymentMethods: paymentMethods.value,
+        platformCharges: platformCharges.value,
+        topCustomers: topCustomers.value,
+        discountAnalysis: discountAnalysis.value
+    })
+});
+
+// Lifecycle
+onMounted(() => {
+    if (props.autoFetch) {
+        fetchAllData();
+    }
+});
+
+onBeforeUnmount(() => {
+    destroyCharts();
+});
+
+// Watch for external filter changes
+watch(() => props.initialFilters, (newFilters) => {
+    filters.value = { ...newFilters };
+    if (props.autoFetch) {
+        fetchAllData();
+    }
+}, { deep: true });
+
+// Watch for revenue trend group change
+watch(revenueTrendGroupBy, async () => {
+    await fetchRevenueTrend();
+    await nextTick();
+    setTimeout(() => renderRevenueTrendChart(), 100);
+});
+
+// Watch for data changes to re-render charts
+watch([revenueTrend, platformCharges], async () => {
+    if (!loading.value && props.showCharts) {
+        await nextTick();
+        setTimeout(() => {
+            if (revenueTrend.value?.length) renderRevenueTrendChart();
+            if (platformCharges.value?.length) renderPlatformChargeChart();
+        }, 100);
+    }
+}, { deep: true });
+</script>
+
+<template>
+    <div class="min-h-screen">
+        <!-- Filters -->
+        <div v-if="showFilters" class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <input type="date" v-model="filters.startDate" @change="onFilterChange"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <input type="date" v-model="filters.endDate" @change="onFilterChange"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
+                    <select v-model="filters.paymentStatus" @change="onFilterChange"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All</option>
+                        <option value="paid">Paid</option>
+                        <option value="unpaid">Unpaid</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Charge Type</label>
+                    <select v-model="filters.platformChargeType" @change="onFilterChange"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Yearly">Yearly</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button @click="resetFilters"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
+                    <RefreshCw class="w-4 h-4 inline mr-2" />
+                    Reset Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="flex justify-center items-center py-12">
+            <Loader2 class="w-8 h-8 animate-spin text-blue-500" />
+        </div>
+
+        <!-- Dashboard Content -->
+        <div v-else>
+            <!-- Stats Cards -->
+            <div v-if="showStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2">
+                                ₹{{ formatCurrency(dashboardStats.totalRevenue) }}
+                            </p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <DollarSign class="w-6 h-6 text-green-600" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        GST: ₹{{ formatCurrency(dashboardStats.totalGST) }}
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Invoices</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2">
+                                {{ dashboardStats.totalInvoices }}
+                            </p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <FileText class="w-6 h-6 text-blue-600" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Avg: ₹{{ formatCurrency(dashboardStats.avgInvoiceValue) }}
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Paid Invoices</p>
+                            <p class="text-2xl font-bold text-green-600 mt-2">
+                                {{ dashboardStats.paidInvoices.count }}
+                            </p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <CheckCircle class="w-6 h-6 text-green-600" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        ₹{{ formatCurrency(dashboardStats.paidInvoices.amount) }}
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Unpaid Invoices</p>
+                            <p class="text-2xl font-bold text-red-600 mt-2">
+                                {{ dashboardStats.unpaidInvoices.count }}
+                            </p>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-full">
+                            <AlertCircle class="w-6 h-6 text-red-600" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        ₹{{ formatCurrency(dashboardStats.unpaidInvoices.amount) }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div v-if="showCharts" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Revenue Trend Chart -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Revenue Trend</h2>
+                        <select v-model="revenueTrendGroupBy"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                            <option value="day">Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month">Monthly</option>
+                        </select>
+                    </div>
+                    <div v-if="revenueTrend.length === 0" class="text-center text-gray-500 py-12">
+                        No revenue trend data available
+                    </div>
+                    <div v-else style="position: relative; height: 256px; width: 100%;">
+                        <canvas ref="revenueTrendChart" width="400" height="256"></canvas>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h2>
+                    <div class="space-y-3">
+                        <div v-if="paymentMethods.length === 0" class="text-center text-gray-500 py-8">
+                            No payment method data available
+                        </div>
+                        <div v-for="method in paymentMethods" :key="method.method"
+                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <CreditCard class="w-5 h-5 text-gray-600 mr-3" />
+                                <span class="font-medium text-gray-900">{{ method.method }}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-semibold text-gray-900">
+                                    ₹{{ formatCurrency(method.totalAmount) }}
+                                </p>
+                                <p class="text-xs text-gray-500">{{ method.count }} transactions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Platform Charge Distribution -->
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Platform Charge Distribution</h2>
+                    <div v-if="platformCharges.length === 0" class="text-center text-gray-500 py-12">
+                        No platform charge data available
+                    </div>
+                    <div v-else style="position: relative; height: 300px; width: 100%;">
+                        <canvas ref="platformChargeChart" width="800" height="300"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Customers -->
+                <div v-if="showTopCustomers" class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Top Customers by Revenue</h2>
+                    <div class="overflow-auto max-h-[400px]">
+                        <table class="divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Company
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Contact Person
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Invoices
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Total Revenue
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Avg Invoice
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr v-if="topCustomers.length === 0">
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                        No customer data available
+                                    </td>
+                                </tr>
+                                <tr v-for="(customer, index) in topCustomers" :key="index">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ customer.companyName }}</div>
+                                        <div class="text-sm text-gray-500">{{ customer.email }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ customer.contactPerson }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            {{ customer.invoiceCount }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                        ₹{{ formatCurrency(customer.totalRevenue) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        ₹{{ formatCurrency(customer.avgInvoiceValue) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discount Analysis -->
+            <div v-if="showDiscountAnalysis" class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Discount Analysis</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <p class="text-sm text-purple-600 font-medium">Discounted Invoices</p>
+                        <p class="text-2xl font-bold text-purple-900 mt-1">
+                            {{ discountAnalysis.totalDiscountedInvoices }}
+                        </p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <p class="text-sm text-purple-600 font-medium">Total Discount Given</p>
+                        <p class="text-2xl font-bold text-purple-900 mt-1">
+                            ₹{{ formatCurrency(discountAnalysis.totalDiscountGiven) }}
+                        </p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <p class="text-sm text-purple-600 font-medium">Avg Discount %</p>
+                        <p class="text-2xl font-bold text-purple-900 mt-1">
+                            {{ discountAnalysis.avgDiscountPercent.toFixed(2) }}%
+                        </p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <p class="text-sm text-purple-600 font-medium">Discount Rate</p>
+                        <p class="text-2xl font-bold text-purple-900 mt-1">
+                            {{ discountAnalysis.discountRate }}%
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

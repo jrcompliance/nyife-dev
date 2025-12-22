@@ -208,9 +208,9 @@ const runSearch = () => {
         </div>
 
         <!-- Table Container -->
-        <div class="bg-white rounded-3xl shadow-md border-2 border-primary/10 p-4 overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-md border-2 border-primary/10 p-4">
             <!-- Table -->
-            <div class="overflow-x-auto">
+            <div class="">
                 <table class="w-full">
                     <!-- Table Header -->
                     <thead class="border-b border-primary/10">

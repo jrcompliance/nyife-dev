@@ -34,6 +34,8 @@ Route::get('/translations/{locale}', function ($locale) {
     return response()->json(json_decode(File::get($path), true));
 });
 
+Route::get('/admin/team', [App\Http\Controllers\Admin\TeamController::class, 'getAdminTeam']);
+
 Route::middleware([AuthenticateBearerToken::class])->group(function () {
     Route::post('/send', [App\Http\Controllers\ApiController::class, 'sendMessage']);
     Route::post('/send/interactive', [App\Http\Controllers\ApiController::class, 'sendInteractiveMessage']);

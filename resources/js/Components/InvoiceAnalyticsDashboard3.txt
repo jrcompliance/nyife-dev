@@ -1,0 +1,703 @@
+<script setup>
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
+import {
+    DollarSign,
+    FileText,
+    CheckCircle,
+    AlertCircle,
+    CreditCard,
+    RefreshCw,
+    Loader2,
+    Filter,
+    X
+} from 'lucide-vue-next';
+import Chart from 'chart.js/auto';
+
+const props = defineProps({
+    apiBaseUrl: {
+        type: String,
+        default: import.meta.env.VITE_BACKEND_API_URL || ''
+    },
+    initialFilters: {
+        type: Object,
+        default: () => ({
+            startDate: '',
+            endDate: '',
+            createdBy: '',
+            paymentStatus: '',
+            platformChargeType: ''
+        })
+    },
+    showFilters: {
+        type: Boolean,
+        default: true
+    },
+    showStats: {
+        type: Boolean,
+        default: true
+    },
+    showCharts: {
+        type: Boolean,
+        default: true
+    },
+    showTopCustomers: {
+        type: Boolean,
+        default: true
+    },
+    showDiscountAnalysis: {
+        type: Boolean,
+        default: true
+    },
+    topCustomersLimit: {
+        type: Number,
+        default: 10
+    },
+    autoFetch: {
+        type: Boolean,
+        default: true
+    }
+});
+
+const emit = defineEmits(['dataLoaded', 'error', 'filterChange']);
+
+// State
+const loading = ref(false);
+const showLocalFilters = ref(false);
+const globalFilters = ref({
+    startDate: props.initialFilters.startDate || '',
+    endDate: props.initialFilters.endDate || '',
+    createdBy: props.initialFilters.createdBy || ''
+});
+const localFilters = ref({
+    paymentStatus: props.initialFilters.paymentStatus || '',
+    platformChargeType: props.initialFilters.platformChargeType || '',
+    groupBy: 'day'
+});
+
+const dashboardStats = ref({
+    totalRevenue: 0,
+    platformRevenue: 0,
+    walletRevenue: 0,
+    totalGST: 0,
+    totalInvoices: 0,
+    paidInvoices: { count: 0, amount: 0 },
+    unpaidInvoices: { count: 0, amount: 0 }
+});
+
+const revenueTrend = ref([]);
+const paymentMethods = ref([]);
+const platformCharges = ref([]);
+const topCustomers = ref([]);
+const discountAnalysis = ref({
+    totalDiscountedInvoices: 0,
+    totalDiscountGiven: 0,
+    avgDiscountPercent: 0,
+    discountRate: 0
+});
+
+const charts = ref({
+    revenueTrend: null,
+    platformCharge: null
+});
+
+const revenueTrendChart = ref(null);
+const platformChargeChart = ref(null);
+
+// Methods
+const formatCurrency = (value) => {
+    if (!value && value !== 0) return '0.00';
+    return new Intl.NumberFormat('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+};
+
+const buildQueryParams = (additionalParams = {}) => {
+    const allFilters = { 
+        ...globalFilters.value, 
+        ...localFilters.value,
+        ...additionalParams 
+    };
+    // Remove empty values
+    Object.keys(allFilters).forEach(key => {
+        if (allFilters[key] === '' || allFilters[key] === null || allFilters[key] === undefined) {
+            delete allFilters[key];
+        }
+    });
+    return new URLSearchParams(allFilters).toString();
+};
+
+const fetchDashboardStats = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/dashboard/stats?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            dashboardStats.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'stats', error });
+    }
+};
+
+const fetchRevenueTrend = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/revenue/trend?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            revenueTrend.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'revenueTrend', error });
+    }
+};
+
+const fetchPaymentMethods = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/payment-methods?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            paymentMethods.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'paymentMethods', error });
+    }
+};
+
+const fetchPlatformCharges = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/platform-charges?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            platformCharges.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'platformCharges', error });
+    }
+};
+
+const fetchTopCustomers = async () => {
+    try {
+        const params = buildQueryParams({ limit: props.topCustomersLimit });
+        const response = await fetch(`${props.apiBaseUrl}/analytics/top-customers?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            topCustomers.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'topCustomers', error });
+    }
+};
+
+const fetchDiscountAnalysis = async () => {
+    try {
+        const params = buildQueryParams();
+        const response = await fetch(`${props.apiBaseUrl}/analytics/discounts?${params}`);
+        const result = await response.json();
+        if (result.success) {
+            discountAnalysis.value = result.data;
+        }
+    } catch (error) {
+        emit('error', { type: 'discountAnalysis', error });
+    }
+};
+
+const fetchAllData = async () => {
+    loading.value = true;
+    destroyCharts();
+
+    try {
+        const promises = [];
+
+        if (props.showStats) promises.push(fetchDashboardStats());
+        if (props.showCharts) {
+            promises.push(fetchRevenueTrend());
+            promises.push(fetchPaymentMethods());
+            promises.push(fetchPlatformCharges());
+        }
+        if (props.showTopCustomers) promises.push(fetchTopCustomers());
+        if (props.showDiscountAnalysis) promises.push(fetchDiscountAnalysis());
+
+        await Promise.all(promises);
+
+        emit('dataLoaded', {
+            stats: dashboardStats.value,
+            revenueTrend: revenueTrend.value,
+            paymentMethods: paymentMethods.value,
+            platformCharges: platformCharges.value,
+            topCustomers: topCustomers.value,
+            discountAnalysis: discountAnalysis.value
+        });
+
+        loading.value = false;
+        await nextTick();
+
+        setTimeout(() => {
+            if (props.showCharts) {
+                if (revenueTrend.value?.length) renderRevenueTrendChart();
+                if (platformCharges.value?.length) renderPlatformChargeChart();
+            }
+        }, 100);
+
+    } catch (error) {
+        loading.value = false;
+        emit('error', { type: 'fetchAll', error });
+    }
+};
+
+const renderRevenueTrendChart = () => {
+    if (charts.value.revenueTrend) {
+        charts.value.revenueTrend.destroy();
+        charts.value.revenueTrend = null;
+    }
+
+    if (!revenueTrendChart.value || !revenueTrend.value?.length) return;
+
+    try {
+        const ctx = revenueTrendChart.value.getContext('2d');
+        if (!ctx) return;
+
+        charts.value.revenueTrend = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: revenueTrend.value.map(item => item.period || ''),
+                datasets: [
+                    {
+                        label: 'Total Revenue',
+                        data: revenueTrend.value.map(item => item.revenue || 0),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Platform Charge',
+                        data: revenueTrend.value.map(item => item.platformCharge || 0),
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        emit('error', { type: 'chartRender', error });
+    }
+};
+
+const renderPlatformChargeChart = () => {
+    if (charts.value.platformCharge) {
+        charts.value.platformCharge.destroy();
+        charts.value.platformCharge = null;
+    }
+
+    if (!platformChargeChart.value || !platformCharges.value?.length) return;
+
+    try {
+        const ctx = platformChargeChart.value.getContext('2d');
+        if (!ctx) return;
+
+        charts.value.platformCharge = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: platformCharges.value.map(item => item.type || 'Unknown'),
+                datasets: [{
+                    label: 'Total Charge',
+                    data: platformCharges.value.map(item => item.totalCharge || 0),
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        emit('error', { type: 'chartRender', error });
+    }
+};
+
+const onGlobalFilterChange = () => {
+    emit('filterChange', { ...globalFilters.value, ...localFilters.value });
+    fetchAllData();
+};
+
+const onLocalFilterChange = () => {
+    emit('filterChange', { ...globalFilters.value, ...localFilters.value });
+    fetchAllData();
+};
+
+const resetAllFilters = () => {
+    globalFilters.value = {
+        startDate: '',
+        endDate: '',
+        createdBy: ''
+    };
+    localFilters.value = {
+        paymentStatus: '',
+        platformChargeType: '',
+        groupBy: 'day'
+    };
+    onGlobalFilterChange();
+};
+
+const clearLocalFilters = () => {
+    localFilters.value = {
+        paymentStatus: '',
+        platformChargeType: '',
+        groupBy: 'day'
+    };
+    onLocalFilterChange();
+};
+
+const destroyCharts = () => {
+    if (charts.value.revenueTrend) {
+        charts.value.revenueTrend.destroy();
+        charts.value.revenueTrend = null;
+    }
+    if (charts.value.platformCharge) {
+        charts.value.platformCharge.destroy();
+        charts.value.platformCharge = null;
+    }
+};
+
+const hasActiveLocalFilters = () => {
+    return localFilters.value.paymentStatus || localFilters.value.platformChargeType;
+};
+
+// Expose methods for external control
+defineExpose({
+    fetchAllData,
+    resetAllFilters,
+    updateFilters: (newFilters) => {
+        if (newFilters.startDate !== undefined) globalFilters.value.startDate = newFilters.startDate;
+        if (newFilters.endDate !== undefined) globalFilters.value.endDate = newFilters.endDate;
+        if (newFilters.createdBy !== undefined) globalFilters.value.createdBy = newFilters.createdBy;
+        if (newFilters.paymentStatus !== undefined) localFilters.value.paymentStatus = newFilters.paymentStatus;
+        if (newFilters.platformChargeType !== undefined) localFilters.value.platformChargeType = newFilters.platformChargeType;
+        if (newFilters.groupBy !== undefined) localFilters.value.groupBy = newFilters.groupBy;
+        fetchAllData();
+    },
+    getStats: () => dashboardStats.value
+});
+
+// Lifecycle
+onMounted(() => {
+    if (props.autoFetch) {
+        fetchAllData();
+    }
+});
+
+onBeforeUnmount(() => {
+    destroyCharts();
+});
+
+// Watch for groupBy change
+watch(() => localFilters.value.groupBy, async () => {
+    await fetchRevenueTrend();
+    await nextTick();
+    setTimeout(() => renderRevenueTrendChart(), 100);
+});
+</script>
+
+<template>
+    <div class="min-h-screen bg-gray-50 p-4 md:p-6">
+        <!-- Header with Global Filters -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Title -->
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Invoice Analytics Dashboard</h1>
+                    <p class="text-sm text-gray-500 mt-1">Track and analyze your invoice performance</p>
+                </div>
+
+                <!-- Global Filters -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex-1 sm:flex-initial">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" v-model="globalFilters.startDate" @change="onGlobalFilterChange"
+                            class="w-full sm:w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                    <div class="flex-1 sm:flex-initial">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">End Date</label>
+                        <input type="date" v-model="globalFilters.endDate" @change="onGlobalFilterChange"
+                            class="w-full sm:w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                    <div class="flex-1 sm:flex-initial">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Created By</label>
+                        <input type="text" v-model="globalFilters.createdBy" @input="onGlobalFilterChange"
+                            placeholder="User ID"
+                            class="w-full sm:w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                    <div class="flex items-end">
+                        <button @click="resetAllFilters"
+                            class="w-full sm:w-auto px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                            <RefreshCw class="w-4 h-4 inline mr-1" />
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="flex justify-center items-center py-20">
+            <div class="text-center">
+                <Loader2 class="w-10 h-10 animate-spin text-blue-500 mx-auto mb-3" />
+                <p class="text-sm text-gray-500">Loading analytics data...</p>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div v-else>
+            <!-- Stats Cards -->
+            <div v-if="showStats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Revenue</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2">
+                                ₹{{ formatCurrency(dashboardStats.totalRevenue) }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-2">
+                                GST: ₹{{ formatCurrency(dashboardStats.totalGST) }}
+                            </p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-xl">
+                            <DollarSign class="w-6 h-6 text-green-600" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Invoices</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2">
+                                {{ dashboardStats.totalInvoices }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-2">
+                                Platform: ₹{{ formatCurrency(dashboardStats.platformRevenue) }}
+                            </p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-xl">
+                            <FileText class="w-6 h-6 text-blue-600" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Paid Invoices</p>
+                            <p class="text-2xl font-bold text-green-600 mt-2">
+                                {{ dashboardStats.paidInvoices.count }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-2">
+                                ₹{{ formatCurrency(dashboardStats.paidInvoices.amount) }}
+                            </p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-xl">
+                            <CheckCircle class="w-6 h-6 text-green-600" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unpaid Invoices</p>
+                            <p class="text-2xl font-bold text-red-600 mt-2">
+                                {{ dashboardStats.unpaidInvoices.count }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-2">
+                                ₹{{ formatCurrency(dashboardStats.unpaidInvoices.amount) }}
+                            </p>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-xl">
+                            <AlertCircle class="w-6 h-6 text-red-600" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section with Local Filters -->
+            <div v-if="showCharts">
+                <!-- Local Filters Bar -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <Filter class="w-5 h-5 text-gray-500" />
+                            <span class="text-sm font-medium text-gray-700">Chart Filters</span>
+                            <span v-if="hasActiveLocalFilters()" 
+                                class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                {{ (localFilters.paymentStatus ? 1 : 0) + (localFilters.platformChargeType ? 1 : 0) }} active
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                            <select v-model="localFilters.paymentStatus" @change="onLocalFilterChange"
+                                class="flex-1 sm:flex-initial px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Statuses</option>
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                            </select>
+
+                            <select v-model="localFilters.platformChargeType" @change="onLocalFilterChange"
+                                class="flex-1 sm:flex-initial px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Charge Types</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+
+                            <select v-model="localFilters.groupBy" @change="onLocalFilterChange"
+                                class="flex-1 sm:flex-initial px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="day">Daily</option>
+                                <option value="week">Weekly</option>
+                                <option value="month">Monthly</option>
+                            </select>
+
+                            <button v-if="hasActiveLocalFilters()" @click="clearLocalFilters"
+                                class="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition">
+                                <X class="w-4 h-4 inline mr-1" />
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
+                    <!-- Revenue Trend Chart -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">Revenue Trend</h2>
+                            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
+                                {{ localFilters.groupBy === 'day' ? 'Daily' : localFilters.groupBy === 'week' ? 'Weekly' : 'Monthly' }}
+                            </span>
+                        </div>
+                        <div v-if="revenueTrend.length === 0" class="flex items-center justify-center text-gray-400 py-16">
+                            <div class="text-center">
+                                <FileText class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p class="text-sm">No revenue data available</p>
+                            </div>
+                        </div>
+                        <div v-else style="position: relative; height: 280px; width: 100%;">
+                            <canvas ref="revenueTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h2>
+                        <div v-if="paymentMethods.length === 0" class="flex items-center justify-center text-gray-400 py-16">
+                            <div class="text-center">
+                                <CreditCard class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p class="text-sm">No payment data available</p>
+                            </div>
+                        </div>
+                        <div v-else class="space-y-3 max-h-[280px] overflow-y-auto">
+                            <div v-for="method in paymentMethods" :key="method.method"
+                                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-white p-2 rounded-lg shadow-sm">
+                                        <CreditCard class="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <span class="font-medium text-gray-900">{{ method.method }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-semibold text-gray-900">
+                                        ₹{{ formatCurrency(method.totalAmount) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">{{ method.count }} transactions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Platform Charge Distribution - Full Width -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Platform Charge Distribution</h2>
+                    <div v-if="platformCharges.length === 0" class="flex items-center justify-center text-gray-400 py-16">
+                        <div class="text-center">
+                            <DollarSign class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            <p class="text-sm">No platform charge data available</p>
+                        </div>
+                    </div>
+                    <div v-else style="position: relative; height: 300px; width: 100%;">
+                        <canvas ref="platformChargeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Customers -->
+            <div v-if="showTopCustomers" class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Top Customers by Revenue</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Company
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Contact
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Invoices
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Total Revenue
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Avg Invoice
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-if="topCustomers.length === 0">
+                                <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                                    <FileText class="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                    <p class="text-sm">No customer data available</p>
+                                </td>
+                            </tr>
+                            <tr v-for="(customer, index) in topCustomers" :key="index" class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ customer.companyName }}</div>
+                                    <div class="text-xs text-gray-500">{{ customer.email }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {{ customer.contactPerson }}
+                                </td>
+                                <td class="
