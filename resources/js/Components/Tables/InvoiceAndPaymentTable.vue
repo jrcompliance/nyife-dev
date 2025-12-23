@@ -16,10 +16,10 @@
                                     stroke-width="2" d="m15 15l6 6m-11-4a7 7 0 1 1 0-14a7 7 0 0 1 0 14Z" />
                             </svg>
                         </span>
-                        <input @input="search" v-model="params.search" type="text"
+                        <input @input="search" v-model="statsFilters.search" type="text"
                             class="outline-none px-4 w-full bg-transparent text-gray-700 placeholder-gray-400 font-medium"
                             :placeholder="$t('Search quotations, proformas, and payment receipts')">
-                        <button v-if="isSearching === false && params.search" @click="clearSearch" type="button"
+                        <button v-if="isSearching === false && statsFilters.search" @click="clearSearch" type="button"
                             class="pr-4 text-gray-400 hover:text-red-500 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                                 <path fill="currentColor"
@@ -64,9 +64,185 @@
                 </div>
             </div>
 
-            <!-- Invoice Analytics -->
+            <!-- Loading State -->
+            <div v-if="loading" class="flex justify-center items-center py-12">
+                <Loader2 class="w-8 h-8 animate-spin text-blue-500" />
+                <span class="ml-3 text-gray-600 font-medium">Loading...</span>
+            </div>
 
-            <InvoiceAnalyticsDashboard />
+            <!-- Stats Filters -->
+            <div v-else class="mb-6">
+                <div class="p-4 pt-0 flex items-center justify-end flex-wrap gap-4">
+                    <button @click="openAnalytics = true"
+                        class="flex justify-center text-sm items-center gap-2 text-green-600 bg-slate-50 py-2 px-4 rounded-lg transition-colors">
+                        <ExternalLink class="w-4 h-4" /> Open Detailed Analytics
+                    </button>
+                    <InvoiceAnalyticsDashboard :isOpen="openAnalytics" @close="openAnalytics = false" />
+                    <button @click="showStatsFilters = !showStatsFilters"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                        <Filter class="w-4 h-4" />
+                        {{ showStatsFilters ? 'Hide' : 'Show' }} Filters
+                    </button>
+                </div>
+
+                <!-- Stats Filters -->
+                <transition enter-active-class="transition-all duration-300 ease-out"
+                    leave-active-class="transition-all duration-200 ease-in" enter-from-class="opacity-0 max-h-0"
+                    enter-to-class="opacity-100 max-h-96" leave-from-class="opacity-100 max-h-96"
+                    leave-to-class="opacity-0 max-h-0">
+                    <div v-show="showStatsFilters" class="p-4 mb-4 bg-slate-50 border border-slate-200 rounded-md">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                                <input type="date" v-model="statsFilters.startDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <input type="date" v-model="statsFilters.endDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
+                                <select v-model="statsFilters.paymentStatus"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">All</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="unpaid">Unpaid</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Platform Charge Type</label>
+                                <select v-model="statsFilters.platformChargeType"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">All</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Yearly">Yearly</option>
+                                </select>
+                            </div>
+                            <div v-if="isAdmin">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Team Member</label>
+                                <select v-model="statsFilters.createdBy"
+                                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">All</option>
+                                    <option v-for="member in teamMembers" :key="member.id" :value="member.id">
+                                        {{ member.full_name || member.first_name }} - {{ member.role }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div :class="isAdmin ? 'col-span-3' : 'col-span-full'">
+                                <div class="w-fit flex items-end ml-auto gap-2">
+                                    <button @click="applyStatsFilters"
+                                        class="flex-1 px-4 py-2 bg-primary/90 text-white rounded-lg hover:bg-primary transition font-medium">
+                                        Apply Filters
+                                    </button>
+                                    <button @click="resetStatsFilters"
+                                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                                        title="Reset Filters">
+                                        <RefreshCw class="w-4 h-6" />
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- Stats Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 my-4">
+                    <!-- Total Revenue Card -->
+                    <div class="group relative">
+                        <div
+                            class="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition">
+                        </div>
+                        <div
+                            class="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-green-300 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-green-500/10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl p-3 shadow-md">
+                                    <IndianRupeeIcon class="w-6 h-6 text-white" />
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Total Revenue</p>
+                            <p class="text-gray-900 text-3xl font-bold mb-3">
+                                ₹{{ formatCurrency(invoiceData?.stats?.totalRevenue) }}
+                            </p>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-green-600">GST: ₹{{
+                                    formatCurrency(invoiceData?.stats?.totalGST) }}</span>
+                                <span class="text-orange-600">Discount: ₹{{
+                                    formatCurrency(invoiceData?.stats?.totalDiscount) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Invoices Card -->
+                    <div class="group relative">
+                        <div
+                            class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition">
+                        </div>
+                        <div
+                            class="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-blue-300 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-blue-500/10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-3 shadow-md">
+                                    <FileText class="w-6 h-6 text-white" />
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Total Invoices</p>
+                            <p class="text-gray-900 text-3xl font-bold mb-3">
+                                {{ invoiceData?.stats?.totalInvoices }}
+                            </p>
+                            <p class="text-xs text-blue-600">
+                                Amount: ₹{{ formatCurrency(invoiceData?.stats?.totalRevenue) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Paid Invoices Card -->
+                    <div class="group relative">
+                        <div
+                            class="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition">
+                        </div>
+                        <div
+                            class="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-emerald-300 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-emerald-500/10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl p-3 shadow-md">
+                                    <CheckCircle class="w-6 h-6 text-white" />
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Paid Invoices</p>
+                            <p class="text-gray-900 text-3xl font-bold mb-3">
+                                {{ invoiceData?.stats?.paidInvoices?.count }}
+                            </p>
+                            <p class="text-xs text-emerald-600">
+                                Amount: ₹{{ formatCurrency(invoiceData?.stats?.paidInvoices?.amount) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Unpaid Invoices Card -->
+                    <div class="group relative">
+                        <div
+                            class="absolute -inset-0.5 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition">
+                        </div>
+                        <div
+                            class="relative bg-white border border-gray-200 rounded-2xl p-6 hover:border-red-300 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-red-500/10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="bg-gradient-to-br from-red-500 to-rose-500 rounded-xl p-3 shadow-md">
+                                    <AlertCircle class="w-6 h-6 text-white" />
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm font-medium mb-1">Unpaid Invoices</p>
+                            <p class="text-gray-900 text-3xl font-bold mb-3">
+                                {{ invoiceData?.stats?.unpaidInvoices?.count }}
+                            </p>
+                            <p class="text-xs text-red-600">
+                                Amount: ₹{{ formatCurrency(invoiceData?.stats?.unpaidInvoices?.amount) }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
 
             <!-- Table Container -->
             <div class="bg-white rounded-3xl shadow-md border-2 border-primary/10 p-4">
@@ -221,7 +397,7 @@
                                                         class="text-teal-600 w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-gray-50">
                                                         <Eye size="18" class="flex-shrink-0" />
                                                         <span class="font-medium truncate">{{ $t("View details")
-                                                            }}</span>
+                                                        }}</span>
                                                     </button>
 
                                                     <button v-for="action in getAvailableActions(item)"
@@ -658,7 +834,7 @@
                             <div class="info-item">
                                 <span class="info-label">Payment Date</span>
                                 <span class="info-value">{{ formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Payment Method</span>
@@ -673,7 +849,7 @@
                                 <span class="info-label">Amount Paid</span>
                                 <span class="info-value">₹{{
                                     generateCurrentPaymentReceiptPDF?.payment_metadata?.amount_paid
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -694,17 +870,17 @@
                             <div class="info-item">
                                 <span class="info-label">Email Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not provided`
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Phone Number</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not provided`
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Address</span>
                                 <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not provided`
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -732,7 +908,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import debounce from 'lodash/debounce';
-import { FileText, FileCheck, Receipt, Plus, RefreshCcw, Check, Eye, IndianRupee } from 'lucide-vue-next';
+import { FileText, FileCheck, Receipt, Plus, RefreshCcw, Check, Eye, IndianRupee, Filter, RefreshCw, IndianRupeeIcon, Loader2, AlertCircle, CheckCircle, ChartLine, ExternalLink } from 'lucide-vue-next';
 import QuotationInvoiceGenerator from '../QuotationInvoiceGenerator.vue';
 import { toast } from 'vue3-toastify';
 import html2canvas from 'html2canvas';
@@ -743,19 +919,40 @@ import DatePickerModal from '../DatePickerModal.vue';
 import InvoiceDetailsModal from '../InvoiceDetailsModal.vue';
 import UpdatePaymentModal from '../UpdatePaymentModal.vue';
 import InvoiceAnalyticsDashboard from '../InvoiceAnalyticsDashboard.vue';
+import { usePage } from '@inertiajs/vue3';
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
 const whatsapp_token = import.meta.env.VITE_WA_TOKEN;
+const phpApiBaseUrl = import.meta.env.VITE_PHP_API_URL;
+
+const page = usePage();
+const isAdmin = page?.props?.auth?.user?.role === 'admin';
+const showStatsFilters = ref(false);
+const openAnalytics = ref(false);
+
+
+const statsFilters = ref({
+    startDate: '',
+    endDate: '',
+    paymentStatus: '',
+    platformChargeType: '',
+    page: 1,
+    limit: 10,
+    search: '',
+    createdBy: ''
+});
+
+const teamMembers = ref([]);
+
+const buildQueryParams = (additionalParams = {}) => {
+    const params = { ...statsFilters.value, ...additionalParams, ...(!isAdmin ? { createdBy: page?.props?.auth?.user?.id } : {}) };
+    const filtered = Object.entries(params).filter(([_, v]) => v !== '');
+    return new URLSearchParams(filtered).toString();
+};
 
 
 const invoiceData = ref([]);
 const loading = ref(false);
-
-const params = ref({
-    search: '',
-    page: 1,
-    limit: 10,
-});
 
 const isSharing = ref({
     whatsapp: false,
@@ -900,13 +1097,12 @@ const handleClickOutside = (event) => {
 };
 
 async function fetchInvoices() {
+    const params = buildQueryParams();
     loading.value = true;
     try {
-        const res = await axios.get(`${base_url}/invoices`, {
-            params: params.value,
-        });
+        const res = await axios.get(`${base_url}/invoices?${params}`);
 
-        invoiceData.value = res.data?.data || [];
+        invoiceData.value = res.data?.data || {};
     } catch (err) {
         toast.error(err.message || 'Error fetching invoices');
     } finally {
@@ -917,11 +1113,19 @@ async function fetchInvoices() {
 
 const fetchTeam = async () => {
     try {
-        const res = await axios.get(`http://localhost:8000/api/admin/team`);
 
-        console.log("res", res);
+        const response = await fetch(`${phpApiBaseUrl}/api/admin/team`);
+        const result = await response.json();
+        if (response.ok) {
+            teamMembers.value = result.data || [];
+            return;
+        }
+
+
+        throw new Error(result.message || 'Failed to fetch team');
+
     } catch (err) {
-        toast.error(err.message || 'Error fetching team');
+        console.error(err.message || 'Error fetching team');
     }
 }
 
@@ -1657,7 +1861,7 @@ const getStatusBadgeClass = (item) => {
 
 // Utility functions
 const clearSearch = () => {
-    params.value.search = '';
+    statsFilters.value.search = '';
     fetchInvoices();
 };
 
@@ -1668,28 +1872,49 @@ const search = debounce(() => {
 
 
 const goToFirstPage = () => {
-    params.value.page = 1;
+    statsFilters.value.page = 1;
     fetchInvoices();
 }
 
 const goToPreviousPage = () => {
     if (invoiceData.value.currentPage > 1) {
-        params.value.page--;
+        statsFilters.value.page--;
         fetchInvoices();
     }
 }
 
 const goToNextPage = () => {
     if (invoiceData.value.currentPage < invoiceData.value.totalPages) {
-        params.value.page++;
+        statsFilters.value.page++;
         fetchInvoices();
     }
 }
 
 const goToLastPage = () => {
-    params.value.page = invoiceData.value.totalPages;
+    statsFilters.value.page = invoiceData.value.totalPages;
     fetchInvoices();
 }
+
+const resetStatsFilters = () => {
+
+    statsFilters.value = {
+        startDate: '',
+        endDate: '',
+        paymentStatus: '',
+        platformChargeType: '',
+        page: 1,
+        limit: 10,
+        search: '',
+        createdBy: ''
+    };
+
+    applyStatsFilters();
+};
+
+
+const applyStatsFilters = () => {
+    fetchInvoices();
+};
 
 const formatAmount = (amount) => {
     return new Intl.NumberFormat('en-IN', {
