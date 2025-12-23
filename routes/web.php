@@ -200,6 +200,7 @@ Route::middleware(['auth:user'])->group(function () {
                 Route::match(['get', 'post'], '/instances', [App\Http\Controllers\User\InstanceController::class, 'index']);
 
                 Route::get('/team', [App\Http\Controllers\User\TeamController::class, 'index'])->name('team');
+                Route::get('/admin/team', [App\Http\Controllers\User\TeamController::class, 'getAdminTeam'])->name('admin.team');
 
                 Route::group(['middleware' => 'check.client.role'], function () {
                     Route::get('/settings', [App\Http\Controllers\User\SettingController::class, 'index']);

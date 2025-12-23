@@ -6,18 +6,20 @@ use App\Http\Controllers\Controller as BaseController;
 use App\Http\Requests\StoreUserAdmin;
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class TeamController extends BaseController
 {
     private $userService;
+
     private $role;
 
     /**
      * TeamController constructor.
      *
-     * @param UserService $userService
-     * @param string $role
+     * @param  UserService  $userService
+     * @param  string  $role
      */
     public function __construct($role = 'admin')
     {
@@ -28,26 +30,32 @@ class TeamController extends BaseController
     /**
      * Display a listing of users.
      *
-     * @param Request $request
      * @return \Inertia\Response
      */
     public function index(Request $request)
     {
+        Log::info($request->all());
+
         return Inertia::render('Admin/Team/Index', [
             'title' => __('Team'),
             'allowCreate' => true,
-            'rows' => $this->userService->get($request), 
-            'filters' => $request->all()
+            'rows' => $this->userService->get($request),
+            'filters' => $request->all(),
         ]);
+    }
+
+    public function getAdminTeam(Request $request)
+    {
+        return $this->userService->get($request);
     }
 
     /**
      * Display the details of a specific user.
      *
-     * @param string $uuid
+     * @param  string  $uuid
      * @return \Inertia\Response
      */
-    public function show(Request $request, $uuid = NULL)
+    public function show(Request $request, $uuid = null)
     {
         $res = $this->userService->getByUuid($request, $uuid);
 
@@ -56,8 +64,6 @@ class TeamController extends BaseController
 
     /**
      * Display Form
-     *
-     * @param $request
      */
     public function create(Request $request)
     {
@@ -68,8 +74,6 @@ class TeamController extends BaseController
 
     /**
      * Store a newly created user.
-     *
-     * @param StoreUserAdmin $request
      */
     public function store(StoreUserAdmin $request)
     {
@@ -77,17 +81,16 @@ class TeamController extends BaseController
 
         return redirect('/admin/team/users')->with(
             'status', [
-                'type' => 'success', 
-                'message' => __('User created successfully!')
+                'type' => 'success',
+                'message' => __('User created successfully!'),
             ]
         );
     }
 
-   /**
+    /**
      * Update the details of a specific user.
      *
-     * @param StoreUserAdmin $request
-     * @param string $uuid
+     * @param  string  $uuid
      */
     public function update(StoreUserAdmin $request, $id)
     {
@@ -95,8 +98,8 @@ class TeamController extends BaseController
 
         return redirect('/admin/team/users')->with(
             'status', [
-                'type' => 'success', 
-                'message' => __('User updated successfully!')
+                'type' => 'success',
+                'message' => __('User updated successfully!'),
             ]
         );
     }
@@ -104,7 +107,7 @@ class TeamController extends BaseController
     /**
      * Remove a specific user.
      *
-     * @param string $uuid
+     * @param  string  $uuid
      */
     public function destroy($id)
     {
