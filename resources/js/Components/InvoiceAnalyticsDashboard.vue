@@ -489,6 +489,7 @@ watch(() => props.isOpen, async (newVal) => {
             await nextTick();
             renderCharts();
         }
+
     } else {
         // Destroy charts when closing
         destroyCharts();
@@ -682,8 +683,8 @@ defineExpose({
                                             <div class="flex items-center justify-between text-xs">
                                                 <span class="text-green-600">GST: ₹{{
                                                     formatCurrency(dashboardStats.totalGST) }}</span>
-                                                <span class="text-orange-600">Discount: ₹{{
-                                                    formatCurrency(dashboardStats.totalDiscount) }}</span>
+                                                <!-- <span class="text-orange-600">Discount: ₹{{
+                                                    formatCurrency(dashboardStats.totalDiscount) }}</span> -->
                                             </div>
                                         </div>
                                     </div>
