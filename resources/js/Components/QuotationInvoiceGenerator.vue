@@ -38,51 +38,58 @@
                     <p class="subtitle">Fill in the details below to generate your quotation</p>
 
                     <!-- Client Information -->
-                    <div class="section-title">Client Information</div>
+                    <!-- <div class="section-title">Client Information</div>
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label>Company Name <span class="required">*</span></label>
-                            <input type="text" v-model="formData.companyName" placeholder="Enter company name"
-                                :class="{ 'error-input': errors.companyName }">
-                            <span v-if="errors.companyName" class="error-text">{{ errors.companyName }}</span>
-                        </div>
                         <div class="form-group">
                             <label>Contact Person <span class="required">*</span></label>
                             <input type="text" v-model="formData.contactPerson" placeholder="Enter contact person name"
                                 :class="{ 'error-input': errors.contactPerson }">
                             <span v-if="errors.contactPerson" class="error-text">{{ errors.contactPerson }}</span>
+
+                            <FormInput v-model="formData.contactPerson" :name="$t('contactPerson')"
+                                :label="$t('Contact Person')" :error="errors.contactPerson" type="text" />
                         </div>
-                    </div>
-
-                    <div class="form-grid">
-
                         <div class="form-group">
                             <FormInput v-model="formData.email" :name="$t('Email')" :label="$t('Email')"
                                 :error="errors.email" type="email" />
                         </div>
+                    </div> -->
 
-                        <div class="form-group py-2">
+                    <div class="form-grid">
+                        <div class="form-group">
+
+                            <FormInput v-model="formData.contactPerson" :name="$t('contactPerson')"
+                                :label="$t('Contact Person')" :error="errors.contactPerson" type="text"
+                                :required="true" />
+                        </div>
+                        <div class="form-group">
+                            <FormInput v-model="formData.email" :name="$t('Email')" :label="$t('Email')"
+                                :error="errors.email" type="email" />
+                        </div>
+                        <div class="form-group pt-1">
                             <FormPhoneInput v-model="formData.phone" :name="$t('Phone')" :label="$t('Phone')"
-                                :error="errors.phone" />
+                                :error="errors.phone" :required="true" />
                         </div>
 
-                        <!-- a vuejs date picker with a default date which was set from props it should have quick date option such as 7 days, 1 month, 2 months and 3 months -->
-                        <div class="form-group py-2">
+                        <div class="form-group">
                             <FormDateInput v-model="formData.quotation_valid_until_date"
                                 :defaultDate="formData.quotation_valid_until_date" name="quotation_valid_until_date"
-                                label="Quotation Vaildity Date" :required="true" helperText="Select Validity Date"
-                                className="mb-4" />
+                                label="Quotation Vaildity Date" :required="true" helperText="" className="" />
                         </div>
 
                         <div class="form-group">
-                            <label>Signature <span class="required">*</span></label>
+                            <!-- <label>Signature <span class="required">*</span></label>
                             <input type="text" v-model="formData.signature" placeholder="Enter signature"
                                 :class="{ 'error-input': errors.signature }">
-                            <span v-if="errors.signature" class="error-text">{{ errors.signature }}</span>
+                            <span v-if="errors.signature" class="error-text">{{ errors.signature }}</span> -->
+
+                            <FormInput v-model="formData.signature" :name="$t('signature')" :label="$t('Signature')"
+                                :error="errors.signature" type="text" :required="true" />
                         </div>
-                        <div class="form-group">
-                            <label>Designation <span class="required">*</span></label>
-                            <select v-model="formData.designation">
+
+                        <div class="form-group !py-0">
+                            <label class="!py-0">Designation <span class="required">*</span></label>
+                            <select v-model="formData.designation" class="!py-2.5">
                                 <option value="" disabled>Select designation</option>
                                 <option v-for="designation in Designations" :key="designation" :value="designation">
                                     {{ designation }}
@@ -90,15 +97,60 @@
                             </select>
                             <span v-if="errors.designation" class="error-text">{{ errors.designation }}</span>
                         </div>
-
                     </div>
 
-                    <div class="form-group">
-                        <label>Address</label>
-                        <textarea v-model="formData.address" placeholder="Enter complete address"
-                            :class="{ 'error-input': errors.address }"></textarea>
-                        <span v-if="errors.address" class="error-text">{{ errors.address }}</span>
+                    <div class="rounded-md border bg-slate-50/80 border-slate-300 p-6">
+                        <div class="form-grid">
+                            <div class="form-group relative"> <label>GST Number</label>
+                                <input type="text" v-model="formData.gst_number" placeholder="Enter GST Number"
+                                    maxlength="15" :class="{ 'error-input': errors.gst_number }">
+                                <button @click="verifyGst"
+                                    :disabled="gstState.state === 'Loading' || formData.gst_number.length !== 15"
+                                    class="absolute right-[5px] top-[35px] font-semibold bg-primary/90 disabled:bg-primary/60 disabled:cursor-not-allowed disabled:scale-100 text-white text-sm py-2 px-4 rounded-md transition-all duration-300 hover:scale-[1.01] shadow-sm flex items-center gap-1">
+                                    {{ gstState.state === 'Loading' ? 'Verifying...' : 'Verify GST' }}
+                                </button>
+
+                                <span v-if="gstState.state === 'Success'" class="text-green-600 text-xs pt-2">{{
+                                    gstState.message }}
+                                </span>
+
+                                <span v-if="gstState.state === 'Loading'" class="text-purple-600 text-xs pt-2">{{
+                                    gstState.message }}
+                                </span>
+
+                                <span v-if="gstState.state === 'Error' || errors.gst_number"
+                                    class="text-red-600 text-xs pt-2">{{
+                                        gstState.message?.trim() || errors.gst_number }}
+                                </span>
+
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-9 justify-center items-center gap-1 text-slate-300 pt-4 pb-2">
+                            <div class="col-span-4 h-[1px] bg-slate-300"></div>
+                            <span class="col-span-1 text-center">OR</span>
+                            <div class="col-span-4 h-[1px] bg-slate-300"></div>
+                        </div>
+
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Company Name <span class="required">*</span></label>
+                                <input type="text" v-model="formData.companyName" placeholder="Enter company name"
+                                    :class="{ 'error-input': errors.companyName }">
+                                <span v-if="errors.companyName" class="error-text">{{ errors.companyName }}</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Address</label>
+                                <textarea v-model="formData.address" placeholder="Enter complete address"
+                                    :class="{ 'error-input': errors.address }"></textarea>
+                                <span v-if="errors.address" class="error-text">{{ errors.address }}</span>
+                            </div>
+                        </div>
                     </div>
+
+
 
 
                     <!-- Service Charges -->
@@ -499,7 +551,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, toRaw } from 'vue';
+import { ref, onMounted, toRaw, onBeforeUnmount } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
@@ -510,7 +562,7 @@ import axios from 'axios';
 import FormDateInput from './FormDateInput.vue';
 
 import { usePage } from '@inertiajs/vue3';
-
+import { set } from '@vueuse/core';
 const page = usePage();
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
@@ -558,6 +610,7 @@ const formData = ref({
     phone: '',
     email: '',
     address: '',
+    gst_number: '',
     selectedPlanId: null,
     platformChargeType: '',
     platformCharge: 0,
@@ -570,9 +623,47 @@ const formData = ref({
     designation: Designations.value[0]
 
 });
-
 const additionalItems = ref([]);
 const currentPdfData = ref(null);
+
+const gstState = ref({
+    state: "Initial",
+    message: ""
+});
+
+const verifyGst = async () => {
+
+    gstState.value.state = "Loading";
+    gstState.value.message = `Verifying... ( It may take up to 1 minute, kindly wait )`;
+
+    try {
+        const res = await axios.post(
+            `${base_url}/gst/verify`,
+            { gst_number: formData.value.gst_number }
+        );
+
+        if (res.data.success) {
+            formData.value.address = res.data.data.gst_data.company_address;
+            formData.value.companyName = res.data.data.gst_data.company_name;
+
+            gstState.value.state = "Success";
+            gstState.value.message = res.data.message || `GST Verified`;
+            return;
+        }
+
+        throw new Error(res.data.message || "Verification failed");
+
+
+    } catch (err) {
+        gstState.value.state = "Error";
+        gstState.value.message = err.response.data.message || err.message;
+    } finally {
+        setTimeout(() => {
+            gstState.value.state = "Initial";
+            gstState.value.message = "";
+        }, 5000);
+    }
+};
 
 const openModal = () => {
     isModalOpen.value = true;
@@ -596,6 +687,7 @@ const resetForm = () => {
         phone: '',
         email: '',
         address: '',
+        gst_number: '',
         selectedPlanId: null,
         platformChargeType: '',
         platformCharge: 0,
@@ -629,6 +721,15 @@ const validateForm = () => {
     if (!formData.value.companyName.trim()) {
         errors.value.companyName = 'Company name is required';
         isValid = false;
+    }
+
+    if (formData.value.gst_number?.trim()?.length !== 15) {
+        if (!formData.value.gst_number.trim()) {
+            return true;
+        } else {
+            errors.value.gst_number = 'Enter valid GST number';
+            isValid = false;
+        }
     }
 
     if (!formData.value.contactPerson.trim()) {
@@ -838,6 +939,7 @@ const generatePDF = async () => {
         const payload = {
             company_name: formData.value.companyName,
             contact_person: formData.value.contactPerson,
+            gst_number: formData.value.gst_number || null,
             phone: formData.value.phone,
             email: formData.value.email,
             address: formData.value.address,
@@ -949,7 +1051,6 @@ const downloadPDF = async () => {
     }
 };
 
-
 const shareOnFreeWhatsApp = async () => {
 
 
@@ -1029,8 +1130,6 @@ Looking forward to assisting you.`,
     //     window.open(whatsappUrl, '_blank');
 
 };
-
-
 
 const shareOnWhatsApp = async () => {
     if (!currentPdfData.value.quotation_invoice_pdf_url) {
