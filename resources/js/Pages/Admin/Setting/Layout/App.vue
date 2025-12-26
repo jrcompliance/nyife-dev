@@ -69,7 +69,7 @@ import { Link } from "@inertiajs/vue3";
                     <div class="bg-white rounded-2xl shadow-sm border border-primary/10 overflow-hidden sticky top-6">
                         <div class="p-4 bg-gradient-to-r from-slate-50 to-orange-50/30 border-b border-slate-200/60">
                             <h3 class="font-semibold text-slate-900 text-sm uppercase tracking-wide">{{ $t('Navigation')
-                            }}</h3>
+                                }}</h3>
                         </div>
                         <nav class="p-3 space-y-1 max-h-[calc(100vh-330px)] overflow-y-auto">
                             <Link v-for="item in menuItems" :key="item.href" :href="item.href"
@@ -77,17 +77,17 @@ import { Link } from "@inertiajs/vue3";
                                 :class="isActive(item.href)
                                     ? 'bg-primary font-semibold text-white scale-[1.02]'
                                     : 'text-slate-700 hover:bg-white hover:text-[#ff5100]'">
-                            <div class="p-2 rounded-lg transition-colors" :class="isActive(item.href)
-                                ? 'bg-white/20'
-                                : 'bg-slate-100 group-hover:bg-[#ff5100]/10'">
-                                <component :is="item.icon" class="w-5 h-5" />
-                            </div>
-                            <span class="text-sm truncate flex-1">{{ $t(item.label) }}</span>
-                            <svg v-if="isActive(item.href)" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" class="shrink-0">
-                                <path fill="currentColor"
-                                    d="m9.55 18l-5.7-5.7l1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z" />
-                            </svg>
+                                <div class="p-2 rounded-lg transition-colors" :class="isActive(item.href)
+                                    ? 'bg-white/20'
+                                    : 'bg-slate-100 group-hover:bg-[#ff5100]/10'">
+                                    <component :is="item.icon" class="w-5 h-5" />
+                                </div>
+                                <span class="text-sm truncate flex-1">{{ $t(item.label) }}</span>
+                                <svg v-if="isActive(item.href)" xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" class="shrink-0">
+                                    <path fill="currentColor"
+                                        d="m9.55 18l-5.7-5.7l1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z" />
+                                </svg>
                             </Link>
                         </nav>
 
@@ -97,7 +97,7 @@ import { Link } from "@inertiajs/vue3";
                                 <span class="text-xs font-medium text-gray-500">Version: v{{ version }}</span>
                                 <Link href="/admin/updates"
                                     class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-[#ff5100] hover:text-white border border-slate-200 hover:border-[#ff5100] rounded-lg transition-all duration-200">
-                                {{ $t('Updates') }}
+                                    {{ $t('Updates') }}
                                 </Link>
                             </div>
                         </div>
@@ -297,6 +297,7 @@ const menuItems = [
     { href: '/admin/settings/pages', label: 'Frontend Pages', icon: PageIcon },
     { href: '/admin/settings/subscription', label: 'Subscription settings', icon: SubscriptionIcon },
     { href: '/admin/settings/billing', label: 'Billing info', icon: PaymentIcon },
+    { href: '/admin/settings/bank', label: 'Bank info', icon: PaymentIcon },
     { href: '/admin/tax-rates', label: 'Tax rates', icon: TaxIcon },
     { href: '/admin/coupons', label: 'Coupons', icon: CouponIcon },
     { href: '/admin/languages', label: 'Languages & translations', icon: LanguageIcon },

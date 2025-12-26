@@ -37,52 +37,36 @@
                 <div class="modal-body">
                     <p class="subtitle">Fill in the details below to generate your quotation</p>
 
-                    <!-- Client Information -->
-                    <div class="section-title">Client Information</div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Company Name <span class="required">*</span></label>
-                            <input type="text" v-model="formData.companyName" placeholder="Enter company name"
-                                :class="{ 'error-input': errors.companyName }">
-                            <span v-if="errors.companyName" class="error-text">{{ errors.companyName }}</span>
-                        </div>
-                        <div class="form-group">
-                            <label>Contact Person <span class="required">*</span></label>
-                            <input type="text" v-model="formData.contactPerson" placeholder="Enter contact person name"
-                                :class="{ 'error-input': errors.contactPerson }">
-                            <span v-if="errors.contactPerson" class="error-text">{{ errors.contactPerson }}</span>
-                        </div>
-                    </div>
 
-                    <div class="form-grid">
-
+                            <FormInput v-model="formData.contactPerson" :name="$t('contactPerson')"
+                                :label="$t('Contact Person')" :error="errors.contactPerson" type="text"
+                                :required="true" />
+                        </div>
                         <div class="form-group">
                             <FormInput v-model="formData.email" :name="$t('Email')" :label="$t('Email')"
                                 :error="errors.email" type="email" />
                         </div>
-
-                        <div class="form-group py-2">
+                        <div class="form-group pt-1">
                             <FormPhoneInput v-model="formData.phone" :name="$t('Phone')" :label="$t('Phone')"
-                                :error="errors.phone" />
+                                :error="errors.phone" :required="true" />
                         </div>
 
-                        <!-- a vuejs date picker with a default date which was set from props it should have quick date option such as 7 days, 1 month, 2 months and 3 months -->
-                        <div class="form-group py-2">
+                        <div class="form-group">
                             <FormDateInput v-model="formData.quotation_valid_until_date"
                                 :defaultDate="formData.quotation_valid_until_date" name="quotation_valid_until_date"
-                                label="Quotation Vaildity Date" :required="true" helperText="Select Validity Date"
-                                className="mb-4" />
+                                label="Quotation Vaildity Date" :required="true" helperText="" className="" />
                         </div>
 
                         <div class="form-group">
-                            <label>Signature <span class="required">*</span></label>
-                            <input type="text" v-model="formData.signature" placeholder="Enter signature"
-                                :class="{ 'error-input': errors.signature }">
-                            <span v-if="errors.signature" class="error-text">{{ errors.signature }}</span>
+                            <FormInput v-model="formData.signature" :name="$t('signature')" :label="$t('Signature')"
+                                :error="errors.signature" type="text" :required="true" />
                         </div>
-                        <div class="form-group">
-                            <label>Designation <span class="required">*</span></label>
-                            <select v-model="formData.designation">
+
+                        <div class="form-group !py-0">
+                            <label class="!py-0">Designation <span class="required">*</span></label>
+                            <select v-model="formData.designation" class="!py-2.5">
                                 <option value="" disabled>Select designation</option>
                                 <option v-for="designation in Designations" :key="designation" :value="designation">
                                     {{ designation }}
@@ -90,15 +74,60 @@
                             </select>
                             <span v-if="errors.designation" class="error-text">{{ errors.designation }}</span>
                         </div>
-
                     </div>
 
-                    <div class="form-group">
-                        <label>Address</label>
-                        <textarea v-model="formData.address" placeholder="Enter complete address"
-                            :class="{ 'error-input': errors.address }"></textarea>
-                        <span v-if="errors.address" class="error-text">{{ errors.address }}</span>
+                    <div class="rounded-md border bg-slate-50/80 border-slate-300 p-6">
+                        <div class="form-grid">
+                            <div class="form-group relative"> <label>GST Number</label>
+                                <input type="text" v-model="formData.gst_number" placeholder="Enter GST Number"
+                                    maxlength="15" :class="{ 'error-input': errors.gst_number }">
+                                <button @click="verifyGst"
+                                    :disabled="gstState.state === 'Loading' || formData.gst_number.length !== 15"
+                                    class="absolute right-[5px] top-[35px] font-semibold bg-primary/90 disabled:bg-primary/60 disabled:cursor-not-allowed disabled:scale-100 text-white text-sm py-2 px-4 rounded-md transition-all duration-300 hover:scale-[1.01] shadow-sm flex items-center gap-1">
+                                    {{ gstState.state === 'Loading' ? 'Verifying...' : 'Verify GST' }}
+                                </button>
+
+                                <span v-if="gstState.state === 'Success'" class="text-green-600 text-xs pt-2">{{
+                                    gstState.message }}
+                                </span>
+
+                                <span v-if="gstState.state === 'Loading'" class="text-purple-600 text-xs pt-2">{{
+                                    gstState.message }}
+                                </span>
+
+                                <span v-if="gstState.state === 'Error' || errors.gst_number"
+                                    class="text-red-600 text-xs pt-2">{{
+                                        gstState.message?.trim() || errors.gst_number }}
+                                </span>
+
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-9 justify-center items-center gap-1 text-slate-300 pt-4 pb-2">
+                            <div class="col-span-4 h-[1px] bg-slate-300"></div>
+                            <span class="col-span-1 text-center">OR</span>
+                            <div class="col-span-4 h-[1px] bg-slate-300"></div>
+                        </div>
+
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Company Name <span class="required">*</span></label>
+                                <input type="text" v-model="formData.companyName" placeholder="Enter company name"
+                                    :class="{ 'error-input': errors.companyName }">
+                                <span v-if="errors.companyName" class="error-text">{{ errors.companyName }}</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Address</label>
+                                <textarea v-model="formData.address" placeholder="Enter complete address"
+                                    :class="{ 'error-input': errors.address }"></textarea>
+                                <span v-if="errors.address" class="error-text">{{ errors.address }}</span>
+                            </div>
+                        </div>
                     </div>
+
+
 
 
                     <!-- Service Charges -->
@@ -291,7 +320,7 @@
 
 
                         <!-- Email Share -->
-                        <button @click="shareViaEmail" :disabled="isSharing.email || !currentPdfData.email"
+                        <button @click="shareViaEmail" :disabled="isSharing.email || !currentPdfData?.email"
                             class="share-option email">
                             <div class="share-icon-wrapper email-bg">
                                 <svg v-if="!isSharing.email" width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -316,9 +345,9 @@
                             </div>
                             <div class="share-content">
                                 <h3>Share via Email</h3>
-                                <p v-if="!currentPdfData.email" class="text-red-500">Email not provided</p>
+                                <p v-if="!currentPdfData?.email" class="text-red-500">Email not provided</p>
                                 <p v-else-if="isSharing.email">Sending...</p>
-                                <p v-else>Send to {{ currentPdfData.email }}</p>
+                                <p v-else>Send to {{ currentPdfData?.email }}</p>
                             </div>
                         </button>
 
@@ -368,19 +397,27 @@
                         <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
                         <p>Delhi-110063, India</p>
                     </div>
-                    <div class="quotation-info">
-                        <h3>QUOTATION #{{ currentPdfData?.quotation_number }}</h3>
+                    <div class="invoice-info">
+                        <h3>QUOTATION INVOICE</h3>
+                        <p><strong>Invoice #:</strong> {{ currentPdfData?.quotation_number }}</p>
                         <p><strong>Date:</strong> {{ currentPdfData?.quotation_date }}</p>
-                        <p><strong>Valid Until:</strong> {{ currentPdfData?.quotation_valid_until_date }}</p>
+                        <p><strong>Valid Until:</strong> {{ currentPdfData?.quotation_valid_until_date }}
+                        </p>
                     </div>
                 </div>
 
                 <div class="client-info">
-                    <h4>Kind Attention: {{ currentPdfData?.contact_person || 'N/A' }}</h4>
+                    <h4>Bill To:</h4>
+                    <p><strong>{{ currentPdfData?.contact_person || 'N/A' }}</strong></p>
                     <p><strong>Company:</strong> {{ currentPdfData?.company_name || 'N/A' }}</p>
-                    <p><strong>Phone Number:</strong> {{ currentPdfData?.phone || 'N/A' }}</p>
-                    <p><strong>Email:</strong> {{ currentPdfData?.email || 'N/A' }}</p>
-                    <p><strong>Address:</strong> {{ currentPdfData?.address || 'N/A' }}</p>
+                    <p><strong>Phone:</strong> {{ currentPdfData?.phone || 'N/A' }}</p>
+                    <p v-if="currentPdfData?.email?.trim()"><strong>Email:</strong> {{ currentPdfData?.email || 'N/A' }}
+                    </p>
+                    <p v-if="currentPdfData?.address?.trim()"><strong>Address:</strong> {{ currentPdfData?.address ||
+                        'N/A' }}</p>
+                    <p v-if="currentPdfData?.gst_number?.trim()"><strong>GSTIN:</strong> {{ currentPdfData?.gst_number
+                        ||
+                        'N/A' }}</p>
                 </div>
 
                 <table class="items-table">
@@ -398,39 +435,35 @@
                             <td>{{ item?.description }}</td>
                             <td style="text-align: right;">{{ formatCurrency(item?.amount) }}</td>
                         </tr>
-
-                        <div v-if="((currentPdfData?.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData?.additional_fee)?.length || 0)) > 0"
-                            v-for="index in (currentPdfData?.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData?.additional_fee)?.length || 0)"
-                            :key="index" class="h-7 w-full">
-                        </div>
-
                     </tbody>
                 </table>
 
-                <table class="summary-table">
-                    <thead>
-                        <tr>
-                            <td>SUBTOTAL:</td>
-                            <td>₹{{ currentPdfData?.sub_total }}</td>
-                        </tr>
-                        <tr v-if="currentPdfData?.discount > 0">
-                            <td>DISCOUNT ({{ currentPdfData?.discount }}%):</td>
-                            <td>-₹{{ currentPdfData?.discount_amount }}</td>
-                        </tr>
-                        <tr v-if="currentPdfData?.discount > 0">
-                            <td>AMOUNT AFTER DISCOUNT:</td>
-                            <td>₹{{ currentPdfData?.amount_after_discount }}</td>
-                        </tr>
-                        <tr>
-                            <td>GST 18%:</td>
-                            <td>₹{{ currentPdfData?.GST_amount }}</td>
-                        </tr>
-                        <tr class="total-row">
-                            <td>TOTAL:</td>
-                            <td>₹{{ currentPdfData?.total }}</td>
-                        </tr>
-                    </thead>
-                </table>
+                <div class="summary-section">
+                    <table class="summary-table-wrapper">
+                        <thead class="summary-table">
+                            <tr>
+                                <td>SUBTOTAL:</td>
+                                <td>₹{{ currentPdfData?.sub_total }}</td>
+                            </tr>
+                            <tr v-if="currentPdfData?.discount > 0">
+                                <td>DISCOUNT ({{ currentPdfData?.discount }}%):</td>
+                                <td class="discount-amount">-₹{{ currentPdfData?.discount_amount }}</td>
+                            </tr>
+                            <tr v-if="currentPdfData?.discount > 0">
+                                <td>AMOUNT AFTER DISCOUNT:</td>
+                                <td>₹{{ currentPdfData?.amount_after_discount }}</td>
+                            </tr>
+                            <tr>
+                                <td>GST 18%:</td>
+                                <td>₹{{ currentPdfData?.GST_amount }}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>TOTAL AMOUNT:</strong></td>
+                                <td><strong>₹{{ currentPdfData?.total }}</strong></td>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
 
                 <div class="thank-you-note">
                     <p>Thank you for considering nyife.chat for your communication needs. We appreciate the
@@ -482,16 +515,14 @@
                 </div>
 
                 <div class="signature">
-                    <p>If you have any questions concerning this quotation, please contact us at info@nyife.chat
-                    </p>
+                    <p>For any queries regarding this invoice, please contact us at info@nyife.chat</p>
                     <p class="signature-line">____________________</p>
-                    <p class="name">{{ currentPdfData.signature }}</p>
-                    <p class="title">{{ currentPdfData.designation }}</p>
+                    <p class="name">{{ currentPdfData?.signature }}</p>
+                    <p class="title">{{ currentPdfData?.designation }}</p>
                 </div>
 
-                <!-- This is auto generated -->
                 <p class="absolute text-nowrap bottom-4 left-[50%] -translate-x-[50%] text-xs text-black/50">
-                    This is an auto-generated quotation invoice and does not require a signature.
+                    This is an auto-generated proforma invoice. Please make payment to receive official tax invoice.
                 </p>
             </div>
         </div>
@@ -499,7 +530,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, toRaw } from 'vue';
+import { ref, onMounted } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
@@ -510,7 +541,6 @@ import axios from 'axios';
 import FormDateInput from './FormDateInput.vue';
 
 import { usePage } from '@inertiajs/vue3';
-
 const page = usePage();
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
@@ -558,6 +588,7 @@ const formData = ref({
     phone: '',
     email: '',
     address: '',
+    gst_number: '',
     selectedPlanId: null,
     platformChargeType: '',
     platformCharge: 0,
@@ -570,9 +601,47 @@ const formData = ref({
     designation: Designations.value[0]
 
 });
-
 const additionalItems = ref([]);
 const currentPdfData = ref(null);
+
+const gstState = ref({
+    state: "Initial",
+    message: ""
+});
+
+const verifyGst = async () => {
+
+    gstState.value.state = "Loading";
+    gstState.value.message = `Verifying... ( It may take up to 1 minute, kindly wait )`;
+
+    try {
+        const res = await axios.post(
+            `${base_url}/gst/verify`,
+            { gst_number: formData.value.gst_number }
+        );
+
+        if (res.data.success) {
+            formData.value.address = res.data.data.gst_data.company_address;
+            formData.value.companyName = res.data.data.gst_data.company_name;
+
+            gstState.value.state = "Success";
+            gstState.value.message = res.data.message || `GST Verified`;
+            return;
+        }
+
+        throw new Error(res.data.message || "Verification failed");
+
+
+    } catch (err) {
+        gstState.value.state = "Error";
+        gstState.value.message = err.response.data.message || err.message;
+    } finally {
+        setTimeout(() => {
+            gstState.value.state = "Initial";
+            gstState.value.message = "";
+        }, 5000);
+    }
+};
 
 const openModal = () => {
     isModalOpen.value = true;
@@ -596,6 +665,7 @@ const resetForm = () => {
         phone: '',
         email: '',
         address: '',
+        gst_number: '',
         selectedPlanId: null,
         platformChargeType: '',
         platformCharge: 0,
@@ -629,6 +699,15 @@ const validateForm = () => {
     if (!formData.value.companyName.trim()) {
         errors.value.companyName = 'Company name is required';
         isValid = false;
+    }
+
+    if (formData.value.gst_number?.trim()?.length !== 15) {
+        if (!formData.value.gst_number.trim()) {
+            return true;
+        } else {
+            errors.value.gst_number = 'Enter valid GST number';
+            isValid = false;
+        }
     }
 
     if (!formData.value.contactPerson.trim()) {
@@ -819,7 +898,7 @@ const generatePDFBlob = async () => {
     }
 
     // Generate filename
-    const fileName = `Quotation_${currentPdfData.value.quotation_number.replace('/', '_')}_${currentPdfData.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    const fileName = `Quotation_${currentPdfData?.value?.quotation_number.replace('/', '_')}_${currentPdfData?.value?.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output('blob');
@@ -838,6 +917,7 @@ const generatePDF = async () => {
         const payload = {
             company_name: formData.value.companyName,
             contact_person: formData.value.contactPerson,
+            gst_number: formData.value.gst_number || null,
             phone: formData.value.phone,
             email: formData.value.email,
             address: formData.value.address,
@@ -897,8 +977,8 @@ const generatePDF = async () => {
             }, 300);
 
         } catch (error) {
-            if (currentPdfData.value.id) {
-                await axios.delete(`${base_url}/invoices/${currentPdfData.value.id}`);
+            if (currentPdfData?.value?.id) {
+                await axios.delete(`${base_url}/invoices/${currentPdfData?.value?.id}`);
             }
             toast.error(error.message || 'Error generating PDF. Please try again.');
         }
@@ -914,7 +994,7 @@ const generatePDF = async () => {
 
 
 const downloadPDF = async () => {
-    if (!currentPdfData.value.quotation_invoice_pdf_download_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_download_url) {
         toast.error('No PDF available to download');
         return;
     }
@@ -923,7 +1003,7 @@ const downloadPDF = async () => {
 
     try {
         // Fetch the PDF as a blob
-        const response = await fetch(currentPdfData.value.quotation_invoice_pdf_download_url);
+        const response = await fetch(currentPdfData?.value?.quotation_invoice_pdf_download_url);
         const blob = await response.blob();
 
         // Create a blob URL
@@ -932,7 +1012,7 @@ const downloadPDF = async () => {
         // Create and trigger download
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.download = currentPdfData.value.quotation_invoice_pdf_filename || "invoice.pdf";
+        link.download = currentPdfData?.value?.quotation_invoice_pdf_filename || "invoice.pdf";
         document.body.appendChild(link);
         link.click();
 
@@ -949,16 +1029,15 @@ const downloadPDF = async () => {
     }
 };
 
-
 const shareOnFreeWhatsApp = async () => {
 
 
-    if (!currentPdfData.value.quotation_invoice_pdf_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
 
-    if (!currentPdfData.value.phone) {
+    if (!currentPdfData?.value?.phone) {
         toast.error('Phone number is required');
         return;
     }
@@ -973,10 +1052,10 @@ const shareOnFreeWhatsApp = async () => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                phone: currentPdfData.value.phone,
+                phone: currentPdfData?.value?.phone,
                 media_type: "document",
-                media_url: currentPdfData.value.quotation_invoice_pdf_url,
-                file_name: currentPdfData.value.quotation_invoice_pdf_filename,
+                media_url: currentPdfData?.value?.quotation_invoice_pdf_url,
+                file_name: currentPdfData?.value?.quotation_invoice_pdf_filename,
                 caption: `Dear ${currentPdfData?.value?.contact_person || 'Sir'},
 
 Thank you for your interest! Please download your quotation invoice.
@@ -1030,15 +1109,13 @@ Looking forward to assisting you.`,
 
 };
 
-
-
 const shareOnWhatsApp = async () => {
-    if (!currentPdfData.value.quotation_invoice_pdf_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
 
-    if (!currentPdfData.value.phone) {
+    if (!currentPdfData?.value?.phone) {
         toast.error('Phone number is required');
         return;
     }
@@ -1047,8 +1124,8 @@ const shareOnWhatsApp = async () => {
 
 
     try {
-        const url = currentPdfData.value.quotation_invoice_pdf_url;
-        const fileName = currentPdfData.value.quotation_invoice_pdf_filename;
+        const url = currentPdfData?.value?.quotation_invoice_pdf_url;
+        const fileName = currentPdfData?.value?.quotation_invoice_pdf_filename;
         const response = await fetch("https://wa.nyife.chat/api/send/template", {
             method: "POST",
             headers: {
@@ -1056,7 +1133,7 @@ const shareOnWhatsApp = async () => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                phone: currentPdfData.value.phone,
+                phone: currentPdfData?.value?.phone,
                 template: {
                     name: "quotation_invoice",
                     language: { code: "en" },
@@ -1094,12 +1171,12 @@ const shareOnWhatsApp = async () => {
 };
 
 const shareViaEmail = async () => {
-    if (!currentPdfData.value.quotation_invoice_pdf_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
 
-    if (!formData.value.email) {
+    if (!formData?.value?.email) {
         toast.error('Email address is required');
         return;
     }
@@ -1109,11 +1186,11 @@ const shareViaEmail = async () => {
     try {
 
         const payload = {
-            customer_name: currentPdfData.value.contact_person,
+            customer_name: currentPdfData?.value?.contact_person,
             invoice_type: 'Quotation',
-            invoice_number: currentPdfData.value.quotation_number,
-            invoice_url: currentPdfData.value.quotation_invoice_pdf_download_url,
-            email: currentPdfData.value.email
+            invoice_number: currentPdfData?.value?.quotation_number,
+            invoice_url: currentPdfData?.value?.quotation_invoice_pdf_download_url,
+            email: currentPdfData?.value?.email
         }
 
         const response = await axios.post(`${base_url}/email/share-invoice`, payload);
@@ -1122,7 +1199,7 @@ const shareViaEmail = async () => {
             throw new Error('Failed to send email');
         }
 
-        toast.success(`Quotation sent to ${currentPdfData.value.email} successfully!`);
+        toast.success(`Quotation sent to ${currentPdfData?.value?.email} successfully!`);
 
     } catch (error) {
         toast.error('Error sending email. Please try again.');
@@ -1439,20 +1516,26 @@ const shareViaEmail = async () => {
     margin: 2px 0;
 }
 
-.quotation-info {
+.invoice-info {
     text-align: right;
+    background: linear-gradient(135deg, #ff5100 0%, #ff7d47 100%);
+    padding: 16px 20px;
+    border-radius: 8px;
+    color: white;
 }
 
-.quotation-info h3 {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 5px;
+.invoice-info h3 {
+    font-size: 20px;
+    color: white;
+    margin-bottom: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
-.quotation-info p {
+.invoice-info p {
     font-size: 11px;
-    color: #666;
-    margin: 3px 0;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 4px 0;
 }
 
 .client-info {
@@ -1460,11 +1543,14 @@ const shareViaEmail = async () => {
     padding: 16px;
     margin-bottom: 25px;
     border-radius: 5px;
+    border-left: 4px solid #ff5100;
 }
 
 .client-info h4 {
     font-size: 13px;
-    color: #333;
+    color: #ff5100;
+    margin-bottom: 8px;
+    font-weight: 700;
 }
 
 .client-info p {
@@ -1500,10 +1586,20 @@ const shareViaEmail = async () => {
     border-bottom: none;
 }
 
+.summary-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    align-items: flex-start;
+}
+
+.summary-table-wrapper {
+    flex: 1;
+}
+
 .summary-table {
-    margin-left: auto;
-    width: 300px;
-    margin-bottom: 30px;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .summary-table tr {
@@ -1511,25 +1607,39 @@ const shareViaEmail = async () => {
 }
 
 .summary-table td {
-    padding: 10px;
+    padding: 10px 12px;
     font-size: 13px;
+}
+
+.summary-table td:first-child {
+    color: #666;
 }
 
 .summary-table td:last-child {
     text-align: right;
     font-weight: 600;
+    color: #333;
+}
+
+.summary-table .discount-amount {
+    color: #28a745;
 }
 
 .summary-table .total-row {
-    background: #ff5100;
-    color: white;
+    background: linear-gradient(135deg, #ff5100 0%, #ff7d47 100%);
+}
+
+.summary-table .total-row td {
+    padding: 14px 12px;
     font-size: 16px;
-    font-weight: 700;
+    border: none;
+    color: white;
 }
 
 .thank-you-note {
     padding: 15px;
     background: #ff51002d;
+    border-radius: 5px;
     border-left: 4px solid #ff5100;
 }
 
@@ -1573,7 +1683,7 @@ const shareViaEmail = async () => {
 }
 
 .signature {
-    margin: 40px 0;
+    margin: 100px 0 60px 0;
     text-align: right;
 }
 
@@ -1584,13 +1694,14 @@ const shareViaEmail = async () => {
 }
 
 .signature .signature-line {
-    margin-top: 20px;
+    margin-top: 30px;
     margin-bottom: 5px;
 }
 
 .signature .name {
     font-weight: 700;
     font-size: 14px;
+    color: #ff5100;
 }
 
 .signature .title {
