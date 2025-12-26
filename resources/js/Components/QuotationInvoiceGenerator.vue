@@ -37,24 +37,6 @@
                 <div class="modal-body">
                     <p class="subtitle">Fill in the details below to generate your quotation</p>
 
-                    <!-- Client Information -->
-                    <!-- <div class="section-title">Client Information</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Contact Person <span class="required">*</span></label>
-                            <input type="text" v-model="formData.contactPerson" placeholder="Enter contact person name"
-                                :class="{ 'error-input': errors.contactPerson }">
-                            <span v-if="errors.contactPerson" class="error-text">{{ errors.contactPerson }}</span>
-
-                            <FormInput v-model="formData.contactPerson" :name="$t('contactPerson')"
-                                :label="$t('Contact Person')" :error="errors.contactPerson" type="text" />
-                        </div>
-                        <div class="form-group">
-                            <FormInput v-model="formData.email" :name="$t('Email')" :label="$t('Email')"
-                                :error="errors.email" type="email" />
-                        </div>
-                    </div> -->
-
                     <div class="form-grid">
                         <div class="form-group">
 
@@ -78,11 +60,6 @@
                         </div>
 
                         <div class="form-group">
-                            <!-- <label>Signature <span class="required">*</span></label>
-                            <input type="text" v-model="formData.signature" placeholder="Enter signature"
-                                :class="{ 'error-input': errors.signature }">
-                            <span v-if="errors.signature" class="error-text">{{ errors.signature }}</span> -->
-
                             <FormInput v-model="formData.signature" :name="$t('signature')" :label="$t('Signature')"
                                 :error="errors.signature" type="text" :required="true" />
                         </div>
@@ -343,7 +320,7 @@
 
 
                         <!-- Email Share -->
-                        <button @click="shareViaEmail" :disabled="isSharing.email || !currentPdfData.email"
+                        <button @click="shareViaEmail" :disabled="isSharing.email || !currentPdfData?.email"
                             class="share-option email">
                             <div class="share-icon-wrapper email-bg">
                                 <svg v-if="!isSharing.email" width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -368,9 +345,9 @@
                             </div>
                             <div class="share-content">
                                 <h3>Share via Email</h3>
-                                <p v-if="!currentPdfData.email" class="text-red-500">Email not provided</p>
+                                <p v-if="!currentPdfData?.email" class="text-red-500">Email not provided</p>
                                 <p v-else-if="isSharing.email">Sending...</p>
-                                <p v-else>Send to {{ currentPdfData.email }}</p>
+                                <p v-else>Send to {{ currentPdfData?.email }}</p>
                             </div>
                         </button>
 
@@ -420,19 +397,27 @@
                         <p>Plot no.9, Third Floor, Paschim Vihar Extn.</p>
                         <p>Delhi-110063, India</p>
                     </div>
-                    <div class="quotation-info">
-                        <h3>QUOTATION #{{ currentPdfData?.quotation_number }}</h3>
+                    <div class="invoice-info">
+                        <h3>QUOTATION INVOICE</h3>
+                        <p><strong>Invoice #:</strong> {{ currentPdfData?.quotation_number }}</p>
                         <p><strong>Date:</strong> {{ currentPdfData?.quotation_date }}</p>
-                        <p><strong>Valid Until:</strong> {{ currentPdfData?.quotation_valid_until_date }}</p>
+                        <p><strong>Valid Until:</strong> {{ currentPdfData?.quotation_valid_until_date }}
+                        </p>
                     </div>
                 </div>
 
                 <div class="client-info">
-                    <h4>Kind Attention: {{ currentPdfData?.contact_person || 'N/A' }}</h4>
+                    <h4>Bill To:</h4>
+                    <p><strong>{{ currentPdfData?.contact_person || 'N/A' }}</strong></p>
                     <p><strong>Company:</strong> {{ currentPdfData?.company_name || 'N/A' }}</p>
-                    <p><strong>Phone Number:</strong> {{ currentPdfData?.phone || 'N/A' }}</p>
-                    <p><strong>Email:</strong> {{ currentPdfData?.email || 'N/A' }}</p>
-                    <p><strong>Address:</strong> {{ currentPdfData?.address || 'N/A' }}</p>
+                    <p><strong>Phone:</strong> {{ currentPdfData?.phone || 'N/A' }}</p>
+                    <p v-if="currentPdfData?.email?.trim()"><strong>Email:</strong> {{ currentPdfData?.email || 'N/A' }}
+                    </p>
+                    <p v-if="currentPdfData?.address?.trim()"><strong>Address:</strong> {{ currentPdfData?.address ||
+                        'N/A' }}</p>
+                    <p v-if="currentPdfData?.gst_number?.trim()"><strong>GSTIN:</strong> {{ currentPdfData?.gst_number
+                        ||
+                        'N/A' }}</p>
                 </div>
 
                 <table class="items-table">
@@ -450,39 +435,35 @@
                             <td>{{ item?.description }}</td>
                             <td style="text-align: right;">{{ formatCurrency(item?.amount) }}</td>
                         </tr>
-
-                        <div v-if="((currentPdfData?.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData?.additional_fee)?.length || 0)) > 0"
-                            v-for="index in (currentPdfData?.discount > 0 ? 2 : 4) - (getVisibleItems(currentPdfData, currentPdfData?.additional_fee)?.length || 0)"
-                            :key="index" class="h-7 w-full">
-                        </div>
-
                     </tbody>
                 </table>
 
-                <table class="summary-table">
-                    <thead>
-                        <tr>
-                            <td>SUBTOTAL:</td>
-                            <td>₹{{ currentPdfData?.sub_total }}</td>
-                        </tr>
-                        <tr v-if="currentPdfData?.discount > 0">
-                            <td>DISCOUNT ({{ currentPdfData?.discount }}%):</td>
-                            <td>-₹{{ currentPdfData?.discount_amount }}</td>
-                        </tr>
-                        <tr v-if="currentPdfData?.discount > 0">
-                            <td>AMOUNT AFTER DISCOUNT:</td>
-                            <td>₹{{ currentPdfData?.amount_after_discount }}</td>
-                        </tr>
-                        <tr>
-                            <td>GST 18%:</td>
-                            <td>₹{{ currentPdfData?.GST_amount }}</td>
-                        </tr>
-                        <tr class="total-row">
-                            <td>TOTAL:</td>
-                            <td>₹{{ currentPdfData?.total }}</td>
-                        </tr>
-                    </thead>
-                </table>
+                <div class="summary-section">
+                    <table class="summary-table-wrapper">
+                        <thead class="summary-table">
+                            <tr>
+                                <td>SUBTOTAL:</td>
+                                <td>₹{{ currentPdfData?.sub_total }}</td>
+                            </tr>
+                            <tr v-if="currentPdfData?.discount > 0">
+                                <td>DISCOUNT ({{ currentPdfData?.discount }}%):</td>
+                                <td class="discount-amount">-₹{{ currentPdfData?.discount_amount }}</td>
+                            </tr>
+                            <tr v-if="currentPdfData?.discount > 0">
+                                <td>AMOUNT AFTER DISCOUNT:</td>
+                                <td>₹{{ currentPdfData?.amount_after_discount }}</td>
+                            </tr>
+                            <tr>
+                                <td>GST 18%:</td>
+                                <td>₹{{ currentPdfData?.GST_amount }}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>TOTAL AMOUNT:</strong></td>
+                                <td><strong>₹{{ currentPdfData?.total }}</strong></td>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
 
                 <div class="thank-you-note">
                     <p>Thank you for considering nyife.chat for your communication needs. We appreciate the
@@ -534,16 +515,14 @@
                 </div>
 
                 <div class="signature">
-                    <p>If you have any questions concerning this quotation, please contact us at info@nyife.chat
-                    </p>
+                    <p>For any queries regarding this invoice, please contact us at info@nyife.chat</p>
                     <p class="signature-line">____________________</p>
-                    <p class="name">{{ currentPdfData.signature }}</p>
-                    <p class="title">{{ currentPdfData.designation }}</p>
+                    <p class="name">{{ currentPdfData?.signature }}</p>
+                    <p class="title">{{ currentPdfData?.designation }}</p>
                 </div>
 
-                <!-- This is auto generated -->
                 <p class="absolute text-nowrap bottom-4 left-[50%] -translate-x-[50%] text-xs text-black/50">
-                    This is an auto-generated quotation invoice and does not require a signature.
+                    This is an auto-generated proforma invoice. Please make payment to receive official tax invoice.
                 </p>
             </div>
         </div>
@@ -551,7 +530,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, toRaw, onBeforeUnmount } from 'vue';
+import { ref, onMounted } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'vue3-toastify';
@@ -562,7 +541,6 @@ import axios from 'axios';
 import FormDateInput from './FormDateInput.vue';
 
 import { usePage } from '@inertiajs/vue3';
-import { set } from '@vueuse/core';
 const page = usePage();
 
 const base_url = import.meta.env.VITE_BACKEND_API_URL;
@@ -920,7 +898,7 @@ const generatePDFBlob = async () => {
     }
 
     // Generate filename
-    const fileName = `Quotation_${currentPdfData.value.quotation_number.replace('/', '_')}_${currentPdfData.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    const fileName = `Quotation_${currentPdfData?.value?.quotation_number.replace('/', '_')}_${currentPdfData?.value?.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output('blob');
@@ -999,8 +977,8 @@ const generatePDF = async () => {
             }, 300);
 
         } catch (error) {
-            if (currentPdfData.value.id) {
-                await axios.delete(`${base_url}/invoices/${currentPdfData.value.id}`);
+            if (currentPdfData?.value?.id) {
+                await axios.delete(`${base_url}/invoices/${currentPdfData?.value?.id}`);
             }
             toast.error(error.message || 'Error generating PDF. Please try again.');
         }
@@ -1016,7 +994,7 @@ const generatePDF = async () => {
 
 
 const downloadPDF = async () => {
-    if (!currentPdfData.value.quotation_invoice_pdf_download_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_download_url) {
         toast.error('No PDF available to download');
         return;
     }
@@ -1025,7 +1003,7 @@ const downloadPDF = async () => {
 
     try {
         // Fetch the PDF as a blob
-        const response = await fetch(currentPdfData.value.quotation_invoice_pdf_download_url);
+        const response = await fetch(currentPdfData?.value?.quotation_invoice_pdf_download_url);
         const blob = await response.blob();
 
         // Create a blob URL
@@ -1034,7 +1012,7 @@ const downloadPDF = async () => {
         // Create and trigger download
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.download = currentPdfData.value.quotation_invoice_pdf_filename || "invoice.pdf";
+        link.download = currentPdfData?.value?.quotation_invoice_pdf_filename || "invoice.pdf";
         document.body.appendChild(link);
         link.click();
 
@@ -1054,12 +1032,12 @@ const downloadPDF = async () => {
 const shareOnFreeWhatsApp = async () => {
 
 
-    if (!currentPdfData.value.quotation_invoice_pdf_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
 
-    if (!currentPdfData.value.phone) {
+    if (!currentPdfData?.value?.phone) {
         toast.error('Phone number is required');
         return;
     }
@@ -1074,10 +1052,10 @@ const shareOnFreeWhatsApp = async () => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                phone: currentPdfData.value.phone,
+                phone: currentPdfData?.value?.phone,
                 media_type: "document",
-                media_url: currentPdfData.value.quotation_invoice_pdf_url,
-                file_name: currentPdfData.value.quotation_invoice_pdf_filename,
+                media_url: currentPdfData?.value?.quotation_invoice_pdf_url,
+                file_name: currentPdfData?.value?.quotation_invoice_pdf_filename,
                 caption: `Dear ${currentPdfData?.value?.contact_person || 'Sir'},
 
 Thank you for your interest! Please download your quotation invoice.
@@ -1132,12 +1110,12 @@ Looking forward to assisting you.`,
 };
 
 const shareOnWhatsApp = async () => {
-    if (!currentPdfData.value.quotation_invoice_pdf_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
 
-    if (!currentPdfData.value.phone) {
+    if (!currentPdfData?.value?.phone) {
         toast.error('Phone number is required');
         return;
     }
@@ -1146,8 +1124,8 @@ const shareOnWhatsApp = async () => {
 
 
     try {
-        const url = currentPdfData.value.quotation_invoice_pdf_url;
-        const fileName = currentPdfData.value.quotation_invoice_pdf_filename;
+        const url = currentPdfData?.value?.quotation_invoice_pdf_url;
+        const fileName = currentPdfData?.value?.quotation_invoice_pdf_filename;
         const response = await fetch("https://wa.nyife.chat/api/send/template", {
             method: "POST",
             headers: {
@@ -1155,7 +1133,7 @@ const shareOnWhatsApp = async () => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                phone: currentPdfData.value.phone,
+                phone: currentPdfData?.value?.phone,
                 template: {
                     name: "quotation_invoice",
                     language: { code: "en" },
@@ -1193,12 +1171,12 @@ const shareOnWhatsApp = async () => {
 };
 
 const shareViaEmail = async () => {
-    if (!currentPdfData.value.quotation_invoice_pdf_url) {
+    if (!currentPdfData?.value?.quotation_invoice_pdf_url) {
         toast.error('No PDF available to share');
         return;
     }
 
-    if (!formData.value.email) {
+    if (!formData?.value?.email) {
         toast.error('Email address is required');
         return;
     }
@@ -1208,11 +1186,11 @@ const shareViaEmail = async () => {
     try {
 
         const payload = {
-            customer_name: currentPdfData.value.contact_person,
+            customer_name: currentPdfData?.value?.contact_person,
             invoice_type: 'Quotation',
-            invoice_number: currentPdfData.value.quotation_number,
-            invoice_url: currentPdfData.value.quotation_invoice_pdf_download_url,
-            email: currentPdfData.value.email
+            invoice_number: currentPdfData?.value?.quotation_number,
+            invoice_url: currentPdfData?.value?.quotation_invoice_pdf_download_url,
+            email: currentPdfData?.value?.email
         }
 
         const response = await axios.post(`${base_url}/email/share-invoice`, payload);
@@ -1221,7 +1199,7 @@ const shareViaEmail = async () => {
             throw new Error('Failed to send email');
         }
 
-        toast.success(`Quotation sent to ${currentPdfData.value.email} successfully!`);
+        toast.success(`Quotation sent to ${currentPdfData?.value?.email} successfully!`);
 
     } catch (error) {
         toast.error('Error sending email. Please try again.');
@@ -1538,20 +1516,26 @@ const shareViaEmail = async () => {
     margin: 2px 0;
 }
 
-.quotation-info {
+.invoice-info {
     text-align: right;
+    background: linear-gradient(135deg, #ff5100 0%, #ff7d47 100%);
+    padding: 16px 20px;
+    border-radius: 8px;
+    color: white;
 }
 
-.quotation-info h3 {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 5px;
+.invoice-info h3 {
+    font-size: 20px;
+    color: white;
+    margin-bottom: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
-.quotation-info p {
+.invoice-info p {
     font-size: 11px;
-    color: #666;
-    margin: 3px 0;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 4px 0;
 }
 
 .client-info {
@@ -1559,11 +1543,14 @@ const shareViaEmail = async () => {
     padding: 16px;
     margin-bottom: 25px;
     border-radius: 5px;
+    border-left: 4px solid #ff5100;
 }
 
 .client-info h4 {
     font-size: 13px;
-    color: #333;
+    color: #ff5100;
+    margin-bottom: 8px;
+    font-weight: 700;
 }
 
 .client-info p {
@@ -1599,10 +1586,20 @@ const shareViaEmail = async () => {
     border-bottom: none;
 }
 
+.summary-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    align-items: flex-start;
+}
+
+.summary-table-wrapper {
+    flex: 1;
+}
+
 .summary-table {
-    margin-left: auto;
-    width: 300px;
-    margin-bottom: 30px;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .summary-table tr {
@@ -1610,25 +1607,39 @@ const shareViaEmail = async () => {
 }
 
 .summary-table td {
-    padding: 10px;
+    padding: 10px 12px;
     font-size: 13px;
+}
+
+.summary-table td:first-child {
+    color: #666;
 }
 
 .summary-table td:last-child {
     text-align: right;
     font-weight: 600;
+    color: #333;
+}
+
+.summary-table .discount-amount {
+    color: #28a745;
 }
 
 .summary-table .total-row {
-    background: #ff5100;
-    color: white;
+    background: linear-gradient(135deg, #ff5100 0%, #ff7d47 100%);
+}
+
+.summary-table .total-row td {
+    padding: 14px 12px;
     font-size: 16px;
-    font-weight: 700;
+    border: none;
+    color: white;
 }
 
 .thank-you-note {
     padding: 15px;
     background: #ff51002d;
+    border-radius: 5px;
     border-left: 4px solid #ff5100;
 }
 
@@ -1672,7 +1683,7 @@ const shareViaEmail = async () => {
 }
 
 .signature {
-    margin: 40px 0;
+    margin: 100px 0 60px 0;
     text-align: right;
 }
 
@@ -1683,13 +1694,14 @@ const shareViaEmail = async () => {
 }
 
 .signature .signature-line {
-    margin-top: 20px;
+    margin-top: 30px;
     margin-bottom: 5px;
 }
 
 .signature .name {
     font-weight: 700;
     font-size: 14px;
+    color: #ff5100;
 }
 
 .signature .title {

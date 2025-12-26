@@ -169,8 +169,6 @@
                             <div class="flex items-center justify-between text-xs">
                                 <span class="text-green-600">GST: ₹{{
                                     formatCurrency(invoiceData?.stats?.totalGST) }}</span>
-                                <!-- <span class="text-orange-600">Discount: ₹{{
-                                    formatCurrency(invoiceData?.stats?.totalDiscount) }}</span> -->
                             </div>
                         </div>
                     </div>
@@ -356,7 +354,7 @@
                                             {{ getStatusText(item) }}
                                         </span>
                                         <div v-if="item.payment_status === 'expired'"
-                                            class="text-xs text-gray-500 mt-1 ml-1">
+                                            class="text-xs text-red-500 mt-1 ml-1">
                                             Payment link expired
                                         </div>
                                         <div v-if="item.payment_status === 'paid'"
@@ -364,7 +362,8 @@
                                             via {{ item.payment_method }}
                                         </div>
 
-                                        <div v-else class="text-xs text-gray-500 mt-1 ml-1">
+                                        <div v-if="item.payment_status === 'unpaid'"
+                                            class="text-xs text-gray-500 mt-1 ml-1">
                                             {{ item.payment_status }}
                                         </div>
 
@@ -397,7 +396,7 @@
                                                         class="text-teal-600 w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-gray-50">
                                                         <Eye size="18" class="flex-shrink-0" />
                                                         <span class="font-medium truncate">{{ $t("View details")
-                                                            }}</span>
+                                                        }}</span>
                                                     </button>
 
                                                     <button v-for="action in getAvailableActions(item)"
@@ -526,10 +525,16 @@
                 </div>
             </div>
         </div>
-        <!-- Date Picker Modal -->
+
+        <!-- Date Picker Modal with payment terms -->
         <DatePickerModal :isOpen="isDateModalOpen" @close="closeDateModal" @submit="handleDateSubmit"
-            v-model="selectedDate" label="Select Proforma Validity" :defaultDate="selectedDate" :required="true"
-            helperText="Pick a date from the calendar" placeholder="Select date" :closeBtn="true" :showHeader="true" />
+            v-model="selectedDate" label="Select Proforma Validity & Payment Terms" :defaultDate="selectedDate"
+            :required="true" helperText="Pick a date from the calendar" placeholder="Select date" :closeBtn="true"
+            :showHeader="true" :showPaymentTerms="true" :paymentTermsValue="paymentTerms" :paymentTermsRequired="true"
+            :totalAmount="proformaTotal" :minPercentage="20" :maxPercentage="100"
+            @update:paymentTerms="(val) => paymentTerms = val" />
+
+
         <!-- Share Options Modal -->
         <div v-if="showShareOptions" class="modal-overlay" @click.self="closeShareModal">
             <div class="share-modal">
@@ -602,7 +607,8 @@
                             </div>
                             <div class="share-content">
                                 <h3>Share on WhatsApp (Template)</h3>
-                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf when chat is not open yet' }}</p>
+                                <p>{{ isSharing.whatsapp ? 'Sharing...' : 'Send pdf when chat is not open yet' }}
+                                </p>
                             </div>
                         </button>
 
@@ -689,7 +695,20 @@
                         <h3>PROFORMA INVOICE</h3>
                         <p><strong>Invoice #:</strong> {{ generateCurrentProformaPDF?.proforma_number }}</p>
                         <p><strong>Date:</strong> {{ generateCurrentProformaPDF?.proforma_date }}</p>
-                        <p><strong>Due Date:</strong> {{ generateCurrentProformaPDF?.proforma_valid_until_date }}</p>
+                        <p><strong>Due Date:</strong> {{ generateCurrentProformaPDF?.proforma_valid_until_date }}
+                        </p>
+                        <p
+                            v-if="generateCurrentProformaPDF?.payment_terms?.percentage > 0 && generateCurrentProformaPDF?.payment_terms?.percentage < 100">
+                            <strong>Payment Terms:</strong>
+                            ₹{{ formatCurrency(generateCurrentProformaPDF?.payment_terms?.calculatedAmount) }}
+                            ({{ generateCurrentProformaPDF?.payment_terms?.percentage?.toFixed(2) }}%)
+                            to be paid in advance.
+                        </p>
+
+                        <p v-else>
+                            <strong>Payment Terms:</strong>
+                            100% to be paid in advance.
+                        </p>
                     </div>
                 </div>
 
@@ -698,8 +717,16 @@
                     <p><strong>{{ generateCurrentProformaPDF?.contact_person || 'N/A' }}</strong></p>
                     <p><strong>Company:</strong> {{ generateCurrentProformaPDF?.company_name || 'N/A' }}</p>
                     <p><strong>Phone:</strong> {{ generateCurrentProformaPDF?.phone || 'N/A' }}</p>
-                    <p><strong>Email:</strong> {{ generateCurrentProformaPDF?.email || 'N/A' }}</p>
-                    <p><strong>Address:</strong> {{ generateCurrentProformaPDF?.address || 'N/A' }}</p>
+                    <p v-if="generateCurrentProformaPDF?.email?.trim()"><strong>Email:</strong> {{
+                        generateCurrentProformaPDF?.email || 'N/A' }}
+                    </p>
+                    <p v-if="generateCurrentProformaPDF?.address?.trim()"><strong>Address:</strong> {{
+                        generateCurrentProformaPDF?.address ||
+                        'N/A' }}</p>
+                    <p v-if="generateCurrentProformaPDF?.gst_number?.trim()"><strong>GSTIN:</strong> {{
+                        generateCurrentProformaPDF?.gst_number
+                        ||
+                        'N/A' }}</p>
                 </div>
 
                 <table class="items-table">
@@ -737,7 +764,7 @@
                         <thead class="summary-table">
                             <tr>
                                 <td>SUBTOTAL:</td>
-                                <td>₹{{ generateCurrentProformaPDF.sub_total }}</td>
+                                <td>₹{{ generateCurrentProformaPDF?.sub_total }}</td>
                             </tr>
                             <tr v-if="generateCurrentProformaPDF?.discount > 0">
                                 <td>DISCOUNT ({{ generateCurrentProformaPDF?.discount }}%):</td>
@@ -767,20 +794,36 @@
                             <p>Full payment is due within the specified due date. Late payments may incur additional
                                 charges.</p>
                         </div>
+
                         <div class="term-section">
-                            <h5>Invoice Validity</h5>
-                            <p>This proforma validity is mentioned in the top of the proforma. Services will commence
-                                upon payment confirmation.</p>
+                            <h5>Proforma Validity</h5>
+                            <p>This proforma validity is mentioned in the top of the proforma. Prices and terms are
+                                subject to review after the validity period.</p>
                         </div>
+
                         <div class="term-section">
                             <h5>Tax Compliance</h5>
-                            <p>All prices include applicable GST @18%. Tax invoice will be issued upon payment receipt.
+                            <p>All prices include applicable GST @18%. Tax invoice will be issued upon payment
+                                receipt.
                             </p>
                         </div>
+
                         <div class="term-section">
-                            <h5>Cancellation Policy</h5>
-                            <p>Cancellations must be notified 48 hours in advance. Refunds subject to our refund policy
-                                terms.</p>
+                            <h5>Scope of Support</h5>
+                            <p>Basic setup and standard support are included. Any customization or additional
+                                technical support beyond standard scope will be charged separately.</p>
+                        </div>
+
+                        <div class="term-section">
+                            <h5>Price Revision Clause</h5>
+                            <p>In case of any price changes by third-party platforms (Meta, Google, telecom
+                                operators), such changes will be passed on to the customer at actual rates.</p>
+                        </div>
+
+                        <div class="term-section">
+                            <h5>Service Activation & Delivery</h5>
+                            <p>Service activation timelines may vary depending on platform approvals. We will make
+                                best efforts to ensure timely activation and delivery of services.</p>
                         </div>
                     </div>
                 </div>
@@ -790,7 +833,6 @@
                     <p class="signature-line">____________________</p>
                     <p class="name">{{ generateCurrentProformaPDF?.signature }}</p>
                     <p class="title">{{ generateCurrentProformaPDF?.designation }}</p>
-                    <!-- <p class="company-stamp">Complia Services Ltd</p> -->
                 </div>
 
                 <p class="absolute text-nowrap bottom-4 left-[50%] -translate-x-[50%] text-xs text-black/50">
@@ -833,8 +875,9 @@
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Payment Date</span>
-                                <span class="info-value">{{ formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
-                                }}</span>
+                                <span class="info-value">{{
+                                    formatDateTimeIST(generateCurrentPaymentReceiptPDF?.paid_at)
+                                    }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Payment Method</span>
@@ -869,17 +912,20 @@
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Email Address</span>
-                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not provided`
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.email || `Not
+                                    provided`
                                     }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Phone Number</span>
-                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not provided`
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.phone || `Not
+                                    provided`
                                     }}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Address</span>
-                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not provided`
+                                <span class="info-value">{{ generateCurrentPaymentReceiptPDF?.address || `Not
+                                    provided`
                                     }}</span>
                             </div>
                         </div>
@@ -908,7 +954,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import debounce from 'lodash/debounce';
-import { FileText, FileCheck, Receipt, Plus, RefreshCcw, Check, Eye, IndianRupee, Filter, RefreshCw, IndianRupeeIcon, Loader2, AlertCircle, CheckCircle, ChartLine, ExternalLink } from 'lucide-vue-next';
+import { FileText, FileCheck, Receipt, Plus, RefreshCcw, Check, Eye, IndianRupee, Filter, RefreshCw, IndianRupeeIcon, Loader2, AlertCircle, CheckCircle, ExternalLink } from 'lucide-vue-next';
 import QuotationInvoiceGenerator from '../QuotationInvoiceGenerator.vue';
 import { toast } from 'vue3-toastify';
 import html2canvas from 'html2canvas';
@@ -977,6 +1023,15 @@ const selectedDate = ref(
     new Date(new Date().setDate(new Date().getDate() + 7))
 );
 
+const paymentTerms = ref({
+    type: 'percentage', // 'percentage' or 'amount'
+    value: 100,
+    calculatedAmount: 0
+});
+
+// Your proforma invoice total
+const proformaTotal = ref(0);
+
 const tempProformaData = ref(null);
 
 
@@ -990,6 +1045,7 @@ const updatePaymentData = ref({});
 function openInvoiceModal(item) {
     isInvoiceModalOpen.value = true;
     invoiceModalData.value = item;
+
 }
 
 function closeInvoiceModal() {
@@ -1002,17 +1058,30 @@ function closeInvoiceModal() {
 function openDateModal(item) {
     isDateModalOpen.value = true;
     tempProformaData.value = item;
+    paymentTerms.value.calculatedAmount = parseFloat(item.total);
+    proformaTotal.value = parseFloat(item.total);
 }
 
 function closeDateModal() {
     isDateModalOpen.value = false;
     tempProformaData.value = null;
+    paymentTerms.value = {
+        type: 'percentage',
+        value: 100,
+        calculatedAmount: 0
+    }
+    proformaTotal.value = 0;
 }
 
-function handleDateSubmit(date) {
-    selectedDate.value = date;
-    generateProforma(tempProformaData.value);
+function handleDateSubmit(data) {
+
+    selectedDate.value = data?.date;
+    paymentTerms.value = data?.paymentTerms;
+
+    generateProforma(tempProformaData?.value);
 }
+
+// Payment Terms: 100% advance payment.
 
 // Action configuration - Config-driven approach
 const actionConfig = {
@@ -1188,45 +1257,46 @@ const formatCurrency = (value) => {
 const getVisibleItems = (Data, additionalData) => {
     const items = [];
 
-    if (parseFloat(Data.platform_charge) > 0) {
+    if (parseFloat(Data?.platform_charge) > 0) {
         items.push({
-            description: `Platform Charge (${Data.platform_charge_type})`,
-            amount: parseFloat(Data.platform_charge)
+            description: `Platform Charge (${Data?.platform_charge_type})`,
+            amount: parseFloat(Data?.platform_charge)
         });
     }
 
-    if (parseFloat(Data.wallet_recharge) > 0) {
+    if (parseFloat(Data?.wallet_recharge) > 0) {
         items.push({
             description: 'Wallet Recharge',
-            amount: parseFloat(Data.wallet_recharge)
+            amount: parseFloat(Data?.wallet_recharge)
         });
     }
 
-    if (parseFloat(Data.setup_fee) > 0) {
+    if (parseFloat(Data?.setup_fee) > 0) {
         items.push({
             description: 'Setup Fee',
-            amount: parseFloat(Data.setup_fee)
+            amount: parseFloat(Data?.setup_fee)
         });
     }
 
-    if (parseFloat(Data.customization_fee) > 0) {
+    if (parseFloat(Data?.customization_fee) > 0) {
         items.push({
             description: 'Customization Fee',
-            amount: parseFloat(Data.customization_fee)
+            amount: parseFloat(Data?.customization_fee)
         });
     }
 
-    additionalData.forEach(item => {
-        if (item.description && parseFloat(item.amount) > 0) {
-            items.push({
-                description: item.description,
-                amount: parseFloat(item.amount)
+    additionalData?.forEach(item => {
+        if (item?.description && parseFloat(item?.amount) > 0) {
+            items?.push({
+                description: item?.description,
+                amount: parseFloat(item?.amount)
             });
         }
     });
 
     return items;
 };
+
 
 const generatePDFBlob = async () => {
 
@@ -1300,7 +1370,7 @@ const generatePDFBlob = async () => {
     }
 
     // Generate filename
-    const fileName = `Proforma_${generateCurrentProformaPDF.value.proforma_number.replace('/', '_')}_${generateCurrentProformaPDF.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    const fileName = `Proforma_${generateCurrentProformaPDF?.value?.proforma_number.replace('/', '_')}_${generateCurrentProformaPDF?.value?.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output('blob');
@@ -1379,7 +1449,7 @@ const generatePaymentReceiptPDFBlob = async () => {
     }
 
     // Generate filename
-    const fileName = `PaymentReceipt_${generateCurrentPaymentReceiptPDF.value.payment_id.replace('/', '_')}_${generateCurrentPaymentReceiptPDF.value.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    const fileName = `PaymentReceipt_${generateCurrentPaymentReceiptPDF?.value?.payment_id?.replace('/', '_')}_${generateCurrentPaymentReceiptPDF?.value?.company_name?.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
 
     // Convert PDF to Blob
     const pdfBlob = pdf.output('blob');
@@ -1627,7 +1697,8 @@ const generateProforma = async (item) => {
 
         const payload = {
 
-            proforma_valid_until_date: selectedDate.value.toISOString()
+            proforma_valid_until_date: selectedDate.value.toISOString(),
+            payment_terms: paymentTerms.value
         }
 
         const res = await axios.put(`${base_url}/invoices/generate-proforma/${item.id}`, payload);
@@ -1669,17 +1740,17 @@ const generateProforma = async (item) => {
         toast.success('Proforma invoice generated successfully!');
 
         currentPDF.value = {
-            contactPerson: generateCurrentProformaPDF.value.contact_person,
-            companyName: generateCurrentProformaPDF.value.company_name,
-            phone: generateCurrentProformaPDF.value.phone,
-            email: generateCurrentProformaPDF.value.email,
-            invoiceNumber: generateCurrentProformaPDF.value.proforma_number,
+            contactPerson: generateCurrentProformaPDF?.value?.contact_person,
+            companyName: generateCurrentProformaPDF?.value?.company_name,
+            phone: generateCurrentProformaPDF?.value?.phone,
+            email: generateCurrentProformaPDF?.value?.email,
+            invoiceNumber: generateCurrentProformaPDF?.value?.proforma_number,
             templateType: "Proforma",
             templateName: "proforma_invoice",
-            payment_url: generateCurrentProformaPDF.value.payment_url?.payment_link_short_url,
-            pdf: uploadRes.data.data.file.url,
-            pdfDownloadUrl: uploadRes.data.data.file.downloadUrl,
-            pdfName: uploadRes.data.data.file.filename
+            payment_url: generateCurrentProformaPDF?.value?.payment_url?.payment_link_short_url,
+            pdf: uploadRes?.data?.data?.file?.url,
+            pdfDownloadUrl: uploadRes?.data?.data?.file?.downloadUrl,
+            pdfName: uploadRes?.data?.data?.file?.filename
         };
 
 
@@ -1798,16 +1869,16 @@ const generateReceipt = async (item) => {
         toast.success('Payment receipt generated successfully!');
 
         currentPDF.value = {
-            contactPerson: generateCurrentPaymentReceiptPDF.value.contact_person,
-            companyName: generateCurrentPaymentReceiptPDF.value.company_name,
-            phone: generateCurrentPaymentReceiptPDF.value.phone,
-            email: generateCurrentPaymentReceiptPDF.value.email,
-            invoiceNumber: generateCurrentPaymentReceiptPDF.value.payment_id,
+            contactPerson: generateCurrentPaymentReceiptPDF?.value?.contact_person,
+            companyName: generateCurrentPaymentReceiptPDF?.value?.company_name,
+            phone: generateCurrentPaymentReceiptPDF?.value?.phone,
+            email: generateCurrentPaymentReceiptPDF?.value?.email,
+            invoiceNumber: generateCurrentPaymentReceiptPDF?.value?.payment_id,
             templateType: "Payment Receipt",
             templateName: "payment_receipt",
-            pdf: uploadRes.data.data.file.url,
-            pdfDownloadUrl: uploadRes.data.data.file.downloadUrl,
-            pdfName: uploadRes.data.data.file.filename
+            pdf: uploadRes?.data?.data?.file?.url,
+            pdfDownloadUrl: uploadRes?.data?.data?.file?.downloadUrl,
+            pdfName: uploadRes?.data?.data?.file?.filename
         };
 
 
@@ -2207,13 +2278,6 @@ const emit = defineEmits(['update:modelValue', 'callback']);
     font-size: 11px;
     color: #666;
 }
-
-/* .signature .company-stamp {
-    font-size: 10px;
-    color: #999;
-    font-style: italic;
-    margin-top: 2px;
-} */
 
 /* Payment Receipt Generator Styles */
 
